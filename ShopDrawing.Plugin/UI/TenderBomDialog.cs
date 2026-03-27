@@ -1511,19 +1511,8 @@ namespace ShopDrawing.Plugin.UI
                     var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
                         bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
                         Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
-
-                    var boundary = pl.Clone() as Autodesk.AutoCAD.DatabaseServices.Entity;
-                    if (boundary != null)
-                    {
-                        boundary.LayerId = layerId;
-                        boundary.ColorIndex = 1;
-                        boundary.LineWeight = Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight070;
-                        btr.AppendEntity(boundary);
-                        tr.AddNewlyCreatedDBObject(boundary, true);
-                        _previewEntityIds.Add(boundary.ObjectId);
-                    }
-
-                    AddPanelPreviewLines(vertices, row, layerId, btr, tr);
+                    pl.Highlight();
+                    _highlightedSourceEntityIds.Add(objId);
 
                     var preview = TenderBomCalculator.GetColdStorageCeilingPreviewData(row.ToModel());
                     if (preview.HasValue)
@@ -1538,7 +1527,9 @@ namespace ShopDrawing.Plugin.UI
                             "T",
                             3,
                             Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight050,
-                            true,
+                            false,
+                            false,
+                            false,
                             layerId,
                             btr,
                             tr);
@@ -1553,12 +1544,12 @@ namespace ShopDrawing.Plugin.UI
                             30,
                             Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight035,
                             false,
+                            false,
+                            false,
                             layerId,
                             btr,
                             tr);
                     }
-
-                    AddPreviewSummaryText(vertices, row, layerId, btr, tr);
 
                     var ext = pl.GeometricExtents;
                     var view = doc.Editor.GetCurrentView();
@@ -1724,6 +1715,8 @@ namespace ShopDrawing.Plugin.UI
             short colorIndex,
             Autodesk.AutoCAD.DatabaseServices.LineWeight lineWeight,
             bool useCircleMarker,
+            bool drawMarkers,
+            bool drawLabels,
             Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
             Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
             Autodesk.AutoCAD.DatabaseServices.Transaction tr)
@@ -1743,22 +1736,29 @@ namespace ShopDrawing.Plugin.UI
                         : new Autodesk.AutoCAD.Geometry.Point3d(pos, segment.End, 0);
 
                     AddPreviewLine(start, end, colorIndex, lineWeight, layerId, btr, tr);
-                    AddSuspensionPointMarkers(
-                        start,
-                        end,
-                        colorIndex,
-                        useCircleMarker,
-                        layerId,
-                        btr,
-                        tr);
-                    AddSuspensionLineLabel(
-                        start,
-                        end,
-                        $"{linePrefix}{index + 1} @{spacingMm:F0}",
-                        colorIndex,
-                        layerId,
-                        btr,
-                        tr);
+                    if (drawMarkers)
+                    {
+                        AddSuspensionPointMarkers(
+                            start,
+                            end,
+                            colorIndex,
+                            useCircleMarker,
+                            layerId,
+                            btr,
+                            tr);
+                    }
+
+                    if (drawLabels)
+                    {
+                        AddSuspensionLineLabel(
+                            start,
+                            end,
+                            $"{linePrefix}{index + 1} @{spacingMm:F0}",
+                            colorIndex,
+                            layerId,
+                            btr,
+                            tr);
+                    }
                 }
             }
         }

@@ -1,0 +1,40 @@
+## .NET build outputs
+bin/
+obj/
+artifacts/bin/
+artifacts/obj/
+artifacts/manual-plugin-build/
+*.dll
+*.pdb
+*.exe
+*.cache
+*.Up2Date
+*.FileListAbsolute.txt
+*.AssemblyInfoInputs.cache
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+## IDE
+.vs/
+*.user
+*.suo
+.idea/
+*.DotSettings.user
+
+## OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+## Logs & temp
+*.log
+*.tmp
+*.temp
+
+## Secrets / local config
+appsettings.Development.json
+*.env

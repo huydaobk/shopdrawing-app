@@ -1,0 +1,24 @@
+[
+  {
+    "Key": "Spec1",
+    "WallCodePrefix": "W",
+    "Description": "T\u00F4n/T\u00F4n",
+    "PanelWidth": 1000,
+    "PanelType": "ISOPAR",
+    "Density": "",
+    "FireRating": "-",
+    "FmApproved": false,
+    "Thickness": 50,
+    "FacingColor": "Tr\u1EAFng",
+    "TopFacing": "Tole",
+    "TopCoating": "AZ150",
+    "TopSteelThickness": 0.6,
+    "TopProfile": "Vu\u00F4ng",
+    "BottomFacingColor": "Tr\u1EAFng",
+    "BottomFacing": "Tole",
+    "BottomCoating": "AZ150",
+    "BottomSteelThickness": 0.6,
+    "BottomProfile": "Vu\u00F4ng",
+    "DisplayName": "Spec1 \u2014 T\u00F4n/T\u00F4n"
+  }
+]

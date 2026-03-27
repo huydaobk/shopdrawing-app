@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <style>
+      .bg { fill: #1f232a; }
+      .panel { fill: #262b33; stroke: #3a404a; stroke-width: 2; rx: 18; }
+      .title { fill: #e6edf3; font: 700 28px Segoe UI, Arial, sans-serif; }
+      .label { fill: #9fb0c2; font: 500 18px Segoe UI, Arial, sans-serif; }
+      .note { fill: #7f8b99; font: 400 15px Segoe UI, Arial, sans-serif; }
+      .dimline { stroke: #25d9ff; stroke-width: 2.4; }
+      .text { fill: #25d9ff; font: 500 42px Arial, sans-serif; }
+      .dot { fill: none; stroke: #25d9ff; stroke-width: 2.2; }
+      .rule { stroke: #485261; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .good { fill: #7ee787; font: 600 17px Segoe UI, Arial, sans-serif; }
+      .warn { fill: #f2cc60; font: 600 17px Segoe UI, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="520"/>
+  <text class="title" x="60" y="60">SmartDim Dot Size Preview</text>
+  <text class="label" x="60" y="96">Minh họa tỷ lệ giữa dim text và đầu dim tròn rỗng</text>
+
+  <rect class="panel" x="50" y="130" width="500" height="330"/>
+  <rect class="panel" x="650" y="130" width="500" height="330"/>
+
+  <text class="title" x="80" y="175">Bản Trước</text>
+  <text class="label" x="80" y="205">Dot ~ 0.45 x text height</text>
+  <text class="warn" x="80" y="235">Dễ nhìn to hơn cảm nhận của chữ</text>
+
+  <text class="title" x="680" y="175">Bản Đã Tune</text>
+  <text class="label" x="680" y="205">Dot ~ 0.30 x text height</text>
+  <text class="good" x="680" y="235">Nhỏ hơn chữ, cân hơn với line/text</text>
+
+  <line class="rule" x1="300" y1="255" x2="300" y2="425"/>
+  <line class="rule" x1="900" y1="255" x2="900" y2="425"/>
+
+  <line class="dimline" x1="186" y1="345" x2="404" y2="345"/>
+  <line class="dimline" x1="781" y1="345" x2="1009" y2="345"/>
+
+  <circle class="dot" cx="170" cy="345" r="15"/>
+  <circle class="dot" cx="420" cy="345" r="15"/>
+  <circle class="dot" cx="770" cy="345" r="10"/>
+  <circle class="dot" cx="1020" cy="345" r="10"/>
+
+  <text class="text" x="238" y="330">5500</text>
+  <text class="text" x="838" y="330">5500</text>
+
+  <text class="note" x="80" y="410">Cùng một chữ "5500", chỉ đổi dot size.</text>
+  <text class="note" x="80" y="435">Bên trái: dot dễ tranh chú ý với text.</text>
+
+  <text class="note" x="680" y="410">Bên phải: dot lùi vai trò xuống thành đầu dim.</text>
+  <text class="note" x="680" y="435">Đây là tỷ lệ tôi vừa set trong code.</text>
+</svg>

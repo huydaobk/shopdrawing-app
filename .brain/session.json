@@ -1,0 +1,73 @@
+{
+  "updated_at": "2026-03-20T10:11:00+07:00",
+  "working_on": {
+    "feature": "Smart Dimension (Phase 2)",
+    "task": "Tinh chỉnh dim style theo TCVN / ISO 129",
+    "status": "in-progress",
+    "files": [
+      "Core/SmartDimEngine.cs"
+    ],
+    "blockers": [
+      "AutoCAD .NET API không hỗ trợ Dimfxlon/Dimfxl — không set fixed ext line length qua code được",
+      "AutoCAD lock DLL khi NETLOAD — phải restart AutoCAD để load DLL mới"
+    ],
+    "notes": "Đã fix 4 vấn đề dim style: tick size, text rotation, opening dim crossing, ext line placement. Cần restart AutoCAD để verify vì DLL bị lock."
+  },
+  "pending_tasks": [
+    {"task": "Restart AutoCAD và test SD_DIM với DLL mới nhất", "priority": "high"},
+    {"task": "Verify DIMFXL hoạt động qua Application.SetSystemVariable", "priority": "high"},
+    {"task": "Test dim trên tường có nhiều lỗ mở (>3 openings)", "priority": "high"},
+    {"task": "Phase 4 — Export PDF", "priority": "medium"}
+  ],
+  "recent_changes": [
+    {
+      "timestamp": "2026-03-19T15:45:00+07:00",
+      "type": "feature",
+      "description": "SmartDimEngine dim style overhaul: ArchTick 0.6×text, TextRotation luôn 0, GetModelFirstDimOffset min 80mm",
+      "files": ["Core/SmartDimEngine.cs"]
+    },
+    {
+      "timestamp": "2026-03-19T16:05:00+07:00",
+      "type": "feature",
+      "description": "DIMFXL (fixed 7mm ext line) via Application.SetSystemVariable + DimOpenings split 2 loops (width by position, height sorted short→long)",
+      "files": ["Core/SmartDimEngine.cs"]
+    },
+    {
+      "timestamp": "2026-03-20T08:50:00+07:00",
+      "type": "bugfix",
+      "description": "Fix opening height dim ext lines crossing wall — changed b.MaxPoint.X → wallBounds.MaxPoint.X as origin. Vertical wall: width dims anchor at wallBounds.MinPoint.Y not b.MinPoint.Y",
+      "files": ["Core/SmartDimEngine.cs"]
+    },
+    {
+      "timestamp": "2026-03-20T09:10:00+07:00",
+      "type": "bugfix",
+      "description": "Revert Dimtih=true back to false — TCVN chuẩn: dim đứng text xoay 90° đọc từ bên phải. Removed TextRotation=0 override in NormalizeDimensionAppearance.",
+      "files": ["Core/SmartDimEngine.cs"]
+    }
+  ],
+  "errors_encountered": [
+    {
+      "error": "DimStyleTableRecord does not contain Dimfxlon/Dimfxl",
+      "cause": "AutoCAD .NET API for AutoCAD 2026 does not expose DIMFXL properties on DimStyleTableRecord",
+      "solution": "Application.SetSystemVariable('DIMFXLON', 1) + ('DIMFXL', 7.0) as best-effort fallback. User can also set manually in AutoCAD: DIMFXLON=1, DIMFXL=7",
+      "resolved": false,
+      "lesson": "Not all AutoCAD system variables have matching .NET API properties. Some only accessible via SetSystemVariable or DXF XData"
+    },
+    {
+      "error": "DLL unchanged sau nhiều lần build — dim vẫn y nguyên",
+      "cause": "AutoCAD lock DLL khi NETLOAD. dotnet build ghi ra bin/ nhưng file bị lock → DLL không được ghi đè. AutoCAD vẫn chạy code cũ",
+      "solution": "PHẢI restart AutoCAD hoàn toàn → build → NETLOAD DLL mới",
+      "resolved": true,
+      "lesson": "AutoCAD .NET: NETLOAD là one-way, không hot-reload. Luôn restart AutoCAD để test DLL mới"
+    }
+  ],
+  "decisions_made": [
+    {"decision": "ArchTick size = textH × 0.6", "reason": "0.8× vẫn to, 0.6× ≈ 1.5mm ở text 2.5mm — cân đối theo TCVN shop drawing"},
+    {"decision": "Dimtih = false (text follows dim line)", "reason": "TCVN chuẩn: dim đứng text xoay 90° đọc từ phải, không phải always-horizontal"},
+    {"decision": "Opening height dims sorted short→long", "reason": "Dim ngắn gần tường nhất, dim dài ra ngoài — tránh crossing"},
+    {"decision": "Sill + opening height share 1 lane (cùng cột dim)", "reason": "Tiết kiệm không gian, mỗi opening = 1 cột duy nhất bên phải tường"},
+    {"decision": "Opening dim dùng wallBounds edge làm anchor, không dùng b.MaxPoint", "reason": "b.MaxPoint nằm trong tường → ext line phải kéo ngang ra ngoài, crossing qua tất cả panels"},
+    {"decision": "Vertical wall: opening height → RIGHT, opening width → BOTTOM", "reason": "Panel width ở LEFT, panel height ở TOP → không conflict"},
+    {"decision": "DIMFXL set qua Application.SetSystemVariable, fallback manual", "reason": "DimStyleTableRecord không có Dimfxlon/Dimfxl properties trong AutoCAD 2026 .NET API"}
+  ]
+}

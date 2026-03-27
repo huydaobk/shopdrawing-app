@@ -1,0 +1,9 @@
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin.csproj.AssemblyReference.cache
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\UI\ExportPdfPaletteControl.baml
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\UI\ExportPdfPaletteControl.g.cs
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin_MarkupCompile.cache
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin.g.resources
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin.GeneratedMSBuildEditorConfig.editorconfig
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin.AssemblyInfoInputs.cache
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin.AssemblyInfo.cs
+C:\my_project\shopdrawing-app\artifacts\obj\SmartDimPanelOverlapFix\x64\Release\ShopDrawing.Plugin.csproj.CoreCompileInputs.cache

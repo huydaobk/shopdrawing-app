@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "schema_version": "1.1.0",
+    "awf_version": "4.0.2",
+    "project": "shopdrawing-app",
+    "last_updated": "2026-03-20"
+  },
+  "project": {
+    "name": "ShopDrawing AutoCAD Plugin",
+    "type": "AutoCAD .NET Plugin (C#/.NET 8)",
+    "status": "active",
+    "description": "Plugin AutoCAD để triển khai tấm sandwich panel — vẽ bố cục, quản lý kho lẻ, xuất BOM Excel, tích hợp Ribbon UI.",
+    "workspace": "c:\\my_project\\shopdrawing-app",
+    "main_plugin": "ShopDrawing.Plugin\\ShopDrawing.Plugin.csproj",
+    "output_dll": "ShopDrawing.Plugin\\bin\\x64\\Release\\net8.0-windows\\ShopDrawing.Plugin.dll"
+  },
+  "tech_stack": {
+    "language": "C# .NET 8",
+    "platform": "AutoCAD 2026 .NET API",
+    "ui": "WPF (Windows Presentation Foundation)",
+    "database": "SQLite (via System.Data.SQLite)",
+    "excel": "NPOI",
+    "key_dlls": ["AutoCAD acmgd.dll", "AutoCAD accoremgd.dll", "AdWindows.dll (Ribbon API)"],
+    "os": "Windows"
+  },
+  "architecture": {
+    "entry_point": "ShopDrawingApp.cs (IExtensionApplication)",
+    "commands": "Commands/ShopDrawingCommands.cs",
+    "core": [
+      "Core/BlockManager.cs — vẽ panel, hatch, tag",
+      "Core/BomManager.cs — scan drawing, xây BOM",
+      "Core/LayoutEngine.cs — bố cục panel theo vách",
+      "Core/SmartDimEngine.cs — dim tự động: panel widths, heights, openings, elevations (TCVN dim style)",
+      "Core/LayoutManagerEngine.cs — layout tab manager",
+      "Core/LayoutManagerRules.cs — layout rules / title inference",
+      "Core/WasteMatcher.cs — khớp tấm lẻ với kho",
+      "Core/WasteCalculator.cs",
+      "Core/PanelIdGenerator.cs",
+      "Core/SpecConfigManager.cs",
+      "Core/ExcelExporter.cs"
+    ],
+    "ui": [
+      "UI/ShopDrawingPalette.xaml — palette chính",
+      "UI/WasteManagerDialog.cs — dashboard BOM + kho lẻ (4 tab)",
+      "UI/RibbonInitializer.cs — Ribbon Tab 'Shop Drawing'",
+      "UI/SpecManagerDialog.cs"
+    ],
+    "data": [
+      "Data/WasteRepository.cs — CRUD SQLite waste panels"
+    ],
+    "models": "Models/ — Panel, WastePanel, BomRow, PanelSpec, LayoutResult..."
+  },
+  "ribbon_ui": {
+    "tab": "Shop Drawing",
+    "panel": "Tools",
+    "buttons": [
+      {"name": "Shopdrawing", "command": "SD_PANEL", "phase": 1, "status": "done"},
+      {"name": "Smart Dimension", "command": "SD_SMART_DIM", "phase": 2, "status": "placeholder"},
+      {"name": "Layout", "command": "SD_LAYOUT", "phase": 3, "status": "placeholder"},
+      {"name": "Xuất bản vẽ", "command": "SD_EXPORT", "phase": 4, "status": "placeholder"}
+    ],
+    "icons": "ShopDrawing.Plugin/icons/ (32x32 PNG embedded resources)",
+    "init": "ShopDrawingApp.cs via Application.Idle event"
+  },
+  "tag_format": {
+    "description": "Mỗi panel có 2 DBText riêng trên layer SD_TAG",
+    "text1": "PanelId + statusIcon, e.g. 'W01-12 ✂'",
+    "text2": "Spec, e.g. 'SPEC1' — luôn bên trong panel bounds để BomManager scan được",
+    "bom_parse_rule": "panelId = text.Split()[0] (strip status icon after space); spec = first non-dash, non-joint text"
+  },
+  "layers": {
+    "SD_PANEL": "Đường viền tấm — Blue ACI 5",
+    "SD_HATCH": "Hatch tấm — Gray ACI 253",
+    "SD_TAG": "Tag text: PanelId + Spec (riêng) — Green ACI 3",
+    "SD_JOINT_MALE": "Ngàm male/cut — Red ACI 1",
+    "SD_JOINT_FEMALE": "Ngàm female — Cyan ACI 4",
+    "SD_OPENING": "Lỗ mở — Orange ACI 30",
+    "SD_DETAIL": "Chi tiết phụ kiện — Purple ACI 200",
+    "SD_DIM": "Kích thước — Cyan ACI 4",
+    "SD_DIM_PANEL": "Dim panel (widths + overall) — Cyan ACI 4",
+    "SD_DIM_OPENING": "Dim lỗ mở — Magenta ACI 6"
+  },
+  "waste_db": {
+    "path": "c:\\my_project\\shopdrawing-app\\public\\shopdrawing_waste.db",
+    "table": "waste_panels",
+    "status_values": ["available", "used", "discarded"],
+    "source_types": ["REM", "STEP", "OPEN", "TRIM"]
+  },
+  "commands": {
+    "SD_WALL_QUICK": "Vẽ vách sandwich panel nhanh",
+    "SD_PANEL": "Toggle palette Shopdrawing",
+    "SD_WASTE_MANAGER": "Mở dashboard BOM + Kho Lẻ",
+    "SD_UPDATE_TEXT": "Cập nhật chiều cao text existing",
+    "SD_SMART_DIM": "Placeholder Phase 2",
+    "SD_LAYOUT": "Layout Manager — tạo layout tự động, phân trang, khung tên, danh mục bản vẽ",
+    "SD_DIM": "Smart Dimension — dim tự động theo TCVN (panel widths, heights, openings, elevation)",
+    "SD_EXPORT": "Placeholder Phase 4"
+  },
+  "features": [
+    {
+      "name": "Layout Manager (Phase 3)",
+      "status": "implemented",
+      "details": "User chọn vùng vẽ (PickRegion), tự động tạo Layout tab(s) phân trang nếu vách dài (overlap 1000mm). Chèn View Title (tên & tỷ lệ), chèn khung tên TCVN Option A (55mm dưới) hoặc khung tên khách hàng (External Block with Attribute mapping in NOD). Tự động cập nhật Drawing List (00-DMBD) dùng AutoCAD Table."
+    },
+    {
+      "name": "Smart Dimension (Phase 2)",
+      "status": "in-progress",
+      "details": "SD_DIM command: quét panels+openings trong wallBounds, tạo dim tự động. Dim style TCVN: ArchTick 0.6×text, annotative, Dimtih=false (text xoay theo dim line). Panel widths phía trên/dưới, panel height bên trái/phải, opening height/width theo direction riêng. Sort opening heights short→long. DIMFXL=7mm (set qua SetSystemVariable, không có .NET API property)."
+    }
+  ],
+  "known_bugs_fixed": [
+    "NaturalComparer double negation (sort chip không đổi chiều) — WasteManagerDialog.cs",
+    "Kho Lẻ không auto-refresh sau khi vẽ vách mới — WasteUpdated event pattern",
+    "Tag text W01-12/SPEC1 trong cột ký hiệu — tách thành 2 DBText riêng",
+    "Cột cấu tạo mặc định SPEC1 — do thiếu Spec text riêng trong drawing",
+    "Hatch vô hình trên tấm tái sử dụng — dùng màu ACI 253 + angle 135°",
+    "Opening height dim ext lines crossing wall — dùng wallBounds edge thay b.MaxPoint",
+    "Dim opening trồng panel dim (tường dọc) — tách opening dims riêng RIGHT/BOTTOM"
+  ],
+  "dim_style_spec": {
+    "style_name": "SD_DIM",
+    "arrowhead": "ArchTick (45° slash)",
+    "arrow_size": "textH × 0.6",
+    "text_height": "2.5mm paper",
+    "text_style": "SD_Arial",
+    "dimtih": false,
+    "dimtoh": false,
+    "dimtad": 1,
+    "dimgap": "textH × 0.4",
+    "annotative": true,
+    "dimfxl": "7.0mm (via SetSystemVariable, not API property)",
+    "known_limitation": "DimStyleTableRecord does not expose Dimfxlon/Dimfxl in AutoCAD 2026 .NET API"
+  },
+  "phases": {
+    "current": "Smart Dimension Phase 2 — tinh chỉnh dim style TCVN",
+    "completed": ["Phase 1 — Panel Drawing", "Phase 3 — Layout Manager"],
+    "next": "Phase 4 — Export PDF"
+  }
+}

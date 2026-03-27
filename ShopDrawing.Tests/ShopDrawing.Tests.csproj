@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Platform>x64</Platform>
+    <Platforms>x64</Platforms>
+    <PluginBuildFlavor>TestsRef</PluginBuildFlavor>
+    <OutputPath>..\artifacts\bin\ShopDrawing.Tests\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.6.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ShopDrawing.Plugin\ShopDrawing.Plugin.csproj">
+      <AdditionalProperties>OutputPath=$(MSBuildThisFileDirectory)..\artifacts\bin\ShopDrawing.Plugin.TestsRef\</AdditionalProperties>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

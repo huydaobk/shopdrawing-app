@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildThisFileDirectory)artifacts\**;$(MSBuildProjectDirectory)\obj\**;$(MSBuildProjectDirectory)\bin\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'ShopDrawing.Plugin' and '$(PluginBuildFlavor)' == 'TestsRef'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\ShopDrawing.Plugin.TestsRef\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'ShopDrawing.Plugin' and '$(PluginBuildFlavor)' != 'TestsRef'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\ShopDrawing.Plugin\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'ShopDrawing.Tests'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\ShopDrawing.Tests\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>

@@ -19,6 +19,8 @@ namespace ShopDrawing.Plugin.UI
     /// </summary>
     public class TenderBomDialog : Window
     {
+        private const bool EnableTenderCadOverlayPreview = false;
+
         // ═══ Color constants (match WasteManagerDialog) ═══
         private static readonly Brush BgWindow = new SolidColorBrush(Color.FromRgb(250, 250, 252));  // #FAFAFC
         private static readonly Brush FgDark = new SolidColorBrush(Color.FromRgb(44, 62, 80));       // #2C3E50
@@ -42,14 +44,16 @@ namespace ShopDrawing.Plugin.UI
         private DataGrid _accessoryBasisGrid = null!;
         private DataGrid _accessorySummaryGrid = null!;
         private DataGrid _panelBreakdownGrid = null!;
-        private CheckBox _chkAutoCadPreview = null!;
         private readonly DispatcherTimer _cadPreviewTimer;
         private TenderWallRow? _pendingPreviewRow;
         private string? _lastCadPreviewKey;
+        private bool _isEditingCell; // Guard: suppress CAD LockDocument while a DataGrid cell is being edited
+        private bool _suspendCadOperations; // Guard: suppress CAD ops during pick/re-pick/programmatic selection
 
         // Highlight nguồn gốc và preview overlay tách riêng để chọn dòng không làm CAD lag.
         private readonly List<Autodesk.AutoCAD.DatabaseServices.ObjectId> _highlightedSourceEntityIds = new();
         private readonly List<Autodesk.AutoCAD.DatabaseServices.ObjectId> _previewEntityIds = new();
+        private readonly List<Autodesk.AutoCAD.DatabaseServices.Entity> _transientPreviewEntities = new();
 
         public TenderBomDialog(TenderProject project)
         {
@@ -181,14 +185,12 @@ namespace ShopDrawing.Plugin.UI
             panel.Children.Add(edgeGuide);
 
             // Toolbar
-            var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
-
-            toolbar.Children.Add(Btn("＋ Thêm", AccentGreen, Brushes.White, OnAddWall));
+            var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
 
             var cboFloor = new ComboBox
             {
-                Width = 70, FontSize = 12, Margin = new Thickness(4, 0, 0, 0),
-                ToolTip = "Lọc theo tầng"
+                Width = 80, FontSize = 12, Margin = new Thickness(0, 0, 8, 0),
+                ToolTip = "Lọc theo tầng", VerticalContentAlignment = VerticalAlignment.Center
             };
             cboFloor.Items.Add("-- Tầng --");
             cboFloor.SelectedIndex = 0;
@@ -196,23 +198,14 @@ namespace ShopDrawing.Plugin.UI
 
             toolbar.Children.Add(Btn("📏 Pick Dài", AccentBlue, Brushes.White, OnPickLength));
             toolbar.Children.Add(Btn("📐 Pick DT", AccentBlue, Brushes.White, OnPickArea));
-            toolbar.Children.Add(Btn("👁 Xem CAD", BtnGray, Brushes.White, OnPreviewCad));
-            toolbar.Children.Add(Btn("🔄 Pick lại", AccentOrange, Brushes.White, OnRepickWall));
-            toolbar.Children.Add(Btn("🗑 Xóa vách", AccentRed, Brushes.White, OnDeleteWall));
 
-            _chkAutoCadPreview = new CheckBox
-            {
-                Content = "Auto preview CAD",
-                Margin = new Thickness(8, 4, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-                IsChecked = false
-            };
-            _chkAutoCadPreview.Checked += (s, e) =>
-            {
-                if (_wallGrid?.SelectedItem is TenderWallRow row)
-                    RequestCadPreview(row);
-            };
-            toolbar.Children.Add(_chkAutoCadPreview);
+            toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
+
+            toolbar.Children.Add(Btn("🔄 Pick lại", BtnGray, Brushes.White, OnRepickWall));
+
+            toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
+
+            toolbar.Children.Add(Btn("🗑 Xóa", AccentRed, Brushes.White, OnDeleteWall));
 
             Grid.SetRow(toolbar, 1);
             panel.Children.Add(toolbar);
@@ -234,10 +227,10 @@ namespace ShopDrawing.Plugin.UI
                 FontWeight = FontWeights.SemiBold, FontSize = 12,
                 Foreground = AccentOrange, VerticalAlignment = VerticalAlignment.Center
             });
-            openingBar.Children.Add(Btn("＋ Thêm lỗ mở", AccentGreen, Brushes.White, OnAddOpening));
             openingBar.Children.Add(Btn("📐 Pick mặt bằng", AccentBlue, Brushes.White, (s, e) => PickOpeningFromCad(false, null)));
             openingBar.Children.Add(Btn("📐 Pick mặt đứng", AccentBlue, Brushes.White, (s, e) => PickOpeningFromCad(true, null)));
-            openingBar.Children.Add(Btn("🔄 Pick lại", AccentOrange, Brushes.White, OnRepickOpening));
+            openingBar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
+            openingBar.Children.Add(Btn("🔄 Pick lại", BtnGray, Brushes.White, OnRepickOpening));
             openingBar.Children.Add(Btn("🗑", AccentRed, Brushes.White, OnDeleteOpening, 28));
             Grid.SetRow(openingBar, 3);
             panel.Children.Add(openingBar);
@@ -534,7 +527,7 @@ namespace ShopDrawing.Plugin.UI
         private void SafeRefreshWallGrid()
         {
             try { _wallGrid.CommitEdit(DataGridEditingUnit.Row, true); } catch { }
-            SafeRefreshWallGrid();
+            try { _wallGrid.Items.Refresh(); } catch { }
         }
 
         // ═══════════════════════════════════════════════════
@@ -597,13 +590,24 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(colPanels);
 
             grid.SelectionChanged += OnWallSelectionChanged;
+            grid.BeginningEdit += OnWallBeginningEdit;
             grid.CellEditEnding += OnWallCellEditEnding;
 
             return grid;
         }
 
+        private void OnWallBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
+        {
+            _cadPreviewTimer.Stop();
+            _pendingPreviewRow = null;
+            _lastCadPreviewKey = null;
+            ForceClearHighlight();
+            _isEditingCell = true;
+        }
+
         private void OnWallSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_isEditingCell || _suspendCadOperations) return; // Suppress CAD ops during cell edit/programmatic updates
             try
             {
                 if (_wallGrid.SelectedItem is TenderWallRow row)
@@ -623,6 +627,8 @@ namespace ShopDrawing.Plugin.UI
 
         private void OnWallCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
+            _isEditingCell = true; // block CAD ops until commit finishes
+            TenderWallRow? restorePreviewRow = null;
             // Use Background priority to run AFTER the cell value commits to source
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
             {
@@ -641,15 +647,33 @@ namespace ShopDrawing.Plugin.UI
                     }
                     SafeRefreshWallGrid();
                     RefreshFooter();
-                    if (_chkAutoCadPreview?.IsChecked == true
-                        && ReferenceEquals(_wallGrid.SelectedItem, e.Row.Item)
+                    if (ReferenceEquals(_wallGrid.SelectedItem, e.Row.Item)
                         && e.Row.Item is TenderWallRow selectedWr)
                     {
                         RefreshPanelBreakdown(selectedWr);
-                        RequestCadPreview(selectedWr);
+                        _lastCadPreviewKey = null;
+                        restorePreviewRow = selectedWr;
                     }
                 }
                 catch { }
+                finally
+                {
+                    _isEditingCell = false; // Re-enable CAD highlight operations
+                    if (restorePreviewRow != null)
+                    {
+                        Dispatcher.BeginInvoke(
+                            System.Windows.Threading.DispatcherPriority.ContextIdle,
+                            new Action(() =>
+                            {
+                                if (!_isEditingCell
+                                    && !_suspendCadOperations
+                                    && ReferenceEquals(_wallGrid.SelectedItem, restorePreviewRow))
+                                {
+                                    RequestCadPreview(restorePreviewRow);
+                                }
+                            }));
+                    }
+                }
             }));
         }
 
@@ -707,31 +731,36 @@ namespace ShopDrawing.Plugin.UI
             }));
         }
 
+        private void BeginCadInteraction()
+        {
+            _suspendCadOperations = true;
+            _isEditingCell = false;
+            _cadPreviewTimer.Stop();
+            _pendingPreviewRow = null;
+            _lastCadPreviewKey = null;
+
+            try { _wallGrid?.CommitEdit(DataGridEditingUnit.Cell, true); } catch { }
+            try { _wallGrid?.CommitEdit(DataGridEditingUnit.Row, true); } catch { }
+            try { _openingGrid?.CommitEdit(DataGridEditingUnit.Cell, true); } catch { }
+            try { _openingGrid?.CommitEdit(DataGridEditingUnit.Row, true); } catch { }
+
+            IsEnabled = false;
+            Opacity = 0.92;
+        }
+
+        private void EndCadInteraction()
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+            {
+                Opacity = 1.0;
+                IsEnabled = true;
+                _suspendCadOperations = false;
+            }));
+        }
+
         // ═══════════════════════════════════════════════════
         // ACTIONS
         // ═══════════════════════════════════════════════════
-
-        private void OnAddWall(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                int nextIndex = _wallRows.Count + 1;
-                _wallRows.Add(new TenderWallRow
-                {
-                    Index = nextIndex,
-                    Category = "Vách",
-                    Floor = _wallRows.LastOrDefault()?.Floor ?? "T1",
-                    Name = $"{TenderWall.GetCategoryPrefix("Vách")}-{(char)('A' + (nextIndex - 1) % 26)}{nextIndex}",
-                    PanelWidth = GetWidthForSpec(_project.Specs.FirstOrDefault()?.Key ?? ""),
-                    PanelThickness = GetThicknessForSpec(_project.Specs.FirstOrDefault()?.Key ?? ""),
-                    LayoutDirection = "Dọc",
-                    SpecKey = _project.Specs.FirstOrDefault()?.Key ?? ""
-                });
-                RefreshFooter();
-                _lblStatus.Text = $"✅ Đã thêm vách #{nextIndex}";
-            }
-            catch (Exception ex) { _lblStatus.Text = $"❌ {ex.Message}"; }
-        }
 
         private void OnDeleteWall(object sender, RoutedEventArgs e)
         {
@@ -823,11 +852,11 @@ namespace ShopDrawing.Plugin.UI
 
         private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         {
-            Hide();
+            BeginCadInteraction();
             try
             {
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-                if (doc == null) { Show(); return; }
+                if (doc == null) return;
                 var ed = doc.Editor;
 
                 string prompt = pickArea
@@ -840,7 +869,7 @@ namespace ShopDrawing.Plugin.UI
                 opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
 
                 var result = ed.GetEntity(opt);
-                if (result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) { Show(); return; }
+                if (result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
 
                 using (var tr = doc.Database.TransactionManager.StartTransaction())
                 {
@@ -876,7 +905,7 @@ namespace ShopDrawing.Plugin.UI
                     SafeRefreshWallGrid();
                     RefreshFooter();
                     RefreshPanelBreakdown(targetRow);
-                    RequestCadPreview(targetRow, true);
+                    _lastCadPreviewKey = null;
                     _lblStatus.Text = $"✅ Đã re-pick vách {targetRow.Name}";
                 });
             }
@@ -886,7 +915,7 @@ namespace ShopDrawing.Plugin.UI
             }
             finally
             {
-                Dispatcher.Invoke(Show);
+                EndCadInteraction();
             }
         }
 
@@ -895,11 +924,11 @@ namespace ShopDrawing.Plugin.UI
 
         private void PickFromCad(bool pickArea)
         {
-            Hide();
+            BeginCadInteraction();
             try
             {
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-                if (doc == null) { Show(); return; }
+                if (doc == null) return;
                 var ed = doc.Editor;
 
                 string prompt = pickArea
@@ -912,14 +941,17 @@ namespace ShopDrawing.Plugin.UI
                 opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
 
                 var result = ed.GetEntity(opt);
-                if (result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) { Show(); return; }
+                if (result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
+
+                TenderWallRow? newRow = null;
+                string polygonTag = string.Empty;
 
                 using (var tr = doc.Database.TransactionManager.StartTransaction())
                 {
                     var ent = tr.GetObject(result.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
                     var template = _wallGrid.SelectedItem as TenderWallRow;
                     string category = template?.Category ?? "Vách";
-                    var newRow = new TenderWallRow
+                    newRow = new TenderWallRow
                     {
                         Index = _wallRows.Count + 1,
                         Category = category,
@@ -1000,7 +1032,6 @@ namespace ShopDrawing.Plugin.UI
                         if (!divideFromMaxSide.HasValue)
                         {
                             tr.Commit();
-                            Show();
                             return;
                         }
 
@@ -1008,17 +1039,25 @@ namespace ShopDrawing.Plugin.UI
                     }
 
                     tr.Commit();
+                    polygonTag = newRow.PolygonVertices != null ? " [Polygon]" : " [Rect]";
+                    ed.WriteMessage($"\n✅ Pick: {newRow.Name}{polygonTag} | Dài={newRow.Length:F0}mm | Cao={newRow.Height:F0}mm");
+                }
+
+                if (newRow != null)
+                {
                     _wallRows.Add(newRow);
                     _wallGrid.SelectedItem = newRow;
                     _wallGrid.ScrollIntoView(newRow);
-                    RequestCadPreview(newRow, true);
                     RefreshFooter();
-                    string polygonTag = newRow.PolygonVertices != null ? " [Polygon]" : " [Rect]";
-                    ed.WriteMessage($"\n✅ Pick: {newRow.Name}{polygonTag} | Dài={newRow.Length:F0}mm | Cao={newRow.Height:F0}mm");
+                    RefreshPanelBreakdown(newRow);
+                    _lastCadPreviewKey = null;
                 }
             }
             catch (Exception ex) { _lblStatus.Text = $"❌ Pick lỗi: {ex.Message}"; }
-            finally { Show(); }
+            finally
+            {
+                EndCadInteraction();
+            }
         }
 
         /// <summary>Detect chữ nhật thuần 2D từ OCS vertices (cross product check)</summary>
@@ -1057,11 +1096,11 @@ namespace ShopDrawing.Plugin.UI
                 return;
             }
 
-            Hide();
+            BeginCadInteraction();
             try
             {
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-                if (doc == null) { Show(); return; }
+                if (doc == null) return;
                 var ed = doc.Editor;
 
                 string mode = isElevation ? "MẶT ĐỨNG" : "MẶT BẰNG";
@@ -1070,7 +1109,7 @@ namespace ShopDrawing.Plugin.UI
                 // Point 1
                 var p1Result = ed.GetPoint(new Autodesk.AutoCAD.EditorInput.PromptPointOptions(
                     "\n→ Click điểm 1 của lỗ mở:"));
-                if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) { Show(); return; }
+                if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
 
                 // Point 2
                 var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions(
@@ -1078,7 +1117,7 @@ namespace ShopDrawing.Plugin.UI
                 p2Opt.UseBasePoint = true;
                 p2Opt.BasePoint = p1Result.Value;
                 var p2Result = ed.GetPoint(p2Opt);
-                if (p2Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) { Show(); return; }
+                if (p2Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
 
                 var p1 = p1Result.Value;
                 var p2 = p2Result.Value;
@@ -1110,7 +1149,7 @@ namespace ShopDrawing.Plugin.UI
                     hOpt.AllowNegative = false;
                     hOpt.AllowZero = false;
                     var hResult = ed.GetDouble(hOpt);
-                    if (hResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) { Show(); return; }
+                    if (hResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
                     heightMm = Math.Round(hResult.Value);
                     ed.WriteMessage($" | Cao={heightMm:F0}mm");
                 }
@@ -1203,7 +1242,7 @@ namespace ShopDrawing.Plugin.UI
                 });
             }
             catch (Exception ex) { _lblStatus.Text = $"❌ Pick opening lỗi: {ex.Message}"; }
-            finally { Show(); }
+            finally { EndCadInteraction(); }
         }
 
         /// <summary>
@@ -1211,14 +1250,32 @@ namespace ShopDrawing.Plugin.UI
         /// </summary>
         private void ClearHighlight()
         {
+            ClearHighlightCore(ignoreGuards: false);
+        }
+
+        private void ForceClearHighlight()
+        {
+            ClearHighlightCore(ignoreGuards: true);
+        }
+
+        private void ClearHighlightCore(bool ignoreGuards)
+        {
+            if (!ignoreGuards && (_isEditingCell || _suspendCadOperations)) return;
             try
             {
-                if (_highlightedSourceEntityIds.Count == 0 && _previewEntityIds.Count == 0) return;
+                if (_highlightedSourceEntityIds.Count == 0
+                    && _previewEntityIds.Count == 0
+                    && _transientPreviewEntities.Count == 0) return;
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
                 if (doc == null)
                 {
                     _highlightedSourceEntityIds.Clear();
                     _previewEntityIds.Clear();
+                    foreach (var entity in _transientPreviewEntities)
+                    {
+                        try { entity.Dispose(); } catch { }
+                    }
+                    _transientPreviewEntities.Clear();
                     return;
                 }
 
@@ -1246,13 +1303,26 @@ namespace ShopDrawing.Plugin.UI
 
                     tr.Commit();
                 }
+                var transientManager = Autodesk.AutoCAD.GraphicsInterface.TransientManager.CurrentTransientManager;
+                var viewportIds = new Autodesk.AutoCAD.Geometry.IntegerCollection();
+                foreach (var entity in _transientPreviewEntities)
+                {
+                    try { transientManager.EraseTransient(entity, viewportIds); } catch { }
+                    try { entity.Dispose(); } catch { }
+                }
                 _highlightedSourceEntityIds.Clear();
                 _previewEntityIds.Clear();
+                _transientPreviewEntities.Clear();
             }
             catch
             {
                 _highlightedSourceEntityIds.Clear();
                 _previewEntityIds.Clear();
+                foreach (var entity in _transientPreviewEntities)
+                {
+                    try { entity.Dispose(); } catch { }
+                }
+                _transientPreviewEntities.Clear();
             }
         }
 
@@ -1266,28 +1336,15 @@ namespace ShopDrawing.Plugin.UI
 
         private void RequestCadPreview(TenderWallRow row, bool force = false)
         {
+            if (_suspendCadOperations)
+                return;
+
             _pendingPreviewRow = row;
             _cadPreviewTimer.Stop();
 
             if (force)
             {
                 ShowCadPreview(row, true);
-                return;
-            }
-
-            if (_chkAutoCadPreview?.IsChecked != true)
-            {
-                if (!string.IsNullOrWhiteSpace(row.CadHandle))
-                {
-                    HighlightEntity(row.CadHandle);
-                    _lastCadPreviewKey = BuildCadPreviewKey(row);
-                    _lblStatus.Text = $"📍 Vị trí: {row.Name}";
-                }
-                else
-                {
-                    ClearHighlight();
-                    _lastCadPreviewKey = null;
-                }
                 return;
             }
 
@@ -1321,10 +1378,11 @@ namespace ShopDrawing.Plugin.UI
         }
 
         /// <summary>
-        /// Zoom to entity and draw a bright rectangle highlight box around it.
+        /// Highlight source entity only. Avoid temporary overlay objects for stability.
         /// </summary>
         private void HighlightEntity(string handleStr)
         {
+            if (_isEditingCell || _suspendCadOperations) return;
             try
             {
                 ClearHighlight();
@@ -1347,7 +1405,8 @@ namespace ShopDrawing.Plugin.UI
                     if (ent == null) { tr.Commit(); return; }
 
                     ent.Highlight();
-                    _highlightedSourceEntityIds.Add(objId);
+                    if (!_highlightedSourceEntityIds.Contains(objId))
+                        _highlightedSourceEntityIds.Add(objId);
 
                     tr.Commit();
                 }
@@ -1357,6 +1416,7 @@ namespace ShopDrawing.Plugin.UI
 
         private void ZoomToEntity(string handleStr)
         {
+            if (_isEditingCell || _suspendCadOperations) return;
             try
             {
                 ClearHighlight();
@@ -1378,29 +1438,10 @@ namespace ShopDrawing.Plugin.UI
                               as Autodesk.AutoCAD.DatabaseServices.Entity;
                     if (ent == null) { tr.Commit(); return; }
 
-                    // Clone the original entity to match its exact contour
-                    var clone = ent.Clone() as Autodesk.AutoCAD.DatabaseServices.Entity;
-                    if (clone == null) { tr.Commit(); return; }
+                    ent.Highlight();
+                    if (!_highlightedSourceEntityIds.Contains(objId))
+                        _highlightedSourceEntityIds.Add(objId);
 
-                    // Get/create highlight layer
-                    var layerId = EnsureHighlightLayer(doc.Database, tr);
-
-                    // Style the clone: red, thick line, on highlight layer
-                    clone.LayerId = layerId;
-                    clone.ColorIndex = 1; // Red
-                    clone.LineWeight = Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight211;
-
-                    // Add clone to model space
-                    var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(
-                        doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
-                    var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
-                        bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
-                        Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
-                    btr.AppendEntity(clone);
-                    tr.AddNewlyCreatedDBObject(clone, true);
-                    _previewEntityIds.Add(clone.ObjectId);
-
-                    // Zoom to fit entity with 1.5x padding
                     var ext = ent.GeometricExtents;
                     var view = doc.Editor.GetCurrentView();
                     view.CenterPoint = new Autodesk.AutoCAD.Geometry.Point2d(
@@ -1420,13 +1461,22 @@ namespace ShopDrawing.Plugin.UI
         {
             string previewKey = BuildCadPreviewKey(row);
             if (!force
-                && (_highlightedSourceEntityIds.Count > 0 || _previewEntityIds.Count > 0)
+                && (_highlightedSourceEntityIds.Count > 0
+                    || _previewEntityIds.Count > 0
+                    || _transientPreviewEntities.Count > 0)
                 && string.Equals(_lastCadPreviewKey, previewKey, StringComparison.Ordinal))
             {
                 return;
             }
 
-            if (TryDrawColdStorageCeilingPreview(row))
+            if (TryShowRowRegionPreview(row))
+            {
+                _lastCadPreviewKey = previewKey;
+                _lblStatus.Text = $"Vung tinh khoi luong: {row.Name}";
+                return;
+            }
+
+            if (EnableTenderCadOverlayPreview && TryDrawColdStorageCeilingPreview(row))
             {
                 _lastCadPreviewKey = previewKey;
                 _lblStatus.Text = $"📍 Preview trần kho lạnh: {row.Name}";
@@ -1435,7 +1485,7 @@ namespace ShopDrawing.Plugin.UI
 
             if (!string.IsNullOrEmpty(row.CadHandle))
             {
-                ZoomToEntity(row.CadHandle);
+                HighlightEntity(row.CadHandle);
                 _lastCadPreviewKey = previewKey;
                 _lblStatus.Text = $"📍 Vị trí: {row.Name}";
             }
@@ -1465,6 +1515,152 @@ namespace ShopDrawing.Plugin.UI
                 length,
                 height,
                 drop);
+        }
+
+        private bool TryShowRowRegionPreview(TenderWallRow row)
+        {
+            if (_isEditingCell || _suspendCadOperations || string.IsNullOrWhiteSpace(row.CadHandle))
+                return false;
+
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            ClearHighlight();
+
+            try
+            {
+                Autodesk.AutoCAD.DatabaseServices.Entity? previewEntity = null;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(Convert.ToInt64(row.CadHandle, 16));
+                    if (!doc.Database.TryGetObjectId(handle, out var objId))
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    var sourceEnt = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false)
+                        as Autodesk.AutoCAD.DatabaseServices.Entity;
+                    if (sourceEnt == null)
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    sourceEnt.Highlight();
+                    if (!_highlightedSourceEntityIds.Contains(objId))
+                        _highlightedSourceEntityIds.Add(objId);
+
+                    previewEntity = BuildRowRegionPreviewEntity(row, sourceEnt);
+                    tr.Commit();
+                }
+
+                if (previewEntity != null)
+                    AddTransientPreviewEntity(previewEntity);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _lblStatus.Text = $"Highlight vung: {ex.Message}";
+                return false;
+            }
+        }
+
+        private void AddTransientPreviewEntity(Autodesk.AutoCAD.DatabaseServices.Entity entity)
+        {
+            entity.SetDatabaseDefaults();
+            entity.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(
+                Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 1);
+            entity.LineWeight = Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight211;
+
+            var transientManager = Autodesk.AutoCAD.GraphicsInterface.TransientManager.CurrentTransientManager;
+            var viewportIds = new Autodesk.AutoCAD.Geometry.IntegerCollection();
+            transientManager.AddTransient(
+                entity,
+                Autodesk.AutoCAD.GraphicsInterface.TransientDrawingMode.DirectShortTerm,
+                0,
+                viewportIds);
+
+            _transientPreviewEntities.Add(entity);
+        }
+
+        private static Autodesk.AutoCAD.DatabaseServices.Entity? BuildRowRegionPreviewEntity(
+            TenderWallRow row,
+            Autodesk.AutoCAD.DatabaseServices.Entity sourceEnt)
+        {
+            if (row.PolygonVertices != null && row.PolygonVertices.Count >= 3)
+                return CreatePreviewPolyline(row.PolygonVertices);
+
+            if (sourceEnt is Autodesk.AutoCAD.DatabaseServices.Polyline polyline)
+            {
+                if (polyline.Closed)
+                    return CreatePreviewPolyline(GetPolylineVertices(polyline));
+
+                if (row.Height > 0 && polyline.NumberOfVertices >= 2)
+                {
+                    return CreatePreviewRectangle(
+                        polyline.GetPoint3dAt(0),
+                        polyline.GetPoint3dAt(polyline.NumberOfVertices - 1),
+                        row.Height);
+                }
+            }
+
+            if (sourceEnt is Autodesk.AutoCAD.DatabaseServices.Line line && row.Height > 0)
+                return CreatePreviewRectangle(line.StartPoint, line.EndPoint, row.Height);
+
+            return null;
+        }
+
+        private static Autodesk.AutoCAD.DatabaseServices.Polyline? CreatePreviewRectangle(
+            Autodesk.AutoCAD.Geometry.Point3d start,
+            Autodesk.AutoCAD.Geometry.Point3d end,
+            double heightMm)
+        {
+            var baseVector = end - start;
+            if (baseVector.Length < 1.0 || heightMm <= 0)
+                return null;
+
+            var offset = baseVector
+                .GetNormal()
+                .RotateBy(Math.PI / 2.0, Autodesk.AutoCAD.Geometry.Vector3d.ZAxis)
+                .MultiplyBy(heightMm);
+
+            return CreatePreviewPolyline(new List<double[]>
+            {
+                new[] { start.X, start.Y },
+                new[] { end.X, end.Y },
+                new[] { end.X + offset.X, end.Y + offset.Y },
+                new[] { start.X + offset.X, start.Y + offset.Y }
+            });
+        }
+
+        private static Autodesk.AutoCAD.DatabaseServices.Polyline? CreatePreviewPolyline(
+            IReadOnlyList<double[]> vertices)
+        {
+            if (vertices.Count < 3)
+                return null;
+
+            var polyline = new Autodesk.AutoCAD.DatabaseServices.Polyline();
+            for (int index = 0; index < vertices.Count; index++)
+            {
+                var vertex = vertices[index];
+                if (vertex.Length < 2)
+                    return null;
+
+                polyline.AddVertexAt(
+                    index,
+                    new Autodesk.AutoCAD.Geometry.Point2d(vertex[0], vertex[1]),
+                    0,
+                    0,
+                    0);
+            }
+
+            polyline.Closed = true;
+            return polyline;
         }
 
         private bool TryDrawColdStorageCeilingPreview(TenderWallRow row)

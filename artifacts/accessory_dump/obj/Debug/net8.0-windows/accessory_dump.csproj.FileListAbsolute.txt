@@ -1,5 +1,0 @@
-c:\my_project\shopdrawing-app\artifacts\accessory_dump\obj\Debug\net8.0-windows\accessory_dump.csproj.AssemblyReference.cache
-c:\my_project\shopdrawing-app\artifacts\accessory_dump\obj\Debug\net8.0-windows\accessory_dump.GeneratedMSBuildEditorConfig.editorconfig
-c:\my_project\shopdrawing-app\artifacts\accessory_dump\obj\Debug\net8.0-windows\accessory_dump.AssemblyInfoInputs.cache
-c:\my_project\shopdrawing-app\artifacts\accessory_dump\obj\Debug\net8.0-windows\accessory_dump.AssemblyInfo.cs
-c:\my_project\shopdrawing-app\artifacts\accessory_dump\obj\Debug\net8.0-windows\accessory_dump.csproj.CoreCompileInputs.cache

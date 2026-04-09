@@ -1,6 +1,8 @@
 ## .NET build outputs
 bin/
 obj/
+**/bin/
+**/obj/
 artifacts/bin/
 artifacts/obj/
 artifacts/manual-plugin-build/
@@ -34,6 +36,17 @@ desktop.ini
 *.log
 *.tmp
 *.temp
+*.bak
+*.locked
+*.old*
+
+## Runtime data / local exports
+public/*.db
+public/*.sqlite
+public/*.xlsx
+public/*.xls
+**/Resources/tender_projects/autosave_*.json
+artifacts/
 
 ## Secrets / local config
 appsettings.Development.json

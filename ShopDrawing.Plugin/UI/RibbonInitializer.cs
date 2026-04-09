@@ -36,8 +36,8 @@ namespace ShopDrawing.Plugin.UI
             AddFeaturePanel(
                 tab,
                 panelId: "SD_PANEL_INPUT",
-                panelTitle: "INPUT",
-                buttonText: "INPUT",
+                panelTitle: "Input",
+                buttonText: "Input",
                 tooltip: "Khai báo thông tin dự án dùng chung cho Tender và Shopdrawing.",
                 command: "SD_INPUT",
                 resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_input.png");

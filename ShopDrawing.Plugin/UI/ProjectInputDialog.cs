@@ -7,7 +7,7 @@ namespace ShopDrawing.Plugin.UI
 {
     internal sealed class ProjectInputDialog : Window
     {
-        private readonly TextBox _txtProjectType;
+        private readonly ComboBox _cboProjectType;
         private readonly TextBox _txtProjectName;
         private readonly TextBox _txtProjectAddress;
         private readonly TextBox _txtCustomerName;
@@ -58,7 +58,7 @@ namespace ShopDrawing.Plugin.UI
             Grid.SetRow(subtitle, 1);
             root.Children.Add(subtitle);
 
-            _txtProjectType = CreateLabeledInput(root, 2, "Loại dự án", profile.ProjectType);
+            _cboProjectType = CreateProjectTypeInput(root, 2, "Loại dự án", profile.ProjectType);
             _txtProjectName = CreateLabeledInput(root, 3, "Tên dự án", profile.ProjectName);
             _txtProjectAddress = CreateLabeledInput(root, 4, "Địa chỉ dự án", profile.ProjectAddress);
             _txtCustomerName = CreateLabeledInput(root, 5, "Khách hàng", profile.CustomerName, true);
@@ -139,9 +139,57 @@ namespace ShopDrawing.Plugin.UI
             return input;
         }
 
+        private static ComboBox CreateProjectTypeInput(
+            Grid root,
+            int rowIndex,
+            string label,
+            string value)
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = label,
+                FontFamily = SdPaletteStyles.Font,
+                FontSize = 11,
+                Foreground = SdPaletteStyles.TextSecondaryBrush,
+                Margin = new Thickness(0, 0, 0, 2)
+            });
+
+            var combo = new ComboBox
+            {
+                Padding = new Thickness(7, 5, 7, 5),
+                FontFamily = SdPaletteStyles.Font,
+                FontSize = 12,
+                IsEditable = false
+            };
+
+            combo.Items.Add("Tender");
+            combo.Items.Add("Shopdrawing");
+            combo.Items.Add("Production");
+
+            if (!string.IsNullOrWhiteSpace(value) && combo.Items.Contains(value))
+            {
+                combo.SelectedItem = value;
+            }
+            else
+            {
+                combo.SelectedIndex = 0;
+            }
+
+            panel.Children.Add(combo);
+            Grid.SetRow(panel, rowIndex);
+            root.Children.Add(panel);
+            return combo;
+        }
+
         private void SaveAndClose()
         {
-            ProjectProfile.ProjectType = _txtProjectType.Text.Trim();
+            ProjectProfile.ProjectType = _cboProjectType.SelectedItem?.ToString()?.Trim() ?? string.Empty;
             ProjectProfile.ProjectName = _txtProjectName.Text.Trim();
             ProjectProfile.ProjectAddress = _txtProjectAddress.Text.Trim();
             ProjectProfile.CustomerName = _txtCustomerName.Text.Trim();

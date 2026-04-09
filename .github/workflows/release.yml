@@ -77,13 +77,15 @@ jobs:
           $setupRoot = Join-Path $releaseRoot "setup"
           New-Item -ItemType Directory -Force -Path $setupRoot | Out-Null
           $settings = [ordered]@{
-            bundleUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShopDrawing.bundle.zip"
+            bundleUrl = ""
+            bundleZipPath = "ShopDrawing.bundle.zip"
             installDirectory = ""
             version = "${env:APP_VERSION}"
             silent = $true
           }
           $settings | ConvertTo-Json | Set-Content -Path (Join-Path $setupRoot "install-settings.json") -Encoding utf8
           Copy-Item -Path (Join-Path $releaseRoot "ShopDrawing.Installer.exe") -Destination (Join-Path $setupRoot "ShopDrawing.Installer.exe") -Force
+          Copy-Item -Path (Join-Path $releaseRoot "ShopDrawing.bundle.zip") -Destination (Join-Path $setupRoot "ShopDrawing.bundle.zip") -Force
           $setupZip = Join-Path $releaseRoot "ShopDrawing.Setup.${env:APP_VERSION}.zip"
           if (Test-Path $setupZip) { Remove-Item $setupZip -Force }
           Compress-Archive -Path (Join-Path $setupRoot "*") -DestinationPath $setupZip

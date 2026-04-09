@@ -34,7 +34,18 @@ internal static class Program
             string bundleSource = Path.Combine(extractPath, "ShopDrawing.bundle");
             if (!Directory.Exists(bundleSource))
             {
-                throw new InvalidOperationException("Goi cai dat khong chua thu muc ShopDrawing.bundle.");
+                bool looksLikeBundleRoot =
+                    File.Exists(Path.Combine(extractPath, "PackageContents.xml")) &&
+                    Directory.Exists(Path.Combine(extractPath, "Contents"));
+
+                if (looksLikeBundleRoot)
+                {
+                    bundleSource = extractPath;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Goi cai dat khong chua thu muc ShopDrawing.bundle.");
+                }
             }
 
             string installRoot = options.InstallDirectory;
@@ -71,7 +82,18 @@ internal static class Program
     {
         if (!string.IsNullOrWhiteSpace(options.BundleZipPath))
         {
-            return options.BundleZipPath;
+            string candidatePath = options.BundleZipPath;
+            if (!Path.IsPathRooted(candidatePath))
+            {
+                candidatePath = Path.Combine(AppContext.BaseDirectory, candidatePath);
+            }
+
+            if (!File.Exists(candidatePath))
+            {
+                throw new FileNotFoundException("Khong tim thay bundle zip duoc chi dinh.", candidatePath);
+            }
+
+            return candidatePath;
         }
 
         if (!string.IsNullOrWhiteSpace(options.BundleUrl))

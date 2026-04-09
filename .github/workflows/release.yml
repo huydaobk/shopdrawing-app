@@ -51,7 +51,7 @@ jobs:
           $bundleRoot = Join-Path $PWD "artifacts\release\bundle\ShopDrawing.bundle"
           $windowsRoot = Join-Path $bundleRoot "Contents\Windows"
           $resourceRoot = Join-Path $bundleRoot "Contents\Resources"
-          $installerOut = Join-Path $PWD "ShopDrawing.Installer\bin\Release\net8.0-windows\win-x64\publish"
+          $installerOut = Join-Path $PWD "ShopDrawing.Installer\bin\x64\Release\net8.0-windows\win-x64\publish"
           $releaseRoot = Join-Path $PWD "artifacts\release"
           New-Item -ItemType Directory -Force -Path $windowsRoot | Out-Null
           New-Item -ItemType Directory -Force -Path $resourceRoot | Out-Null

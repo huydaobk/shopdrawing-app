@@ -35,6 +35,15 @@ namespace ShopDrawing.Plugin.UI
 
             AddFeaturePanel(
                 tab,
+                panelId: "SD_PANEL_INPUT",
+                panelTitle: "INPUT",
+                buttonText: "INPUT",
+                tooltip: "Khai báo thông tin dự án dùng chung cho Tender và Shopdrawing.",
+                command: "SD_INPUT",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_input.png");
+
+            AddFeaturePanel(
+                tab,
                 panelId: "SD_PANEL_TENDER",
                 panelTitle: "Tender",
                 buttonText: "Tender",
@@ -118,17 +127,10 @@ namespace ShopDrawing.Plugin.UI
             };
 
             panelSource.Items.Add(CreateButton(
-                "Init Project",
-                "Khoi tao root du an va thu muc ShopDrawingData.",
-                "SD_INIT_PROJECT",
-                "ShopDrawing.Plugin.Resources.Icons.icon_shopdrawing.png",
-                isLarge: true));
-
-            panelSource.Items.Add(CreateButton(
                 "Update",
                 "Kiem tra ban cap nhat plugin.",
                 "SD_CHECK_UPDATE",
-                "ShopDrawing.Plugin.Resources.Icons.icon_export.png",
+                "ShopDrawing.Plugin.Resources.Icons.icon_system.png",
                 isLarge: true));
 
             tab.Panels.Add(new RibbonPanel { Source = panelSource });

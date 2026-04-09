@@ -25,11 +25,12 @@ namespace ShopDrawing.Plugin.Core
 
         public TenderProject CreateNew(string projectName, string customerName)
         {
+            var profile = new ProjectProfileManager().LoadOrDefault();
             var specManager = new SpecConfigManager();
             var project = new TenderProject
             {
-                ProjectName = projectName,
-                CustomerName = customerName,
+                ProjectName = string.IsNullOrWhiteSpace(projectName) ? profile.ProjectName : projectName,
+                CustomerName = string.IsNullOrWhiteSpace(customerName) ? profile.CustomerName : customerName,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 Specs = specManager.GetAll(),

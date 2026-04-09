@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -90,6 +90,9 @@ namespace ShopDrawing.Plugin.Core
     {
         public const string None = "";
         public const string ProjectName = "ProjectName";
+        public const string CustomerName = "CustomerName";
+        public const string ProjectType = "ProjectType";
+        public const string ProjectAddress = "ProjectAddress";
         public const string DrawingTitle = "DrawingTitle";
         public const string DrawingNumber = "DrawingNumber";
         public const string Scale = "Scale";
@@ -101,6 +104,9 @@ namespace ShopDrawing.Plugin.Core
         {
             new LayoutTitleBlockFieldOption(None, "Khong gan"),
             new LayoutTitleBlockFieldOption(ProjectName, "Ten du an"),
+            new LayoutTitleBlockFieldOption(CustomerName, "Khách hàng"),
+            new LayoutTitleBlockFieldOption(ProjectType, "Loại dự án"),
+            new LayoutTitleBlockFieldOption(ProjectAddress, "Địa chỉ dự án"),
             new LayoutTitleBlockFieldOption(DrawingTitle, "Ten ban ve"),
             new LayoutTitleBlockFieldOption(DrawingNumber, "So ban ve"),
             new LayoutTitleBlockFieldOption(Scale, "Ty le"),
@@ -117,6 +123,9 @@ namespace ShopDrawing.Plugin.Core
         public static string ResolveValue(string field, LayoutTitleBlockValueSet values) => field switch
         {
             ProjectName => values.ProjectName,
+            CustomerName => values.CustomerName,
+            ProjectType => values.ProjectType,
+            ProjectAddress => values.ProjectAddress,
             DrawingTitle => values.DrawingTitle,
             DrawingNumber => values.DrawingNumber,
             Scale => values.Scale,
@@ -130,6 +139,9 @@ namespace ShopDrawing.Plugin.Core
     public sealed record LayoutTitleBlockValueSet
     {
         public string ProjectName { get; init; } = "";
+        public string CustomerName { get; init; } = "";
+        public string ProjectType { get; init; } = "";
+        public string ProjectAddress { get; init; } = "";
         public string DrawingTitle { get; init; } = "";
         public string DrawingNumber { get; init; } = "";
         public string Scale { get; init; } = "";

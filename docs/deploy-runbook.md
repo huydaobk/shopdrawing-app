@@ -99,6 +99,7 @@ ProjectRoot/
 |-- ShopDrawingData/
 |   |-- shopdrawing_waste.db
 |   |-- panel_specs.json
+|   |-- project_profile.json
 |   |-- tender_projects/
 |   `-- logs/
 `-- .shopdrawing-project.json
@@ -139,6 +140,25 @@ Khoi tao project moi:
   - `ShopDrawingData\tender_projects`
 - neu file hien tai chua save, plugin se yeu cau nhap duong dan root du an
 - sau khi khoi tao xong, nen luu cac file `.dwg` cua du an vao folder `Drawings`
+
+Khai bao thong tin du an dung chung:
+
+- chay lenh `SD_INPUT`
+- plugin tu dong dam bao cau truc project (marker + ShopDrawingData) truoc khi mo form INPUT
+- nhap:
+  - Loai du an
+  - Ten du an
+  - Dia chi du an
+  - Khach hang
+- plugin luu vao `ShopDrawingData\project_profile.json`
+- Tender va Shopdrawing doc profile nay lam nguon mac dinh:
+  - Tender dong bo Ten du an + Khach hang
+  - Shopdrawing dong bo Ten du an
+  - External title block co them field map:
+    - `ProjectName`
+    - `CustomerName`
+    - `ProjectType`
+    - `ProjectAddress`
 
 ## Khi nao can bat may dev
 

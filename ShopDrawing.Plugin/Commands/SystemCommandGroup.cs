@@ -13,5 +13,11 @@ namespace ShopDrawing.Plugin.Commands
         {
             _actions.InitializeProject();
         }
+
+        [CommandMethod("SD_INPUT")]
+        public void InputProjectInfo()
+        {
+            _actions.InputProjectInfo();
+        }
     }
 }

@@ -56,7 +56,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $windowsRoot | Out-Null
           New-Item -ItemType Directory -Force -Path $resourceRoot | Out-Null
           Copy-Item -Path (Join-Path $pluginOut "*") -Destination $windowsRoot -Recurse -Force
-          Copy-Item -Path (Join-Path $pluginOut "Resources\Icons\icon_shopdrawing.png") -Destination (Join-Path $resourceRoot "icon_shopdrawing.png") -Force
+          Copy-Item -Path (Join-Path $PWD "ShopDrawing.Plugin\Resources\Icons\icon_shopdrawing.png") -Destination (Join-Path $resourceRoot "icon_shopdrawing.png") -Force
           $packageTemplate = Get-Content -Raw (Join-Path $PWD "packaging\ShopDrawing.bundle\PackageContents.xml")
           $packageTemplate = $packageTemplate.Replace("__APP_VERSION__", "${env:APP_VERSION}")
           Set-Content -Path (Join-Path $bundleRoot "PackageContents.xml") -Value $packageTemplate -Encoding utf8

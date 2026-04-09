@@ -62,6 +62,12 @@ gh run list --workflow release --limit 3
 gh run watch <run-id> --exit-status
 ```
 
+Hoac dung script co san:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\watch-release.ps1 -Version 0.1.7
+```
+
 Kiem tra release asset:
 
 - `ShopDrawing.Setup.X.Y.Z.zip`
@@ -99,3 +105,7 @@ He qua:
 ## Buoc nen lam tiep
 
 Chuyen runner sang Windows Service bang quyen Administrator de CI/CD chay on dinh hon.
+
+Tai lieu thao tac chi tiet:
+
+- `docs/runner-service.md`

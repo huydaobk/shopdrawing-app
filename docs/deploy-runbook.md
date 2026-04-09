@@ -6,7 +6,8 @@ Muc tieu: bien release thanh viec lap lai duoc, khong phu thuoc vao nho tay.
 
 - Team dung plugin da cai san tren may cua ho.
 - GitHub Releases luu file cai va file update.
-- May dev chi can bat khi can build release moi, vi self-hosted runner dang nam tren may nay.
+- May dev chi can online khi can build release moi, vi self-hosted runner dang nam tren may nay.
+- Runner da co them user-level guard de tu bat lai sau khi user dang nhap vao Windows.
 
 ## Sau khi cai xong, team co phu thuoc may dev khong
 
@@ -75,6 +76,12 @@ Kiem tra release asset:
 - `ShopDrawing.bundle.zip`
 - `latest.json`
 
+Kiem tra runner truoc khi tag neu muon chac an:
+
+```powershell
+gh api repos/huydaobk/shopdrawing-app/actions/runners
+```
+
 ## File nao gui cho team
 
 - Cai moi: gui `ShopDrawing.Setup.X.Y.Z.zip`
@@ -110,18 +117,33 @@ Khong can bat may dev khi:
 - team dang mo AutoCAD hang ngay
 - team dang cai lai tu release da co san tren GitHub
 
-## Diem yeu hien tai
+## Do on dinh hien tai
 
-Self-hosted runner dang chay interactive, chua la Windows Service.
+Self-hosted runner hien tai da duoc bo sung guard user-level qua `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
+
+Guard nay se:
+
+- tu mo runner sau khi user dang nhap
+- giu 1 tien trinh guard chay nen
+- neu `Runner.Listener.exe` tat, guard tu mo lai
+
+Runner van chua la Windows Service.
 
 He qua:
 
-- neu may dev tat, logout, runner bi stop thi release moi se khong build
+- neu may dev tat, release moi se khong build
+- neu Windows logout hoan toan, guard chi chay lai khi user dang nhap lai
 - release da co san tren GitHub van tai/cai duoc binh thuong
 
 ## Buoc nen lam tiep
 
-Chuyen runner sang Windows Service bang quyen Administrator de CI/CD chay on dinh hon.
+Neu muon muc on dinh cao nhat, chuyen runner sang Windows Service bang quyen Administrator.
+
+Neu chua co quyen Administrator, cai guard bang lenh:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-runner-tasks.ps1
+```
 
 Tai lieu thao tac chi tiet:
 

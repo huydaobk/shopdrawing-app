@@ -135,8 +135,16 @@ Dự án áp dụng chặt chẽ các nguyên lý **Fail-Safe**:
 
 ### Máy dev có cần luôn bật không
 - Không cần để team dùng plugin hằng ngày.
-- Chỉ cần bật khi build và phát hành release mới vì self-hosted runner đang nằm trên máy dev.
+- Chỉ cần online khi build và phát hành release mới vì self-hosted runner đang nằm trên máy dev.
 - Release đã publish lên GitHub thì team vẫn tải và update bình thường dù máy dev đang tắt.
+
+### Làm runner ổn định hơn
+- Có thể cài watchdog local bằng:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\install-runner-tasks.ps1
+  ```
+- Cách này tạo user-level autostart guard trong `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` và tự bật lại runner nếu nó tắt.
+- Nếu cần mức ổn định cao nhất sau reboot/logout, chuyển runner sang Windows Service theo [docs/runner-service.md](C:\my_project\shopdrawing-app\docs\runner-service.md).
 
 ### Runtime data của plugin nằm ở đâu
 - `%AppData%\ShopDrawing\shopdrawing_plugin.log`

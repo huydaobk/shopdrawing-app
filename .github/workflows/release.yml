@@ -5,11 +5,16 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
 jobs:
   build-release:
+    timeout-minutes: 45
     runs-on:
       - self-hosted
       - windows

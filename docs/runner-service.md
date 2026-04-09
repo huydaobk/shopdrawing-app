@@ -1,6 +1,33 @@
-# Runner Service Guide
+# Runner Stability Guide
 
-Muc tieu: chuyen self-hosted runner tren may dev thanh Windows Service de release khong phu thuoc vao viec mo cua so terminal.
+Muc tieu: giu self-hosted runner on dinh cho release. Co 2 muc:
+
+- muc 1: user-level autostart guard, khong can Administrator
+- muc 2: Windows Service, on dinh nhat nhung can Administrator
+
+## Muc 1: User-level autostart guard khong can Administrator
+
+Chay trong root repo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-runner-tasks.ps1
+```
+
+Tac dung:
+
+- user dang nhap Windows la runner tu len
+- co 1 guard chay nen trong user session
+- neu runner khong chay thi guard tu mo lai
+
+Go autostart:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-runner-tasks.ps1 -Remove
+```
+
+## Muc 2: Windows Service
+
+Nen lam khi may nay la build host chinh va co quyen Administrator.
 
 ## Khi nao can lam
 
@@ -33,11 +60,11 @@ Di chuyen vao folder runner:
 cd C:\actions-runner-shopdrawing
 ```
 
-Cai service:
+Cai service truc tiep ngay trong qua trinh config:
 
 ```powershell
-.\svc install
-.\svc start
+.\config.cmd remove
+.\config.cmd --url https://github.com/huydaobk/shopdrawing-app --token <registration-token> --labels autocad2026 --name NGOC_HUY-shopdrawing --runasservice
 ```
 
 Kiem tra service:
@@ -56,12 +83,11 @@ gh api repos/huydaobk/shopdrawing-app/actions/runners
 
 ```powershell
 cd C:\actions-runner-shopdrawing
-.\svc stop
-.\svc uninstall
+.\config.cmd remove
 ```
 
 ## Sau khi chuyen service
 
-- may reboot xong runner tu len lai
+- may reboot xong runner tu len lai ma khong can user login
 - khong can mo `run.cmd` thu cong
-- pipeline release on dinh hon ro ret
+- pipeline release on dinh nhat

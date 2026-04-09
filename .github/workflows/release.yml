@@ -1,0 +1,109 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on:
+      - self-hosted
+      - windows
+      - autocad2026
+
+    env:
+      RELEASE_VERSION: ${{ github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Normalize version
+        shell: powershell
+        run: |
+          $version = "${env:RELEASE_VERSION}".TrimStart('v')
+          "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $manifestUrl = "https://github.com/${{ github.repository }}/releases/latest/download/latest.json"
+          $settingsPath = Join-Path $PWD "ShopDrawing.Plugin\Resources\update-settings.json"
+          $json = Get-Content -Raw $settingsPath | ConvertFrom-Json
+          $json.manifestUrl = $manifestUrl
+          $json | ConvertTo-Json | Set-Content -Path $settingsPath -Encoding utf8
+
+      - name: Restore
+        run: dotnet restore shopdrawing-app.sln
+
+      - name: Build plugin
+        run: dotnet build ShopDrawing.Plugin/ShopDrawing.Plugin.csproj -c Release /p:Version=${{ env.APP_VERSION }} /p:InformationalVersion=${{ env.APP_VERSION }}
+
+      - name: Publish installer
+        run: dotnet publish ShopDrawing.Installer/ShopDrawing.Installer.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:Version=${{ env.APP_VERSION }} /p:InformationalVersion=${{ env.APP_VERSION }}
+
+      - name: Package AutoCAD bundle
+        shell: powershell
+        run: |
+          $pluginOut = Join-Path $PWD "ShopDrawing.Plugin\bin\x64\Release\net8.0-windows"
+          $bundleRoot = Join-Path $PWD "artifacts\release\bundle\ShopDrawing.bundle"
+          $windowsRoot = Join-Path $bundleRoot "Contents\Windows"
+          $resourceRoot = Join-Path $bundleRoot "Contents\Resources"
+          $installerOut = Join-Path $PWD "ShopDrawing.Installer\bin\Release\net8.0-windows\win-x64\publish"
+          $releaseRoot = Join-Path $PWD "artifacts\release"
+          New-Item -ItemType Directory -Force -Path $windowsRoot | Out-Null
+          New-Item -ItemType Directory -Force -Path $resourceRoot | Out-Null
+          Copy-Item -Path (Join-Path $pluginOut "*") -Destination $windowsRoot -Recurse -Force
+          Copy-Item -Path (Join-Path $pluginOut "Resources\Icons\icon_shopdrawing.png") -Destination (Join-Path $resourceRoot "icon_shopdrawing.png") -Force
+          $packageTemplate = Get-Content -Raw (Join-Path $PWD "packaging\ShopDrawing.bundle\PackageContents.xml")
+          $packageTemplate = $packageTemplate.Replace("__APP_VERSION__", "${env:APP_VERSION}")
+          Set-Content -Path (Join-Path $bundleRoot "PackageContents.xml") -Value $packageTemplate -Encoding utf8
+          $bundleZip = Join-Path $releaseRoot "ShopDrawing.bundle.zip"
+          if (Test-Path $bundleZip) { Remove-Item $bundleZip -Force }
+          Compress-Archive -Path (Join-Path $bundleRoot "*") -DestinationPath $bundleZip
+          Copy-Item -Path (Join-Path $installerOut "ShopDrawing.Installer.exe") -Destination (Join-Path $releaseRoot "ShopDrawing.Installer.exe") -Force
+
+      - name: Generate setup package
+        shell: powershell
+        run: |
+          $releaseRoot = Join-Path $PWD "artifacts\release"
+          $setupRoot = Join-Path $releaseRoot "setup"
+          New-Item -ItemType Directory -Force -Path $setupRoot | Out-Null
+          $settings = [ordered]@{
+            bundleUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShopDrawing.bundle.zip"
+            installDirectory = ""
+            version = "${env:APP_VERSION}"
+            silent = $true
+          }
+          $settings | ConvertTo-Json | Set-Content -Path (Join-Path $setupRoot "install-settings.json") -Encoding utf8
+          Copy-Item -Path (Join-Path $releaseRoot "ShopDrawing.Installer.exe") -Destination (Join-Path $setupRoot "ShopDrawing.Installer.exe") -Force
+          $setupZip = Join-Path $releaseRoot "ShopDrawing.Setup.${env:APP_VERSION}.zip"
+          if (Test-Path $setupZip) { Remove-Item $setupZip -Force }
+          Compress-Archive -Path (Join-Path $setupRoot "*") -DestinationPath $setupZip
+
+      - name: Generate latest manifest
+        shell: powershell
+        run: |
+          $releaseRoot = Join-Path $PWD "artifacts\release"
+          $latest = [ordered]@{
+            version = "${env:APP_VERSION}"
+            installerUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShopDrawing.Installer.exe"
+            packageUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShopDrawing.bundle.zip"
+            notes = "Release ${env:APP_VERSION}"
+            mandatory = $false
+            releaseDate = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssK")
+            channelName = "stable"
+          }
+          $latest | ConvertTo-Json | Set-Content -Path (Join-Path $releaseRoot "latest.json") -Encoding utf8
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/release/ShopDrawing.bundle.zip
+            artifacts/release/ShopDrawing.Installer.exe
+            artifacts/release/ShopDrawing.Setup.${{ env.APP_VERSION }}.zip
+            artifacts/release/latest.json

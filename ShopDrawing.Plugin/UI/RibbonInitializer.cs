@@ -1,5 +1,5 @@
+using System;
 using System.Reflection;
-using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Autodesk.Windows;
@@ -7,115 +7,147 @@ using Autodesk.Windows;
 namespace ShopDrawing.Plugin.UI
 {
     /// <summary>
-    /// Tạo custom Ribbon Tab "Shop Drawing" với 3 panel nhóm theo chức năng:
-    /// [Thiết Kế] | [Kích Thước] | [Xuất]
+    /// Tạo custom Ribbon Tab "Shop Drawing" và tách panel theo từng chức năng.
     /// </summary>
     public static class RibbonInitializer
     {
-        private static bool _created = false;
+        private static bool _created;
 
         public static void CreateRibbon()
         {
-            if (_created) return;
+            if (_created)
+            {
+                return;
+            }
 
             var ribbon = ComponentManager.Ribbon;
-            if (ribbon == null) return;
+            if (ribbon == null)
+            {
+                return;
+            }
 
-            // ── Tab: Shop Drawing ──
-            var tab = new RibbonTab { Title = "Shop Drawing", Id = "SD_TAB" };
+            var tab = new RibbonTab
+            {
+                Title = UiText.Normalize("Shop Drawing"),
+                Id = "SD_TAB"
+            };
             ribbon.Tabs.Add(tab);
 
-            // ══════════════════════════════════════════
-            // PANEL 1 — Đấu thầu
-            // ══════════════════════════════════════════
-            var panel1Source = new RibbonPanelSource { Title = "Đấu thầu", Id = "SD_PANEL1" };
-            tab.Panels.Add(new RibbonPanel { Source = panel1Source });
+            AddFeaturePanel(
+                tab,
+                panelId: "SD_PANEL_TENDER",
+                panelTitle: "Tender",
+                buttonText: "Tender",
+                tooltip: "Chuẩn bị báo giá và khối lượng Tender.",
+                command: "SD_TENDER",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_tender.png");
 
-            panel1Source.Items.Add(CreateButton(
-                "Tender",
-                "Chuẩn bị báo giá & khối lượng Tender.",
-                "SD_TENDER",
-                "ShopDrawing.Plugin.Resources.Icons.icon_tender.png", // Dự phòng icon
-                isLarge: true
-            ));
+            AddFeaturePanel(
+                tab,
+                panelId: "SD_PANEL_SHOPDRAWING",
+                panelTitle: "Shopdrawing",
+                buttonText: "Shopdrawing",
+                tooltip: "Mở palette Shopdrawing để tạo bản vẽ lắp đặt tấm panel tường.",
+                command: "SD_PANEL",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_shopdrawing.png");
 
-            // ══════════════════════════════════════════
-            // PANEL 2 — Thiết Kế
-            // ══════════════════════════════════════════
-            var panel2Source = new RibbonPanelSource { Title = "Thiết Kế", Id = "SD_PANEL2" };
-            tab.Panels.Add(new RibbonPanel { Source = panel2Source });
+            AddFeaturePanel(
+                tab,
+                panelId: "SD_PANEL_SMARTDIM",
+                panelTitle: "SmartDim",
+                buttonText: "SmartDim",
+                tooltip: "Đo kích thước tự động và thủ công.",
+                command: "SD_SMART_DIM",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_smartdim.png");
 
-            panel2Source.Items.Add(CreateButton(
-                "Shopdrawing",
-                "Mở Palette Shop Drawing\nTạo bản vẽ lắp đặt tấm panel tường.",
-                "SD_PANEL",
-                "ShopDrawing.Plugin.Resources.Icons.icon_shopdrawing.png",
-                isLarge: true
-            ));
+            AddFeaturePanel(
+                tab,
+                panelId: "SD_PANEL_LAYOUT",
+                panelTitle: "Layout",
+                buttonText: "Layout",
+                tooltip: "Phân bổ bản vẽ vào Layout tabs.",
+                command: "SD_LAYOUT",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_layout.png");
 
-            panel2Source.Items.Add(CreateButton(
-                "Smart Dim",
-                "Smart Dimension\nĐo kích thước tự động + thủ công.",
-                "SD_SMART_DIM",
-                "ShopDrawing.Plugin.Resources.Icons.icon_smartdim.png",
-                isLarge: true
-            ));
+            AddFeaturePanel(
+                tab,
+                panelId: "SD_PANEL_EXPORTPDF",
+                panelTitle: "ExportPDF",
+                buttonText: "ExportPDF",
+                tooltip: "Xuất bộ bản vẽ PDF cho trình duyệt và ban hành.",
+                command: "SD_EXPORT",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_export.png");
 
-            panel2Source.Items.Add(CreateButton(
-                "Layout",
-                "Layout Manager\nPhân bổ bản vẽ vào Layout tabs.",
-                "SD_LAYOUT",
-                "ShopDrawing.Plugin.Resources.Icons.icon_layout.png",
-                isLarge: true
-            ));
-
-            // ══════════════════════════════════════════
-            // PANEL 3 — Xuất
-            // ══════════════════════════════════════════
-            var panel3Source = new RibbonPanelSource { Title = "Xuất", Id = "SD_PANEL3" };
-            tab.Panels.Add(new RibbonPanel { Source = panel3Source });
-
-            panel3Source.Items.Add(CreateButton(
-                "Xuất PDF",
-                "Xuất bản vẽ PDF\nXuất bộ bản vẽ cho trình duyệt & ban hành.",
-                "SD_EXPORT",
-                "ShopDrawing.Plugin.Resources.Icons.icon_export.png",
-                isLarge: true
-            ));
+            AddFeaturePanel(
+                tab,
+                panelId: "SD_PANEL_SYSTEM",
+                panelTitle: "System",
+                buttonText: "Update",
+                tooltip: "Kiem tra ban cap nhat plugin.",
+                command: "SD_CHECK_UPDATE",
+                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_export.png");
 
             tab.IsActive = true;
             _created = true;
         }
 
+        private static void AddFeaturePanel(
+            RibbonTab tab,
+            string panelId,
+            string panelTitle,
+            string buttonText,
+            string tooltip,
+            string command,
+            string resourceName)
+        {
+            var panelSource = new RibbonPanelSource
+            {
+                Title = UiText.Normalize(panelTitle),
+                Id = panelId
+            };
+
+            panelSource.Items.Add(CreateButton(
+                buttonText,
+                tooltip,
+                command,
+                resourceName,
+                isLarge: true));
+
+            tab.Panels.Add(new RibbonPanel { Source = panelSource });
+        }
+
         /// <summary>
         /// Tạo RibbonButton.
-        /// isLarge=true  → icon 32px + text dưới (Large button).
-        /// isLarge=false → icon 16px + text ngang (Standard button).
+        /// isLarge=true: icon 32px + text dưới.
+        /// isLarge=false: icon 16px + text ngang.
         /// </summary>
         private static RibbonButton CreateButton(
-            string text, string tooltip, string command,
-            string resourceName, bool isLarge)
+            string text,
+            string tooltip,
+            string command,
+            string resourceName,
+            bool isLarge)
         {
             var btn = new RibbonButton
             {
-                Text             = text,
-                ShowText         = true,
-                ShowImage        = true,
-                ToolTip          = tooltip,
-                CommandHandler   = new RibbonCommandHandler(),
+                Text = UiText.Normalize(text),
+                ShowText = false,
+                ShowImage = true,
+                ToolTip = UiText.Normalize(tooltip),
+                CommandHandler = new RibbonCommandHandler(),
                 CommandParameter = command + "\n",
-                Image            = LoadAndResize(resourceName, 16),
-                LargeImage       = LoadAndResize(resourceName, 32)
+                Image = LoadAndResize(resourceName, 16),
+                LargeImage = LoadAndResize(resourceName, 32)
             };
 
             if (isLarge)
             {
-                btn.Size        = RibbonItemSize.Large;
+                btn.Size = RibbonItemSize.Large;
                 btn.Orientation = System.Windows.Controls.Orientation.Vertical;
             }
             else
             {
-                btn.Size        = RibbonItemSize.Standard;
+                btn.Size = RibbonItemSize.Standard;
                 btn.Orientation = System.Windows.Controls.Orientation.Horizontal;
             }
 
@@ -124,7 +156,7 @@ namespace ShopDrawing.Plugin.UI
 
         /// <summary>
         /// Load PNG từ EmbeddedResource rồi resize về kích thước cần thiết.
-        /// AutoCAD Ribbon cần icon 16x16 (Standard) hoặc 32x32 (Large).
+        /// AutoCAD Ribbon cần icon 16x16 hoặc 32x32.
         /// </summary>
         private static BitmapSource? LoadAndResize(string resourceName, int size)
         {
@@ -132,17 +164,22 @@ namespace ShopDrawing.Plugin.UI
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 using var stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream == null) return null;
+                if (stream == null)
+                {
+                    return null;
+                }
 
                 var original = new BitmapImage();
                 original.BeginInit();
                 original.StreamSource = stream;
-                original.CacheOption  = BitmapCacheOption.OnLoad;
+                original.CacheOption = BitmapCacheOption.OnLoad;
                 original.EndInit();
                 original.Freeze();
 
                 if (original.PixelWidth == size && original.PixelHeight == size)
+                {
                     return original;
+                }
 
                 double scaleX = (double)size / original.PixelWidth;
                 double scaleY = (double)size / original.PixelHeight;
@@ -150,16 +187,24 @@ namespace ShopDrawing.Plugin.UI
                 transformed.Freeze();
                 return transformed;
             }
-            catch { return null; }
+            catch (Exception ex)
+            {
+                ShopDrawing.Plugin.Core.PluginLogger.Warn("Suppressed exception: " + ex.Message);
+                return null;
+            }
         }
     }
 
     /// <summary>
-    /// CommandHandler cho RibbonButton — gửi lệnh vào AutoCAD command line.
+    /// CommandHandler cho RibbonButton gửi lệnh vào AutoCAD command line.
     /// </summary>
     public class RibbonCommandHandler : System.Windows.Input.ICommand
     {
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
 
         public bool CanExecute(object? parameter) => true;
 
@@ -167,11 +212,9 @@ namespace ShopDrawing.Plugin.UI
         {
             if (parameter is RibbonButton btn && btn.CommandParameter is string cmd)
             {
-                var doc = Autodesk.AutoCAD.ApplicationServices.Application
-                    .DocumentManager.MdiActiveDocument;
-                if (doc != null)
-                    doc.SendStringToExecute(cmd, true, false, false);
+                AutoCadUiContext.TrySendCommand(cmd);
             }
         }
     }
 }
+

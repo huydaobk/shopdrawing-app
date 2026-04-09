@@ -11,6 +11,8 @@ namespace ShopDrawing.Plugin
     {
         public void Initialize()
         {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            PluginUpdateService.TryScheduleStartupCheck();
             InitLayersForDocument(Application.DocumentManager.MdiActiveDocument);
             EnsurePlotStyleForDocument(Application.DocumentManager.MdiActiveDocument);
             HookAnnotationScaleForDocument(Application.DocumentManager.MdiActiveDocument);

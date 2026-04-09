@@ -1,0 +1,6 @@
+{
+  "manifestUrl": "",
+  "checkOnStartup": true,
+  "checkDelaySeconds": 8,
+  "channelName": "stable"
+}

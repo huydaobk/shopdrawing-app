@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage
+  SchemaVersion="1.0"
+  AutodeskProduct="AutoCAD"
+  Name="ShopDrawing"
+  Description="ShopDrawing Plugin"
+  AppVersion="__APP_VERSION__"
+  ProductCode="{FD2E61E5-3104-453C-BAB0-BAD76BB264EA}"
+  UpgradeCode="{FD2E61E5-3104-453C-BAB0-BAD76BB264EA}"
+  Author="ShopDrawing Team"
+  Icon="./Contents/Resources/icon_shopdrawing.png">
+  <CompanyDetails Name="ShopDrawing Team" Url="" />
+  <Components Description="ShopDrawing Plugin for AutoCAD 2026">
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R25.1" SeriesMax="R25.1" />
+    <ComponentEntry
+      AppName="ShopDrawing"
+      ModuleName="./Contents/Windows/ShopDrawing.Plugin.dll"
+      AppDescription="ShopDrawing Plugin"
+      LoadOnAutoCADStartup="True"
+      LoadOnCommandInvocation="True" />
+  </Components>
+</ApplicationPackage>

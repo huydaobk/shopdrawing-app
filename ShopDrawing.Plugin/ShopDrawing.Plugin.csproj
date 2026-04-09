@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <OutputType>Library</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -11,14 +12,8 @@
     <OutputPath Condition="'$(OutputPath)' == ''">bin\x64\Release\net8.0-windows\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Reference Include="PresentationFramework" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="System.Xaml" />
-  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="accoremgd">
@@ -54,7 +49,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="artifacts\**\*.cs" />
+    <EmbeddedResource Remove="artifacts\**\*" />
+    <None Remove="artifacts\**\*" />
+    <Page Remove="artifacts\**\*.xaml" />
+    <ApplicationDefinition Remove="artifacts\**\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Resources\PlotStyles\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\update-settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

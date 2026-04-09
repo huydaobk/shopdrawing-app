@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShopDrawing.Plugin", "ShopD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShopDrawing.Tests", "ShopDrawing.Tests\ShopDrawing.Tests.csproj", "{B684C9BA-549E-066B-841A-964E11ACA6BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShopDrawing.Updater", "ShopDrawing.Updater\ShopDrawing.Updater.csproj", "{5A4773DD-C4FD-46A4-9E62-FF6CC65A04D1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShopDrawing.Installer", "ShopDrawing.Installer\ShopDrawing.Installer.csproj", "{782A7E86-95D8-4B71-BD57-9AA087C9CC90}"
 EndProject
 Global
@@ -25,10 +23,6 @@ Global
 		{B684C9BA-549E-066B-841A-964E11ACA6BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B684C9BA-549E-066B-841A-964E11ACA6BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B684C9BA-549E-066B-841A-964E11ACA6BC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5A4773DD-C4FD-46A4-9E62-FF6CC65A04D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5A4773DD-C4FD-46A4-9E62-FF6CC65A04D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5A4773DD-C4FD-46A4-9E62-FF6CC65A04D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5A4773DD-C4FD-46A4-9E62-FF6CC65A04D1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{782A7E86-95D8-4B71-BD57-9AA087C9CC90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{782A7E86-95D8-4B71-BD57-9AA087C9CC90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{782A7E86-95D8-4B71-BD57-9AA087C9CC90}.Release|Any CPU.ActiveCfg = Release|Any CPU

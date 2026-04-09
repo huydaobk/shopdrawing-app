@@ -1,5 +1,5 @@
 {
-  "manifestUrl": "",
+  "manifestUrl": "https://github.com/huydaobk/shopdrawing-app/releases/latest/download/latest.json",
   "checkOnStartup": true,
   "checkDelaySeconds": 8,
   "channelName": "stable"

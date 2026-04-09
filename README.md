@@ -138,6 +138,14 @@ Dự án áp dụng chặt chẽ các nguyên lý **Fail-Safe**:
 - Chỉ cần bật khi build và phát hành release mới vì self-hosted runner đang nằm trên máy dev.
 - Release đã publish lên GitHub thì team vẫn tải và update bình thường dù máy dev đang tắt.
 
+### Runtime data của plugin nằm ở đâu
+- `%AppData%\ShopDrawing\shopdrawing_plugin.log`
+- `%AppData%\ShopDrawing\Data\shopdrawing_waste.db`
+- `%AppData%\ShopDrawing\Data\panel_specs.json`
+- `%AppData%\ShopDrawing\Data\tender_projects\*.json`
+
+Các file này là data local/runtime, không đi theo git và không nên để chung với thư mục bản vẽ gửi khách.
+
 ### Tài liệu vận hành
 - [docs/release-autoupdate.md](C:\my_project\shopdrawing-app\docs\release-autoupdate.md)
 - [docs/deploy-runbook.md](C:\my_project\shopdrawing-app\docs\deploy-runbook.md)

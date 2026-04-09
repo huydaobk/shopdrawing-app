@@ -80,6 +80,23 @@ Kiem tra release asset:
 - Cai moi: gui `ShopDrawing.Setup.X.Y.Z.zip`
 - Auto update: plugin tu doc `latest.json` va goi `ShopDrawing.Installer.exe`
 
+## Runtime data cua plugin
+
+Plugin khong con luu data runtime trong repo code hay thu muc ban ve.
+
+Data local cua plugin nam tai:
+
+- `%AppData%\ShopDrawing\shopdrawing_plugin.log`
+- `%AppData%\ShopDrawing\Data\shopdrawing_waste.db`
+- `%AppData%\ShopDrawing\Data\panel_specs.json`
+- `%AppData%\ShopDrawing\Data\tender_projects\*.json`
+
+Y nghia:
+
+- code/release tách riêng với data local
+- gui ban ve cho khach se khong lom rom data test cua plugin
+- git khong con bi dinh db, autosave, artifact build
+
 ## Khi nao can bat may dev
 
 Can bat may dev khi:

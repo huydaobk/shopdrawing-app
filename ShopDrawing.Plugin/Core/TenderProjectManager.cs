@@ -1,15 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using ShopDrawing.Plugin.Models;
 
 namespace ShopDrawing.Plugin.Core
 {
     /// <summary>
-    /// Save/Load dự án Tender thành JSON file.
-    /// Projects lưu tại: public/Resources/tender_projects/
+    /// Save/Load Tender projects as JSON files.
+    /// Projects are stored under AppData to keep runtime data out of the repo and install folder.
     /// </summary>
     public class TenderProjectManager
     {
@@ -22,24 +21,17 @@ namespace ShopDrawing.Plugin.Core
 
         public TenderProjectManager()
         {
-            string assemblyFolder;
+            _projectsFolder = Path.Combine(PluginLogger.GetDataDirectory(), "tender_projects");
             try
             {
-                string loc = Assembly.GetExecutingAssembly().Location;
-                assemblyFolder = !string.IsNullOrEmpty(loc)
-                    ? Path.GetDirectoryName(loc) ?? @"c:\my_project\shopdrawing-app\public"
-                    : @"c:\my_project\shopdrawing-app\public";
+                Directory.CreateDirectory(_projectsFolder);
             }
-            catch
+            catch (Exception ex)
             {
-                assemblyFolder = @"c:\my_project\shopdrawing-app\public";
+                PluginLogger.Error("Suppressed exception in TenderProjectManager.cs", ex);
             }
-
-            _projectsFolder = Path.Combine(assemblyFolder, "Resources", "tender_projects");
-            try { Directory.CreateDirectory(_projectsFolder); } catch { }
         }
 
-        /// <summary>Tạo project mới với specs fork từ ShopDrawing + accessories mặc định</summary>
         public TenderProject CreateNew(string projectName, string customerName)
         {
             var specManager = new SpecConfigManager();
@@ -49,17 +41,17 @@ namespace ShopDrawing.Plugin.Core
                 CustomerName = customerName,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                Specs = specManager.GetAll(),                    // Fork specs
-                Accessories = AccessoryDataManager.GetDefaults() // Default accessories
+                Specs = specManager.GetAll(),
+                Accessories = AccessoryDataManager.GetDefaults()
             };
             project.Accessories = AccessoryDataManager.NormalizeConfiguredAccessories(project.Accessories);
             return project;
         }
 
-        /// <summary>Lưu project thành JSON file</summary>
         public string Save(TenderProject project, string? filePath = null)
         {
             project.UpdatedAt = DateTime.Now;
+            project.Accessories = AccessoryDataManager.NormalizeConfiguredAccessories(project.Accessories);
 
             if (string.IsNullOrEmpty(filePath))
             {
@@ -69,9 +61,12 @@ namespace ShopDrawing.Plugin.Core
                 }
                 else
                 {
-                    // Tạo tên file từ project name
                     string safeName = SanitizeFileName(project.ProjectName);
-                    if (string.IsNullOrEmpty(safeName)) safeName = "tender_project";
+                    if (string.IsNullOrEmpty(safeName))
+                    {
+                        safeName = "tender_project";
+                    }
+
                     string timestamp = DateTime.Now.ToString("yyMMdd_HHmm");
                     filePath = Path.Combine(_projectsFolder, $"{safeName}_{timestamp}.json");
                 }
@@ -83,7 +78,6 @@ namespace ShopDrawing.Plugin.Core
             return filePath;
         }
 
-        /// <summary>Load project từ JSON file</summary>
         public TenderProject? Load(string filePath)
         {
             try
@@ -95,58 +89,66 @@ namespace ShopDrawing.Plugin.Core
                     project.Accessories = AccessoryDataManager.NormalizeConfiguredAccessories(project.Accessories);
                     project.FilePath = filePath;
                 }
+
                 return project;
             }
-            catch
+            catch (Exception ex)
             {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
                 return null;
             }
         }
 
-        /// <summary>Liệt kê tất cả project files đã lưu</summary>
         public List<string> ListProjects()
         {
             var files = new List<string>();
             try
             {
-                foreach (var f in Directory.GetFiles(_projectsFolder, "*.json"))
-                    files.Add(f);
+                foreach (var file in Directory.GetFiles(_projectsFolder, "*.json"))
+                {
+                    files.Add(file);
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                PluginLogger.Error("Suppressed exception in TenderProjectManager.cs", ex);
+            }
+
             return files;
         }
 
-        /// <summary>Lấy thư mục lưu projects</summary>
         public string ProjectsFolder => _projectsFolder;
 
-        /// <summary>Lấy auto-save path dựa trên tên file DWG hiện tại</summary>
         public string GetAutoSavePath(string dwgFileName)
         {
             string safeName = SanitizeFileName(Path.GetFileNameWithoutExtension(dwgFileName));
-            if (string.IsNullOrEmpty(safeName)) safeName = "untitled";
+            if (string.IsNullOrEmpty(safeName))
+            {
+                safeName = "untitled";
+            }
+
             return Path.Combine(_projectsFolder, $"autosave_{safeName}.json");
         }
 
-        /// <summary>Auto-save project theo tên DWG</summary>
         public string AutoSave(TenderProject project, string dwgFileName)
         {
             string path = GetAutoSavePath(dwgFileName);
             return Save(project, path);
         }
 
-        /// <summary>Auto-load project nếu có file autosave cho DWG này</summary>
         public TenderProject? TryAutoLoad(string dwgFileName)
         {
             string path = GetAutoSavePath(dwgFileName);
-            if (File.Exists(path))
-                return Load(path);
-            return null;
+            return File.Exists(path) ? Load(path) : null;
         }
 
         private static string SanitizeFileName(string name)
         {
             foreach (char c in Path.GetInvalidFileNameChars())
+            {
                 name = name.Replace(c, '_');
+            }
+
             return name.Trim().Replace(' ', '_');
         }
     }

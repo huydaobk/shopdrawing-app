@@ -127,6 +127,19 @@ Fallback AppData chi dung khi:
 - khong lay duoc duong dan document hien tai
 - khong xac dinh duoc root du an
 
+Khoi tao project moi:
+
+- chay lenh `SD_INIT_PROJECT`
+- neu file `.dwg` hien tai da duoc save, plugin se de xuat root du an dua tren vi tri file do
+- neu dong y, plugin tao:
+  - `.shopdrawing-project.json`
+  - `Drawings`
+  - `ShopDrawingData`
+  - `ShopDrawingData\logs`
+  - `ShopDrawingData\tender_projects`
+- neu file hien tai chua save, plugin se yeu cau nhap duong dan root du an
+- sau khi khoi tao xong, nen luu cac file `.dwg` cua du an vao folder `Drawings`
+
 ## Khi nao can bat may dev
 
 Can bat may dev khi:

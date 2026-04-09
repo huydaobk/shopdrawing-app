@@ -78,14 +78,7 @@ namespace ShopDrawing.Plugin.UI
                 command: "SD_EXPORT",
                 resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_export.png");
 
-            AddFeaturePanel(
-                tab,
-                panelId: "SD_PANEL_SYSTEM",
-                panelTitle: "System",
-                buttonText: "Update",
-                tooltip: "Kiem tra ban cap nhat plugin.",
-                command: "SD_CHECK_UPDATE",
-                resourceName: "ShopDrawing.Plugin.Resources.Icons.icon_export.png");
+            AddSystemButtons(tab);
 
             tab.IsActive = true;
             _created = true;
@@ -111,6 +104,31 @@ namespace ShopDrawing.Plugin.UI
                 tooltip,
                 command,
                 resourceName,
+                isLarge: true));
+
+            tab.Panels.Add(new RibbonPanel { Source = panelSource });
+        }
+
+        private static void AddSystemButtons(RibbonTab tab)
+        {
+            var panelSource = new RibbonPanelSource
+            {
+                Title = UiText.Normalize("System"),
+                Id = "SD_PANEL_SYSTEM_TOOLS"
+            };
+
+            panelSource.Items.Add(CreateButton(
+                "Init Project",
+                "Khoi tao root du an va thu muc ShopDrawingData.",
+                "SD_INIT_PROJECT",
+                "ShopDrawing.Plugin.Resources.Icons.icon_shopdrawing.png",
+                isLarge: true));
+
+            panelSource.Items.Add(CreateButton(
+                "Update",
+                "Kiem tra ban cap nhat plugin.",
+                "SD_CHECK_UPDATE",
+                "ShopDrawing.Plugin.Resources.Icons.icon_export.png",
                 isLarge: true));
 
             tab.Panels.Add(new RibbonPanel { Source = panelSource });

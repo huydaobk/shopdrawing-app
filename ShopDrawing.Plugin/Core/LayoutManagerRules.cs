@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,18 @@ namespace ShopDrawing.Plugin.Core
             return totalPages <= 1
                 ? userTitle
                 : $"{userTitle} (PHẦN {pageIndex}/{totalPages})";
+        }
+
+        public static string GetViewTitlePrefix(LayoutViewKind kind)
+        {
+            return kind == LayoutViewKind.Plan
+                ? "MẶT BẰNG - "
+                : "MẶT ĐỨNG VÁCH - ";
+        }
+
+        public static string BuildViewTitle(LayoutViewKind kind, string userTitle, int pageIndex, int totalPages)
+        {
+            return GetViewTitlePrefix(kind) + BuildPageLabel(userTitle, pageIndex, totalPages);
         }
 
         public static string SanitizeLayoutTabLabel(string text)

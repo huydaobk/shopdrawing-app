@@ -36,8 +36,14 @@ namespace ShopDrawing.Plugin.Data
                 connection.Open();
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-                    INSERT INTO panels (panel_code, width_mm, length_mm, thick_mm, panel_spec, joint_left, joint_right, source_wall, project, status, source_type)
-                    VALUES (@code, @width, @length, @thick, @spec, @jLeft, @jRight, @sWall, @project, @status, @srcType)
+                    INSERT INTO panels (
+                        panel_code, width_mm, length_mm, thick_mm, panel_spec,
+                        joint_left, joint_right, source_wall, project, status, source_type,
+                        source_panel_x, source_panel_y)
+                    VALUES (
+                        @code, @width, @length, @thick, @spec,
+                        @jLeft, @jRight, @sWall, @project, @status, @srcType,
+                        @sourceX, @sourceY)
                 ";
                 command.Parameters.AddWithValue("@code", panel.PanelCode);
                 command.Parameters.AddWithValue("@width", panel.WidthMm);
@@ -50,6 +56,8 @@ namespace ShopDrawing.Plugin.Data
                 command.Parameters.AddWithValue("@project", panel.Project);
                 command.Parameters.AddWithValue("@status", panel.Status);
                 command.Parameters.AddWithValue("@srcType", panel.SourceType);
+                command.Parameters.AddWithValue("@sourceX", (object?)panel.SourcePanelX ?? DBNull.Value);
+                command.Parameters.AddWithValue("@sourceY", (object?)panel.SourcePanelY ?? DBNull.Value);
                 command.ExecuteNonQuery();
             }
         }
@@ -71,6 +79,8 @@ namespace ShopDrawing.Plugin.Data
                       AND joint_left  = @jLeft
                       AND joint_right = @jRight
                       AND status = 'available'
+                      AND width_mm  BETWEEN (@width  - @tol) AND (@width  + @tol)
+                      AND length_mm BETWEEN (@length - @tol) AND (@length + @tol)
                     ORDER BY ABS(width_mm - @width) ASC, ABS(length_mm - @length) ASC
                 ";
                 command.Parameters.AddWithValue("@spec", spec);
@@ -93,9 +103,9 @@ namespace ShopDrawing.Plugin.Data
         }
 
         /// <summary>
-        /// Tìm tấm theo spec + thickness, width >= neededWidth, length >= neededLength,
-        /// sort theo width gần nhất.
-        /// Không filter theo joint (để WasteMatcher kiểm tra 2 chiều).
+        /// T├¼m tß║Ñm theo spec + thickness, width >= neededWidth, length >= neededLength,
+        /// sort theo width gß║ºn nhß║Ñt.
+        /// Kh├┤ng filter theo joint (─æß╗â WasteMatcher kiß╗âm tra 2 chiß╗üu).
         /// </summary>
         public List<WastePanel> FindMatchesBySpec(string spec, int thickMm, double neededWidth, double neededLength = 0)
         {
@@ -139,7 +149,7 @@ namespace ShopDrawing.Plugin.Data
             UpdateStatus(id, "discarded");
         }
 
-        /// <summary>Xóa hẳn tấm khỏi DB (hard delete).</summary>
+        /// <summary>X├│a hß║│n tß║Ñm khß╗Åi DB (hard delete).</summary>
         public void HardDelete(int id)
         {
             using (var connection = new SqliteConnection(_connectionString))
@@ -152,7 +162,7 @@ namespace ShopDrawing.Plugin.Data
             }
         }
 
-        /// <summary>Xóa tất cả tấm lẻ thuộc một tường khi tường bị xóa khỏi bản vẽ.</summary>
+        /// <summary>X├│a tß║Ñt cß║ú tß║Ñm lß║╗ thuß╗Öc mß╗Öt t╞░ß╗¥ng khi t╞░ß╗¥ng bß╗ï x├│a khß╗Åi bß║ún vß║╜.</summary>
         public int DeleteBySourceWall(string wallCode)
         {
             using (var connection = new SqliteConnection(_connectionString))
@@ -165,7 +175,31 @@ namespace ShopDrawing.Plugin.Data
             }
         }
 
-        /// <summary>Xóa tất cả tấm lẻ có panel_code bắt đầu bằng prefix.</summary>
+        public int DeleteGeneratedBySourceWall(string wallCode)
+        {
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+                    DELETE FROM panels
+                    WHERE source_wall = @wall
+                      AND (
+                            panel_code LIKE @remPattern
+                         OR panel_code LIKE @stepPattern
+                         OR panel_code LIKE @openPattern
+                         OR source_type = 'TRIM'
+                      )
+                ";
+                command.Parameters.AddWithValue("@wall", wallCode);
+                command.Parameters.AddWithValue("@remPattern", wallCode + "-%-REM");
+                command.Parameters.AddWithValue("@stepPattern", wallCode + "-%-STEP");
+                command.Parameters.AddWithValue("@openPattern", wallCode + "-%-OPEN");
+                return command.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>X├│a tß║Ñt cß║ú tß║Ñm lß║╗ c├│ panel_code bß║»t ─æß║ºu bß║▒ng prefix.</summary>
         public int DeleteByPanelCodePrefix(string prefix)
         {
             using (var connection = new SqliteConnection(_connectionString))
@@ -187,6 +221,47 @@ namespace ShopDrawing.Plugin.Data
                 command.CommandText = "UPDATE panels SET status = @status WHERE id = @id";
                 command.Parameters.AddWithValue("@status", status);
                 command.Parameters.AddWithValue("@id", id);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void UpdatePanel(WastePanel panel)
+        {
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+                    UPDATE panels
+                    SET panel_code = @code,
+                        width_mm = @width,
+                        length_mm = @length,
+                        thick_mm = @thick,
+                        panel_spec = @spec,
+                        joint_left = @jLeft,
+                        joint_right = @jRight,
+                        source_wall = @sWall,
+                        project = @project,
+                        status = @status,
+                        source_type = @srcType,
+                        source_panel_x = @sourceX,
+                        source_panel_y = @sourceY
+                    WHERE id = @id
+                ";
+                command.Parameters.AddWithValue("@id", panel.Id);
+                command.Parameters.AddWithValue("@code", panel.PanelCode);
+                command.Parameters.AddWithValue("@width", panel.WidthMm);
+                command.Parameters.AddWithValue("@length", panel.LengthMm);
+                command.Parameters.AddWithValue("@thick", panel.ThickMm);
+                command.Parameters.AddWithValue("@spec", panel.PanelSpec);
+                command.Parameters.AddWithValue("@jLeft", panel.JointLeft.ToString()[0].ToString());
+                command.Parameters.AddWithValue("@jRight", panel.JointRight.ToString()[0].ToString());
+                command.Parameters.AddWithValue("@sWall", panel.SourceWall);
+                command.Parameters.AddWithValue("@project", panel.Project);
+                command.Parameters.AddWithValue("@status", panel.Status);
+                command.Parameters.AddWithValue("@srcType", panel.SourceType);
+                command.Parameters.AddWithValue("@sourceX", (object?)panel.SourcePanelX ?? DBNull.Value);
+                command.Parameters.AddWithValue("@sourceY", (object?)panel.SourcePanelY ?? DBNull.Value);
                 command.ExecuteNonQuery();
             }
         }
@@ -227,9 +302,9 @@ namespace ShopDrawing.Plugin.Data
             return results;
         }
 
-        // ─── Delivery Batch (Số đợt giao hàng) ────────────────────
+        // ΓöÇΓöÇΓöÇ Delivery Batch (Sß╗æ ─æß╗út giao h├áng) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
-        /// <summary>Load toàn bộ batch map (panelKey → batchNo) — gọi 1 lần khi load data.</summary>
+        /// <summary>Load to├án bß╗Ö batch map (panelKey ΓåÆ batchNo) ΓÇö gß╗ìi 1 lß║ºn khi load data.</summary>
         public Dictionary<string, int> GetAllBatches()
         {
             var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -245,7 +320,7 @@ namespace ShopDrawing.Plugin.Data
             return result;
         }
 
-        /// <summary>Lưu hoặc cập nhật số đợt cho 1 panel key (UPSERT).</summary>
+        /// <summary>L╞░u hoß║╖c cß║¡p nhß║¡t sß╗æ ─æß╗út cho 1 panel key (UPSERT).</summary>
         public void SetBatch(string panelKey, int batchNo)
         {
             using (var connection = new SqliteConnection(_connectionString))
@@ -263,7 +338,7 @@ namespace ShopDrawing.Plugin.Data
             }
         }
 
-        /// <summary>Xóa batch assignment khi batchNo = 0 (chưa gán).</summary>
+        /// <summary>X├│a batch assignment khi batchNo = 0 (ch╞░a g├ín).</summary>
         public void ClearBatch(string panelKey)
         {
             using (var connection = new SqliteConnection(_connectionString))
@@ -279,24 +354,43 @@ namespace ShopDrawing.Plugin.Data
 
         private WastePanel MapFromReader(SqliteDataReader reader)
         {
-            var panel = new WastePanel
+            return new WastePanel
             {
-                Id = reader.GetInt32(0),
-                PanelCode = reader.GetString(1),
-                WidthMm = reader.GetDouble(2),
-                LengthMm = reader.GetDouble(3),
-                ThickMm = reader.GetInt32(4),
-                PanelSpec = reader.GetString(5),
-                JointLeft = ParseJoint(reader.GetString(6)),
-                JointRight = ParseJoint(reader.GetString(7)),
-                SourceWall = reader.IsDBNull(8) ? "" : reader.GetString(8),
-                Project = reader.IsDBNull(9) ? "" : reader.GetString(9),
-                Status = reader.GetString(11)
+                Id         = reader.GetInt32(reader.GetOrdinal("id")),
+                PanelCode  = reader.GetString(reader.GetOrdinal("panel_code")),
+                WidthMm    = reader.GetDouble(reader.GetOrdinal("width_mm")),
+                LengthMm   = reader.GetDouble(reader.GetOrdinal("length_mm")),
+                ThickMm    = reader.GetInt32(reader.GetOrdinal("thick_mm")),
+                PanelSpec  = reader.GetString(reader.GetOrdinal("panel_spec")),
+                JointLeft  = ParseJoint(reader.GetString(reader.GetOrdinal("joint_left"))),
+                JointRight = ParseJoint(reader.GetString(reader.GetOrdinal("joint_right"))),
+                SourceWall = SafeGetString(reader, "source_wall"),
+                Project    = SafeGetString(reader, "project"),
+                Status     = reader.GetString(reader.GetOrdinal("status")),
+                SourceType = SafeGetString(reader, "source_type", "REM"),
+                SourcePanelX = SafeGetNullableDouble(reader, "source_panel_x"),
+                SourcePanelY = SafeGetNullableDouble(reader, "source_panel_y"),
             };
-            // source_type column (index 12) — may not exist in old DBs
-            try { if (!reader.IsDBNull(12)) panel.SourceType = reader.GetString(12); }
-            catch { /* old schema without source_type */ }
-            return panel;
+        }
+
+        private static string SafeGetString(SqliteDataReader reader, string column, string defaultValue = "")
+        {
+            try
+            {
+                int ord = reader.GetOrdinal(column);
+                return reader.IsDBNull(ord) ? defaultValue : reader.GetString(ord);
+            }
+            catch { return defaultValue; }
+        }
+
+        private static double? SafeGetNullableDouble(SqliteDataReader reader, string column)
+        {
+            try
+            {
+                int ord = reader.GetOrdinal(column);
+                return reader.IsDBNull(ord) ? null : reader.GetDouble(ord);
+            }
+            catch { return null; }
         }
 
         private JointType ParseJoint(string j)

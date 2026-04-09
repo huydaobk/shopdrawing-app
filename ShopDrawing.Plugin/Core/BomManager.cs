@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using ShopDrawing.Plugin.Models;
+using ShopDrawing.Plugin.Modules.Accessories;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace ShopDrawing.Plugin.Core
@@ -14,7 +15,7 @@ namespace ShopDrawing.Plugin.Core
         private const string TagBlockName = "SD_PANEL_TAG";
         private ObjectId _tableId = ObjectId.Null;
 
-        // Theo dõi các wall đã cleanup trong phiên hiện tại để tránh xóa trùng
+        // Theo doi cac wall da cleanup trong phien hien tai de tranh xoa trung
         private readonly HashSet<string> _cleanedWalls = new();
 
         public void RegisterReactor()
@@ -35,32 +36,26 @@ namespace ShopDrawing.Plugin.Core
         }
 
         /// <summary>
-        /// Khi entity bị xóa: nếu nằm trên layer SD_TAG → xóa tấm lẻ liên quan.
+        /// Khi entity bi xoa: neu nam tren layer SD_TAG thi xoa tam le lien quan.
         /// </summary>
         private void OnObjectErased(object? sender, ObjectErasedEventArgs e)
         {
             try
             {
-                // Chỉ xử lý khi entity bị xóa (không phải Undo restore)
                 if (!e.Erased) return;
 
                 var obj = e.DBObject;
                 if (obj == null) return;
 
-                // Khi ObjectErased fire, entity ĐÃ bị xóa (IsErased=true)
-                // Nhưng e.DBObject vẫn giữ data trong memory → đọc được Layer, TextString
                 if (obj is DBText txt)
                 {
-                    // Kiểm tra layer — dùng LayerId vì property Layer có thể không truy cập được
                     string layerName = "";
                     try
                     {
-                        // Thử đọc trực tiếp
                         layerName = txt.Layer;
                     }
                     catch
                     {
-                        // Fallback: đọc qua LayerId
                         try
                         {
                             using (var tr = txt.Database.TransactionManager.StartOpenCloseTransaction())
@@ -74,21 +69,17 @@ namespace ShopDrawing.Plugin.Core
 
                     if (layerName != "SD_TAG") return;
 
-                    // Tag text dạng "W1-01" → wall code = "W1"
                     string panelId = "";
                     try { panelId = txt.TextString; } catch { return; }
                     if (string.IsNullOrEmpty(panelId) || !panelId.Contains('-')) return;
 
-                    // Trích wall code: {wallCode}-{seq} → e.g. "W1-01" → "W1"
                     int lastDash = panelId.LastIndexOf('-');
                     if (lastDash <= 0) return;
-                    string wallCode = panelId.Substring(0, lastDash); // "W1"
+                    string wallCode = panelId.Substring(0, lastDash);
 
-                    // Tránh xóa nhiều lần cùng 1 tường (mỗi tường có nhiều panel tag)
                     if (_cleanedWalls.Contains(wallCode)) return;
                     _cleanedWalls.Add(wallCode);
 
-                    // Xóa tấm lẻ thuộc tường này
                     var repo = Commands.ShopDrawingCommands.WasteRepo;
                     if (repo != null)
                     {
@@ -96,20 +87,18 @@ namespace ShopDrawing.Plugin.Core
                         if (deleted > 0)
                         {
                             var ed = Application.DocumentManager.MdiActiveDocument?.Editor;
-                            ed?.WriteMessage($"\n🗑️ Đã xóa {deleted} tấm lẻ thuộc tường {wallCode} khỏi kho.");
+                            ed?.WriteMessage($"\nÃ°Å¸â€”â€˜Ã¯Â¸Â Ã„ÂÃƒÂ£ xÃƒÂ³a {deleted} tÃ¡ÂºÂ¥m lÃ¡ÂºÂ» thuÃ¡Â»â„¢c tÃ†Â°Ã¡Â»Âng {wallCode} khÃ¡Â»Âi kho.");
                         }
                     }
 
-                    // Xóa khỏi tracking set sau 2 giây (cho phép xóa lại nếu Undo → Redo)
                     System.Threading.Tasks.Task.Delay(2000).ContinueWith(_ => _cleanedWalls.Remove(wallCode));
                 }
             }
-            catch { /* Không crash AutoCAD */ }
+            catch { }
         }
 
         private void OnObjectModified(object? sender, ObjectEventArgs e)
         {
-            // Chỉ refresh khi AttributeReference của SD_PANEL_TAG thay đổi
             if (e.DBObject is AttributeReference attr)
             {
                 if (IsShopDrawingAttribute(attr.Tag))
@@ -135,8 +124,6 @@ namespace ShopDrawing.Plugin.Core
                 using (var tr = doc.Database.TransactionManager.StartTransaction())
                 {
                     var rows = ScanDocumentForPanels(tr, doc.Database);
-                    // TODO Phase sau: SD_INSERT_BOM command (UpdateTable chưa production-ready)
-                    // if (rows.Count > 0) UpdateTable(rows, tr, doc.Database);
                     tr.Commit();
                 }
             }
@@ -149,30 +136,29 @@ namespace ShopDrawing.Plugin.Core
         public List<BomRow> ScanDocumentForPanels(Transaction tr, Database db)
         {
             var data = new List<BomItem>();
-            
-            if (tr.GetObject(db.BlockTableId, OpenMode.ForRead) is not BlockTable bt) 
+
+            if (tr.GetObject(db.BlockTableId, OpenMode.ForRead) is not BlockTable bt)
                 return new List<BomRow>();
 
             if (tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) is not BlockTableRecord ms)
                 return new List<BomRow>();
 
-            // === STEP 1: Thu thập tất cả SD_TAG text và SD_PANEL polyline ===
             var tagTexts = new List<(double X, double Y, string Text)>();
             var panelOutlines = new List<(double X, double Y, double W, double H)>();
 
             foreach (ObjectId id in ms)
             {
-                var ent = tr.GetObject(id, OpenMode.ForRead) as Autodesk.AutoCAD.DatabaseServices.Entity;
+                if (id.IsErased) continue;
+
+                var ent = tr.GetObject(id, OpenMode.ForRead) as Entity;
                 if (ent == null) continue;
 
-                // DBText trên layer SD_TAG
                 if (ent is DBText txt && txt.Layer == "SD_TAG")
                 {
                     var pt = txt.HorizontalMode != TextHorizontalMode.TextLeft
                         ? txt.AlignmentPoint : txt.Position;
                     tagTexts.Add((Math.Round(pt.X, 0), Math.Round(pt.Y, 0), txt.TextString));
                 }
-                // Polyline trên layer SD_PANEL
                 else if (ent is Polyline pl && pl.Layer == "SD_PANEL" && pl.Closed && pl.NumberOfVertices >= 4)
                 {
                     double minX = double.MaxValue, maxX = double.MinValue;
@@ -185,68 +171,71 @@ namespace ShopDrawing.Plugin.Core
                         if (v.Y < minY) minY = v.Y;
                         if (v.Y > maxY) maxY = v.Y;
                     }
+
                     double w = Math.Round(maxX - minX, 0);
                     double h = Math.Round(maxY - minY, 0);
-                    panelOutlines.Add((minX, minY, w, h));
+                    if (TryBuildBomItemFromMetadata(pl, w, h, out BomItem? metadataItem) && metadataItem != null)
+                    {
+                        data.Add(metadataItem);
+                    }
+                    else
+                    {
+                        panelOutlines.Add((minX, minY, w, h));
+                    }
                 }
             }
 
-            // === STEP 2: Polyline-first — iterate mỗi polyline, tìm texts bên trong ===
-            // Cách cũ group text by X bị lỗi khi 2 panel cùng X (do opening split)
-            // Cách mới: mỗi SD_PANEL polyline = 1 panel duy nhất → match text vào polyline
-            double margin = 50;
             foreach (var (px, py, pw, ph) in panelOutlines)
             {
-                // Tìm tất cả texts nằm BÊN TRONG polyline này
-                var textsInside = tagTexts
-                    .Where(t => t.X >= px - margin && t.X <= px + pw + margin &&
-                                t.Y >= py - margin && t.Y <= py + ph + margin)
-                    .OrderByDescending(t => t.Y)
-                    .ToList();
-                
-                if (textsInside.Count < 1) continue; // Ít nhất 1 text (tag+spec gộp)
-                
+                var textsForPanel = FindTextsForPanel(tagTexts, px, py, pw, ph);
+                if (textsForPanel.Count < 1) continue;
+
                 string panelId = "";
                 string spec = "";
-                string status = "✦ MỚI";
+                string status = "\u2726 M\u1edaI";
                 string jointLeft = "";
                 string jointRight = "";
 
-                foreach (var (_, _, text) in textsInside)
+                foreach (var (_, _, text) in textsForPanel)
                 {
-                    if (text.Contains("-") && (text.StartsWith("W") || text.StartsWith("w")))
+                    ParsedPanelTag? primaryPanelTag = TryParsePanelTagText(text);
+                    if (primaryPanelTag == null)
                     {
-                        // Format mới: "W01-12 / Spec1" hoặc "W01-12 ✂ / Spec1"
-                        // Tách spec qua delimiter " / "
-                        if (text.Contains(" / "))
+                        continue;
+                    }
+
+                    panelId = primaryPanelTag.PanelId;
+                    spec = primaryPanelTag.Spec;
+                    status = primaryPanelTag.Status;
+                    break;
+                }
+
+                foreach (var (_, _, text) in textsForPanel)
+                {
+                    ParsedPanelTag? parsedTag = TryParsePanelTagText(text);
+                    if (parsedTag != null)
+                    {
+                        if (string.IsNullOrEmpty(panelId))
                         {
-                            int slashIdx = text.IndexOf(" / ");
-                            string leftPart = text.Substring(0, slashIdx).Trim();
-                            spec = text.Substring(slashIdx + 3).Trim();
-                            panelId = leftPart.Split(' ')[0].Trim();
-                            // Status icon nằm trong leftPart
-                            if (leftPart.Contains("✂") || leftPart.Contains("CẮT"))
-                                status = "✂ CẮT";
-                            else if (leftPart.Contains("♻") || leftPart.Contains("TÁI"))
-                                status = "♻ TÁI SỬ DỤNG";
+                            panelId = parsedTag.PanelId;
                         }
-                        else
+
+                        if (string.IsNullOrEmpty(spec) && !string.IsNullOrEmpty(parsedTag.Spec))
                         {
-                            // Fallback: format cũ không có spec (hoặc spec rỗng)
-                            panelId = text.Split(' ')[0].Trim();
-                            if (text.Contains("✂") || text.Contains("CẮT"))
-                                status = "✂ CẮT";
-                            else if (text.Contains("♻") || text.Contains("TÁI"))
-                                status = "♻ TÁI SỬ DỤNG";
+                            spec = parsedTag.Spec;
+                        }
+
+                        if (status == "\u2726 M\u1edaI" && parsedTag.Status != "\u2726 M\u1edaI")
+                        {
+                            status = parsedTag.Status;
                         }
                     }
-                    else if (text.Contains("✂") || text.Contains("CẮT"))
+                    else if (text.Contains('\u2702') || text.Contains("C\u1eaeT", StringComparison.OrdinalIgnoreCase) || text.Contains("CAT", StringComparison.OrdinalIgnoreCase))
                         status = text;
-                    else if (text.Contains("♻") || text.Contains("TÁI"))
+                    else if (text.Contains('\u267b') || text.Contains("T\u00c1I", StringComparison.OrdinalIgnoreCase) || text.Contains("TAI", StringComparison.OrdinalIgnoreCase))
                         status = text;
-                    else if (text.Contains("✦") || text.Contains("MỚI"))
+                    else if (text.Contains('\u2726') || text.Contains("M\u1edaI", StringComparison.OrdinalIgnoreCase) || text.Contains("MOI", StringComparison.OrdinalIgnoreCase))
                         status = text;
-                    // Fallback: text riêng lẻ (tương thích bản vẽ cũ chưa gộp)
                     else if (!string.IsNullOrWhiteSpace(text) && string.IsNullOrEmpty(spec)
                              && text != "+" && text != "-" && text != "0"
                              && text.Length > 1)
@@ -265,6 +254,7 @@ namespace ShopDrawing.Plugin.Core
                 data.Add(new BomItem
                 {
                     Id = panelId,
+                    DisplayId = panelId,
                     Spec = spec,
                     Status = status,
                     WallCode = wallCode,
@@ -275,7 +265,6 @@ namespace ShopDrawing.Plugin.Core
                 });
             }
 
-            // === STEP 3: Fallback Spec — nếu rỗng thì lấy từ panel cùng WallCode hoặc config ===
             string globalSpec = ShopDrawing.Plugin.Commands.ShopDrawingCommands.DefaultSpec;
             if (string.IsNullOrEmpty(globalSpec))
             {
@@ -283,6 +272,7 @@ namespace ShopDrawing.Plugin.Core
                 if (allSpecs != null && allSpecs.Count > 0)
                     globalSpec = allSpecs[0].Key;
             }
+
             foreach (var item in data)
             {
                 if (string.IsNullOrEmpty(item.Spec))
@@ -296,8 +286,10 @@ namespace ShopDrawing.Plugin.Core
             }
 
             return data.GroupBy(x => new { x.Id, x.Spec, x.Status, x.WallCode, x.JointLeft, x.JointRight, x.WidthMm, x.LengthMm })
-                       .Select(g => new BomRow {
+                       .Select(g => new BomRow
+                       {
                            Id = g.Key.Id,
+                           DisplayId = g.First().DisplayId,
                            Spec = g.Key.Spec,
                            Status = g.Key.Status,
                            WallCode = g.Key.WallCode,
@@ -311,6 +303,190 @@ namespace ShopDrawing.Plugin.Core
                        .ToList();
         }
 
+        private static bool TryBuildBomItemFromMetadata(Polyline polyline, double widthMm, double lengthMm, out BomItem? item)
+        {
+            item = null;
+
+            IReadOnlyDictionary<string, string> metadata = ShopdrawingEntityMetadata.Read(polyline);
+            if (!metadata.TryGetValue("PANEL_ID", out string? panelId) || string.IsNullOrWhiteSpace(panelId))
+            {
+                return false;
+            }
+
+            string wallCode = TryGetMetadataValue(metadata, "WALL_CODE");
+            if (string.IsNullOrWhiteSpace(wallCode))
+            {
+                wallCode = ResolveWallCode(panelId);
+            }
+
+            item = new BomItem
+            {
+                Id = panelId.Trim(),
+                DisplayId = ResolveDisplayPanelId(metadata, panelId),
+                Spec = TryGetMetadataValue(metadata, "SPEC"),
+                Status = ResolveStatusFromMetadata(metadata),
+                WallCode = wallCode,
+                JointLeft = string.Empty,
+                JointRight = string.Empty,
+                WidthMm = Math.Min(widthMm, lengthMm),
+                LengthMm = Math.Max(widthMm, lengthMm)
+            };
+
+            return true;
+        }
+
+        private static string ResolveStatusFromMetadata(IReadOnlyDictionary<string, string> metadata)
+        {
+            if (IsMetadataFlagEnabled(metadata, "IS_CUT"))
+            {
+                return "\u2702 C\u1eaeT";
+            }
+
+            if (IsMetadataFlagEnabled(metadata, "IS_REUSED"))
+            {
+                return "\u267b T\u00c1I S\u1eec D\u1ee4NG";
+            }
+
+            return "\u2726 M\u1edaI";
+        }
+
+        private static string ResolveDisplayPanelId(IReadOnlyDictionary<string, string> metadata, string panelId)
+        {
+            string normalizedPanelId = panelId.Trim();
+            if (!IsMetadataFlagEnabled(metadata, "IS_REUSED"))
+            {
+                return normalizedPanelId;
+            }
+
+            string sourceId = TryGetMetadataValue(metadata, "SOURCE_ID");
+            if (string.IsNullOrWhiteSpace(sourceId))
+            {
+                return normalizedPanelId;
+            }
+
+            string[] suffixes = { "-REM", "-STEP", "-OPEN", "-TRIM" };
+            foreach (string suffix in suffixes)
+            {
+                if (sourceId.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return sourceId.Substring(0, sourceId.Length - suffix.Length);
+                }
+            }
+
+            return sourceId;
+        }
+
+        private static bool IsMetadataFlagEnabled(IReadOnlyDictionary<string, string> metadata, string key)
+        {
+            return metadata.TryGetValue(key, out string? value)
+                && (string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string TryGetMetadataValue(IReadOnlyDictionary<string, string> metadata, string key)
+        {
+            return metadata.TryGetValue(key, out string? value) ? value?.Trim() ?? string.Empty : string.Empty;
+        }
+
+        private static string ResolveWallCode(string panelId)
+        {
+            if (string.IsNullOrWhiteSpace(panelId))
+            {
+                return string.Empty;
+            }
+
+            string[] parts = panelId.Split('-');
+            return parts.Length >= 1 ? parts[0] : string.Empty;
+        }
+
+        private static ParsedPanelTag? TryParsePanelTagText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text) || !text.Contains('-'))
+            {
+                return null;
+            }
+
+            string trimmed = text.Trim();
+            if (!trimmed.StartsWith("W", StringComparison.OrdinalIgnoreCase)
+                && !trimmed.StartsWith("C", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            string panelId = trimmed.Split(' ')[0].Trim();
+            string spec = string.Empty;
+            if (trimmed.Contains(" / "))
+            {
+                int slashIdx = trimmed.IndexOf(" / ", StringComparison.Ordinal);
+                string leftPart = trimmed.Substring(0, slashIdx).Trim();
+                panelId = leftPart.Split(' ')[0].Trim();
+                spec = trimmed.Substring(slashIdx + 3).Trim();
+            }
+
+            string status = "\u2726 M\u1edaI";
+            if (trimmed.Contains('\u2702') || trimmed.Contains("C\u1eaeT", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("CAT", StringComparison.OrdinalIgnoreCase))
+            {
+                status = "\u2702 C\u1eaeT";
+            }
+            else if (trimmed.Contains('\u267b') || trimmed.Contains("T\u00c1I", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("TAI", StringComparison.OrdinalIgnoreCase))
+            {
+                status = "\u267b T\u00c1I S\u1eec D\u1ee4NG";
+            }
+
+            return new ParsedPanelTag(panelId, spec, status);
+        }
+
+        private static List<(double X, double Y, string Text)> FindTextsForPanel(
+            IReadOnlyList<(double X, double Y, string Text)> tagTexts,
+            double px,
+            double py,
+            double pw,
+            double ph)
+        {
+            const double insideMargin = 50;
+            double centerX = px + (pw / 2.0);
+            double centerY = py + (ph / 2.0);
+
+            var insideTexts = tagTexts
+                .Where(t => t.X >= px - insideMargin && t.X <= px + pw + insideMargin &&
+                            t.Y >= py - insideMargin && t.Y <= py + ph + insideMargin)
+                .OrderBy(t =>
+                {
+                    double dx = t.X - centerX;
+                    double dy = t.Y - centerY;
+                    return (dx * dx) + (dy * dy);
+                })
+                .ToList();
+
+            if (insideTexts.Count > 0)
+            {
+                return insideTexts;
+            }
+
+            bool looksHorizontal = pw >= ph;
+            double outerMarginX = looksHorizontal
+                ? Math.Max(600, pw * 0.20)
+                : Math.Max(1800, pw * 0.75);
+            double outerMarginY = looksHorizontal
+                ? Math.Max(1800, ph * 3.0)
+                : Math.Max(600, ph * 0.20);
+
+            return tagTexts
+                .Where(t =>
+                    t.X >= px - outerMarginX && t.X <= px + pw + outerMarginX &&
+                    t.Y >= py - outerMarginY && t.Y <= py + ph + outerMarginY)
+                .OrderBy(t =>
+                {
+                    double dx = t.X - centerX;
+                    double dy = t.Y - centerY;
+                    return (dx * dx) + (dy * dy);
+                })
+                .Take(6)
+                .ToList();
+        }
+
+        private sealed record ParsedPanelTag(string PanelId, string Spec, string Status);
+
         private void UpdateTable(List<BomRow> rows, Transaction tr, Database db)
         {
             if (tr.GetObject(db.BlockTableId, OpenMode.ForRead) is not BlockTable bt) return;
@@ -322,7 +498,7 @@ namespace ShopDrawing.Plugin.Core
                 tb = new Table();
                 tb.SetDatabaseDefaults();
                 tb.TableStyle = db.Tablestyle;
-                tb.Position = new Point3d(0, 0, 0); 
+                tb.Position = new Point3d(0, 0, 0);
                 ms.AppendEntity(tb);
                 tr.AddNewlyCreatedDBObject(tb, true);
                 _tableId = tb.ObjectId;
@@ -332,29 +508,26 @@ namespace ShopDrawing.Plugin.Core
                 tb = (Table)tr.GetObject(_tableId, OpenMode.ForWrite);
             }
 
-            // Setup Header
-            tb.SetSize(rows.Count + 2, 5); 
-            tb.Cells[0, 0].TextString = "BẢNG THỐNG KÊ TẤM SANDWICH";
-            
-            string[] headers = { "MÃ TẤM", "CẤU TẠO", "KÍCH THƯỚC (W×L)", "SỐ LƯỢNG", "TRẠNG THÁI" };
+            tb.SetSize(rows.Count + 2, 5);
+            tb.Cells[0, 0].TextString = "BÃ¡ÂºÂ¢NG THÃ¡Â»ÂNG KÃƒÅ  TÃ¡ÂºÂ¤M SANDWICH";
+
+            string[] headers = { "MÃƒÆ’ TÃ¡ÂºÂ¤M", "CÃ¡ÂºÂ¤U TÃ¡ÂºÂ O", "KÃƒÂCH THÃ†Â¯Ã¡Â»Å¡C (WÃƒâ€”L)", "SÃ¡Â»Â LÃ†Â¯Ã¡Â»Â¢NG", "TRÃ¡ÂºÂ NG THÃƒÂI" };
             for (int i = 0; i < headers.Length; i++)
             {
                 tb.Cells[1, i].TextString = headers[i];
             }
 
-            // Fill Data
             for (int i = 0; i < rows.Count; i++)
             {
                 int r = i + 2;
-                tb.Cells[r, 0].TextString = rows[i].Id;
+                tb.Cells[r, 0].TextString = string.IsNullOrWhiteSpace(rows[i].DisplayId) ? rows[i].Id : rows[i].DisplayId;
                 tb.Cells[r, 1].TextString = rows[i].Spec;
                 tb.Cells[r, 2].TextString = rows[i].Dims;
                 tb.Cells[r, 3].TextString = rows[i].Qty.ToString();
                 tb.Cells[r, 4].TextString = rows[i].Status;
             }
-            
+
             tb.GenerateLayout();
         }
-
     }
 }

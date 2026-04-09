@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using ShopDrawing.Plugin.Core;
@@ -72,6 +72,83 @@ namespace ShopDrawing.Plugin.Models
                 _      => "W"
             };
 
+        public const string TopPanelTreatmentNone = "Không áp dụng";
+        public const string TopPanelTreatmentCeilingCenter = "Giao trần giữa";
+        public const string TopPanelTreatmentCeilingPerimeter = "Giao biên trần";
+        public const string TopPanelTreatmentFree = "Mép trên tự do";
+        public const string EndPanelTreatmentNone = "Không áp dụng";
+        public const string EndPanelTreatmentCenter = "Giao giữa";
+        public const string EndPanelTreatmentPerimeter = "Giao biên";
+        public const string EndPanelTreatmentFree = "Mép tự do";
+        public const string BottomPanelTreatmentNone = "Không áp dụng";
+        public const string BottomPanelTreatmentCurb = "Trên bệ chân (curb)";
+
+        public static readonly string[] TopPanelTreatmentOptions =
+        {
+            TopPanelTreatmentNone,
+            TopPanelTreatmentCeilingCenter,
+            TopPanelTreatmentCeilingPerimeter,
+            TopPanelTreatmentFree
+        };
+
+        public static readonly string[] EndPanelTreatmentOptions =
+        {
+            EndPanelTreatmentNone,
+            EndPanelTreatmentCenter,
+            EndPanelTreatmentPerimeter
+        };
+
+        public static readonly string[] BottomPanelTreatmentOptions =
+        {
+            BottomPanelTreatmentNone,
+            BottomPanelTreatmentCurb
+        };
+
+        public static string NormalizeTopPanelTreatment(string? treatment, bool fallbackLegacyExposed = false)
+        {
+            var normalized = (treatment ?? string.Empty).Trim();
+            if (string.Equals(normalized, TopPanelTreatmentCeilingCenter, StringComparison.OrdinalIgnoreCase))
+                return TopPanelTreatmentCeilingCenter;
+            if (string.Equals(normalized, TopPanelTreatmentCeilingPerimeter, StringComparison.OrdinalIgnoreCase))
+                return TopPanelTreatmentCeilingPerimeter;
+            if (string.Equals(normalized, TopPanelTreatmentFree, StringComparison.OrdinalIgnoreCase))
+                return TopPanelTreatmentFree;
+            if (string.Equals(normalized, TopPanelTreatmentNone, StringComparison.OrdinalIgnoreCase))
+                return TopPanelTreatmentNone;
+
+            return fallbackLegacyExposed ? TopPanelTreatmentFree : TopPanelTreatmentNone;
+        }
+
+        public static string NormalizeEndPanelTreatment(string? treatment, bool fallbackLegacyExposed = false)
+        {
+            var normalized = (treatment ?? string.Empty).Trim();
+            if (string.Equals(normalized, EndPanelTreatmentCenter, StringComparison.OrdinalIgnoreCase))
+                return EndPanelTreatmentCenter;
+            if (string.Equals(normalized, EndPanelTreatmentPerimeter, StringComparison.OrdinalIgnoreCase))
+                return EndPanelTreatmentPerimeter;
+            if (string.Equals(normalized, EndPanelTreatmentFree, StringComparison.OrdinalIgnoreCase))
+                return EndPanelTreatmentFree;
+            if (string.Equals(normalized, EndPanelTreatmentNone, StringComparison.OrdinalIgnoreCase))
+                return EndPanelTreatmentNone;
+
+            return fallbackLegacyExposed ? EndPanelTreatmentCenter : EndPanelTreatmentNone;
+        }
+
+        public static string NormalizeBottomPanelTreatment(string? treatment, bool fallbackLegacyExposed = false)
+        {
+            var normalized = (treatment ?? string.Empty).Trim();
+            if (string.Equals(normalized, BottomPanelTreatmentCurb, StringComparison.OrdinalIgnoreCase))
+                return BottomPanelTreatmentCurb;
+            if (string.Equals(normalized, BottomPanelTreatmentNone, StringComparison.OrdinalIgnoreCase))
+                return BottomPanelTreatmentNone;
+
+            return fallbackLegacyExposed ? BottomPanelTreatmentCurb : BottomPanelTreatmentNone;
+        }
+
+        public string TopPanelTreatment { get; set; } = string.Empty;
+        public string EndPanelTreatment { get; set; } = string.Empty;
+        public string BottomPanelTreatment { get; set; } = string.Empty;
+
         /// <summary>Canh tren co lo de tinh up noc hay khong</summary>
         public bool TopEdgeExposed { get; set; } = true;
 
@@ -87,7 +164,7 @@ namespace ShopDrawing.Plugin.Models
         /// <summary>
         /// Số góc ngoài đi qua theo chiều cao vách.
         /// ⚠️ Nếu cạnh vách đã là góc ngoài, KHÔNG bật StartEdgeExposed/EndEdgeExposed
-        /// cho cùng cạnh đó — sẽ tính trùng cả Úp góc ngoài lẫn Úp cạnh hở.
+        /// cho cùng cạnh đó — sẽ tính trùng cả Úp góc ngoài lẫn xử lý mép đứng tự do.
         /// </summary>
         public int OutsideCornerCount { get; set; }
 
@@ -120,6 +197,12 @@ namespace ShopDrawing.Plugin.Models
         public bool ColdStorageDivideFromMaxSide { get; set; }
 
         /// <summary>
+        /// Huong chia phu kien/tuyen treo tran.
+        /// Doc lap voi huong chia tam (LayoutDirection).
+        /// </summary>
+        public string SuspensionLayoutDirection { get; set; } = string.Empty;
+
+        /// <summary>
         /// Dinh polygon [[x,y],...] - khi pick polyline khong phai chu nhat.
         /// null = vach chu nhat thong thuong.
         /// </summary>
@@ -144,8 +227,41 @@ namespace ShopDrawing.Plugin.Models
             Openings.Sum(o => Math.Min(o.Width, Length) * o.Quantity);
         public double TotalOpeningSillLength =>
             Openings.Where(o => o.IsNonDoor).Sum(o => Math.Min(o.Width, Length) * o.Quantity);
-        public double TopEdgeLength => TopEdgeExposed ? Length : 0;
-        public double BottomEdgeLength => BottomEdgeExposed ? Length : 0;
+        public bool IsColdStorageWall =>
+            string.Equals(Category, "Vách", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(Application, "Kho lạnh", StringComparison.OrdinalIgnoreCase);
+        public string ResolvedTopPanelTreatment => NormalizeTopPanelTreatment(TopPanelTreatment, TopEdgeExposed);
+        public bool HasTopPanelTreatment => !string.Equals(ResolvedTopPanelTreatment, TopPanelTreatmentNone, StringComparison.OrdinalIgnoreCase);
+        public string ResolvedEndPanelTreatment => NormalizeEndPanelTreatment(EndPanelTreatment, StartEdgeExposed || EndEdgeExposed);
+        public bool HasEndPanelTreatment => !string.Equals(ResolvedEndPanelTreatment, EndPanelTreatmentNone, StringComparison.OrdinalIgnoreCase);
+        public string ResolvedBottomPanelTreatment =>
+            IsColdStorageWall
+                ? NormalizeBottomPanelTreatment(BottomPanelTreatment, BottomEdgeExposed)
+                : (BottomEdgeExposed ? BottomPanelTreatmentCurb : BottomPanelTreatmentNone);
+        public bool HasBottomPanelTreatment =>
+            IsColdStorageWall
+                ? !string.Equals(ResolvedBottomPanelTreatment, BottomPanelTreatmentNone, StringComparison.OrdinalIgnoreCase)
+                : BottomEdgeExposed;
+        public double TopEdgeLength => HasTopPanelTreatment ? Length : 0;
+        public double TopPanelCeilingCenterLength =>
+            string.Equals(ResolvedTopPanelTreatment, TopPanelTreatmentCeilingCenter, StringComparison.OrdinalIgnoreCase) ? Length : 0;
+        public double TopPanelCeilingPerimeterLength =>
+            string.Equals(ResolvedTopPanelTreatment, TopPanelTreatmentCeilingPerimeter, StringComparison.OrdinalIgnoreCase) ? Length : 0;
+        public double TopPanelFreeLength =>
+            string.Equals(ResolvedTopPanelTreatment, TopPanelTreatmentFree, StringComparison.OrdinalIgnoreCase) ? Length : 0;
+        public double BottomEdgeLength => HasBottomPanelTreatment ? Length : 0;
+        public double EndPanelCenterLength =>
+            string.Equals(ResolvedEndPanelTreatment, EndPanelTreatmentCenter, StringComparison.OrdinalIgnoreCase)
+                ? ExposedEndLength
+                : 0;
+        public double EndPanelPerimeterLength =>
+            string.Equals(ResolvedEndPanelTreatment, EndPanelTreatmentPerimeter, StringComparison.OrdinalIgnoreCase)
+                ? ExposedEndLength
+                : 0;
+        public double EndPanelFreeLength =>
+            string.Equals(ResolvedEndPanelTreatment, EndPanelTreatmentFree, StringComparison.OrdinalIgnoreCase)
+                ? ExposedEndLength
+                : 0;
         public double ExposedEndLength => (StartEdgeExposed ? Height : 0) + (EndEdgeExposed ? Height : 0);
         public double TotalExposedEdgeLength => TopEdgeLength + BottomEdgeLength + ExposedEndLength;
         public double OutsideCornerHeight => Math.Max(0, OutsideCornerCount) * Height;

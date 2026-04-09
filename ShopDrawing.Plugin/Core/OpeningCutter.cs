@@ -46,8 +46,8 @@ namespace ShopDrawing.Plugin.Core
                         }
                         else if (IsPanelFullyInsideOpeningSpan(piece, opening))
                         {
-                            // Tấm nằm GỌN TRONG vùng lỗ mở → Chia thành tấm MỚI (trên/dưới)
-                            // Nhà máy sản xuất đúng kích thước → KHÔNG có waste
+                            // Tấm nằm gọn trong bề rộng lỗ mở sẽ tách thành 2 tấm nguyên khi sản xuất.
+                            // Trường hợp này không ghi waste vào kho lẻ.
                             wasSplit = true;
                             nextPieces.AddRange(SplitPanel(piece, opening, request.WallCode, ref cutCounter, isBoundaryCut: false));
                         }
@@ -59,19 +59,7 @@ namespace ShopDrawing.Plugin.Core
                             piece.IsCutPanel = true;
                             nextPieces.Add(piece);
 
-                            // Tính waste thực tế = phần overlap bị cắt bỏ
-                            double pw = DrawW(piece);
-                            double ph = DrawH(piece);
-                            double overlapLeft = Math.Max(piece.X, opening.X);
-                            double overlapRight = Math.Min(piece.X + pw, opening.X + opening.Width);
-                            double overlapBot = Math.Max(piece.Y, opening.Y);
-                            double overlapTop = Math.Min(piece.Y + ph, opening.Y + opening.Height);
-                            double wasteW = Math.Max(0, overlapRight - overlapLeft);
-                            double wasteH = Math.Max(0, overlapTop - overlapBot);
-                            if (wasteW > MIN_PIECE && wasteH > MIN_PIECE)
-                            {
-                                wasteEntries.Add((piece.PanelId, Math.Round(wasteW, 0), Math.Round(wasteH, 0)));
-                            }
+                            TryAddOpeningWasteEntry(wasteEntries, piece, opening);
                         }
                     }
                     currentPieces = nextPieces;
@@ -95,6 +83,29 @@ namespace ShopDrawing.Plugin.Core
             
             result.CutPanels = cutPanels;
             result.OpeningWasteEntries = wasteEntries;
+        }
+
+        private static void TryAddOpeningWasteEntry(
+            ICollection<(string PanelId, double WidthMm, double HeightMm)> wasteEntries,
+            Panel piece,
+            Opening opening)
+        {
+            double pw = DrawW(piece);
+            double ph = DrawH(piece);
+            double overlapLeft = Math.Max(piece.X, opening.X);
+            double overlapRight = Math.Min(piece.X + pw, opening.X + opening.Width);
+            double overlapBot = Math.Max(piece.Y, opening.Y);
+            double overlapTop = Math.Min(piece.Y + ph, opening.Y + opening.Height);
+            double wasteW = Math.Max(0, overlapRight - overlapLeft);
+            double wasteH = Math.Max(0, overlapTop - overlapBot);
+            if (wasteW <= MIN_PIECE || wasteH <= MIN_PIECE)
+            {
+                return;
+            }
+
+            double widthMm = piece.IsHorizontal ? wasteH : wasteW;
+            double lengthMm = piece.IsHorizontal ? wasteW : wasteH;
+            wasteEntries.Add((piece.PanelId, Math.Round(widthMm, 0), Math.Round(lengthMm, 0)));
         }
 
         /// <summary>

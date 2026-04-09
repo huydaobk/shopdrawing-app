@@ -1,4 +1,4 @@
-using System.Windows;
+﻿﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -12,7 +12,7 @@ namespace ShopDrawing.Plugin.UI
 
         public LayoutRevisionDialog(int newCount, int updateCount, string initialContent = "")
         {
-            Title = updateCount > 0 ? "Cap nhat Revision" : "Tao Layout";
+            Title = updateCount > 0 ? "Cập nhật revision" : "Tạo layout";
             Width = 460;
             Height = 300;
             ResizeMode = ResizeMode.NoResize;
@@ -27,7 +27,7 @@ namespace ShopDrawing.Plugin.UI
 
             var title = new TextBlock
             {
-                Text = "Noi dung revision cho dot tao layout nay",
+                Text = "Nội dung revision cho đợt tạo layout này",
                 FontSize = 15,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(44, 62, 80)),
@@ -67,7 +67,7 @@ namespace ShopDrawing.Plugin.UI
 
             var btnCancel = new Button
             {
-                Content = "Huy",
+                Content = "Hủy",
                 Width = 90,
                 Height = 32,
                 Margin = new Thickness(0, 0, 8, 0)
@@ -76,7 +76,7 @@ namespace ShopDrawing.Plugin.UI
 
             var btnOk = new Button
             {
-                Content = "Xac nhan",
+                Content = "Xác nhận",
                 Width = 100,
                 Height = 32,
                 IsDefault = true,
@@ -94,17 +94,18 @@ namespace ShopDrawing.Plugin.UI
             root.Children.Add(footer);
 
             Content = root;
+            UiText.NormalizeWindow(this);
         }
 
         private static string BuildSummary(int newCount, int updateCount)
         {
             if (updateCount > 0 && newCount > 0)
-                return $"Se cap nhat revision cho {updateCount} layout da ton tai va tao moi {newCount} layout. Noi dung nay se duoc dua vao title block va DMBV.";
+                return $"Sẽ cập nhật revision cho {updateCount} layout đã tồn tại và tạo mới {newCount} layout. Nội dung này sẽ được đưa vào title block và DMBV.";
 
             if (updateCount > 0)
-                return $"Se cap nhat revision cho {updateCount} layout da ton tai. Noi dung nay se duoc dua vao title block va DMBV.";
+                return $"Sẽ cập nhật revision cho {updateCount} layout đã tồn tại. Nội dung này sẽ được đưa vào title block và DMBV.";
 
-            return $"Se tao moi {newCount} layout voi revision A. Noi dung nay se duoc dua vao title block va DMBV.";
+            return $"Sẽ tạo mới {newCount} layout với revision A. Nội dung này sẽ được đưa vào title block và DMBV.";
         }
     }
 }

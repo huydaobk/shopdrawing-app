@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
@@ -51,7 +51,7 @@ namespace ShopDrawing.Plugin.UI
         {
             return new Label
             {
-                Content    = title,
+                Content    = UiText.Normalize(title),
                 FontWeight = FontWeights.Bold,
                 FontSize   = FontSizeHeader,
                 FontFamily = Font,
@@ -66,7 +66,7 @@ namespace ShopDrawing.Plugin.UI
         {
             return new TextBlock
             {
-                Text       = title,
+                Text       = UiText.Normalize(title),
                 FontWeight = FontWeights.SemiBold,
                 FontSize   = FontSizeSmall,
                 FontFamily = Font,
@@ -95,7 +95,7 @@ namespace ShopDrawing.Plugin.UI
         {
             return new TextBlock
             {
-                Text       = text,
+                Text       = UiText.Normalize(text),
                 FontFamily = Font,
                 FontSize   = FontSizeNormal,
                 Foreground = TextPrimaryBrush,
@@ -108,7 +108,7 @@ namespace ShopDrawing.Plugin.UI
         {
             return new Button
             {
-                Content         = text,
+                Content         = UiText.Normalize(text),
                 Background      = bg ?? AccentBlueBrush,
                 Foreground      = fg ?? Brushes.White,
                 FontWeight      = FontWeights.SemiBold,
@@ -127,7 +127,7 @@ namespace ShopDrawing.Plugin.UI
         {
             return new Button
             {
-                Content         = text,
+                Content         = UiText.Normalize(text),
                 Background      = TransparentBrush,
                 Foreground      = TextPrimaryBrush,
                 FontSize        = FontSizeNormal,
@@ -146,7 +146,7 @@ namespace ShopDrawing.Plugin.UI
         {
             return new Button
             {
-                Content         = text,
+                Content         = UiText.Normalize(text),
                 Background      = bg ?? BtnDefaultBrush,
                 Foreground      = fg ?? Brushes.White,
                 FontSize        = FontSizeNormal,
@@ -186,6 +186,7 @@ namespace ShopDrawing.Plugin.UI
         // ═══ Apply global dark theme to palette root ═══
         public static ScrollViewer WrapInScrollViewer(StackPanel content)
         {
+            UiText.NormalizeTree(content);
             return new ScrollViewer
             {
                 VerticalScrollBarVisibility   = ScrollBarVisibility.Auto,
@@ -287,7 +288,7 @@ namespace ShopDrawing.Plugin.UI
             // Header with custom styling
             var headerBlock = new TextBlock
             {
-                Text = header,
+                Text = UiText.Normalize(header),
                 FontFamily = Font,
                 FontSize = FontSizeNormal,
                 Padding = new Thickness(10, 6, 10, 6)

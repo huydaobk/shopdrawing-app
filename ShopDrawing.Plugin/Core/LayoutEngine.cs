@@ -20,238 +20,236 @@ namespace ShopDrawing.Plugin.Core
         public string Spec { get; set; } = string.Empty;
         public double JointGapMm { get; set; }
         public string WallCode { get; set; } = string.Empty;
-        public List<Opening> Openings { get; set; } = new List<Opening>();
+        public List<Opening> Openings { get; set; } = new();
+        public string Application { get; set; } = string.Empty;
+        public string TopPanelTreatment { get; set; } = string.Empty;
+        public string StartPanelTreatment { get; set; } = string.Empty;
+        public string EndPanelTreatment { get; set; } = string.Empty;
+        public bool BottomEdgeEnabled { get; set; }
+        public bool IsCeilingLayout { get; set; }
+        public LayoutDirection CeilingSuspensionDirection { get; set; } = LayoutDirection.Vertical;
+        public bool CeilingDivideFromMaxSide { get; set; }
+        public double CeilingTSpacingMm { get; set; }
+        public double CeilingTClearGapMm { get; set; }
+        public int CeilingMushroomDivisionCount { get; set; }
+        public List<double> CeilingBaySpansMm { get; set; } = new();
+        public List<bool> CeilingBayHasMushroomFlags { get; set; } = new();
     }
 
     public class LayoutEngine
     {
         public LayoutResult Calculate(LayoutRequest request)
         {
-            if (request.BoundaryPolyline == null) 
+            if (request.BoundaryPolyline == null)
+            {
                 throw new ArgumentException("Boundary polyline is required.");
+            }
 
-            var res = new LayoutResult();
-            var pl = request.BoundaryPolyline;
-            var extents = pl.GeometricExtents;
-            
+            var result = new LayoutResult();
+            var polyline = request.BoundaryPolyline;
+            var extents = polyline.GeometricExtents;
+
             double totalWidth = extents.MaxPoint.X - extents.MinPoint.X;
             double totalHeight = extents.MaxPoint.Y - extents.MinPoint.Y;
-
-            // Ngang: tấm nằm ngang (dài theo X), xếp từ dưới lên (Y)
-            // Dọc:  tấm đứng dọc  (dài theo Y), xếp từ trái qua phải (X)
-            double span = request.Direction == LayoutDirection.Horizontal ? totalHeight : totalWidth;
+            double divisionSpan = request.Direction == LayoutDirection.Horizontal ? totalHeight : totalWidth;
 
             double slotWidth = request.PanelWidthMm + request.JointGapMm;
-            int nFull = (int)Math.Floor(span / slotWidth);
-            double remnantWidth = span - (nFull * slotWidth);
+            int fullPanelCount = (int)Math.Floor(divisionSpan / slotWidth);
+            double remnantWidth = divisionSpan - (fullPanelCount * slotWidth);
 
-            // Nếu phần lẻ vừa đúng 1 tấm nguyên khổ (±1mm tolerance do float):
-            // → KHÔNG tạo remnant, thêm vào nFull để xếp như tấm bình thường.
-            // VD: wall=2220, panelW=1100, gap=20 → slotW=1120, nFull=1, remnant=1100 ← trường hợp này
             if (Math.Abs(remnantWidth - request.PanelWidthMm) < 1.0)
             {
-                nFull++;
+                fullPanelCount++;
                 remnantWidth = 0;
             }
 
-            // Bắt đầu tính tọa độ
-            double currentPos = 0;
-            
-            // 1. Tạo các tấm Full
-            for (int i = 0; i < nFull; i++)
+            double currentOffset = 0;
+            for (int i = 0; i < fullPanelCount; i++)
             {
-                // Tính chiều dài thực: sample ở MÉP TRÁI + MÉP PHẢI, lấy MAX
-                // → tấm nằm đúng chỗ bậc nhảy dùng chiều cao LỚN hơn (factory nguyên)
-                // → phần thừa ra bậc thấp = waste (STEP)
-                double leftEdge = currentPos + 1.0;  // offset nhỏ tránh biên
-                double rightEdge = currentPos + request.PanelWidthMm - 1.0;
-                var spanLeft = GetPolylineSpanAt(pl, leftEdge, request.Direction, extents);
-                var spanRight = GetPolylineSpanAt(pl, rightEdge, request.Direction, extents);
-                var spanResult = spanLeft.Span >= spanRight.Span ? spanLeft : spanRight;
-
-                var p = new Panel
-                {
-                    WallCode = request.WallCode,
-                    ThickMm = request.ThicknessMm,
-                    Spec = request.Spec,
-                    WidthMm = request.PanelWidthMm,
-                    LengthMm = spanResult.Span,
-                    IsReused = false,
-                    IsHorizontal = request.Direction == LayoutDirection.Horizontal
-                };
-
-                if (request.Direction == LayoutDirection.Horizontal)
-                {
-                    p.X = spanResult.Origin;
-                    p.Y = extents.MinPoint.Y + currentPos;
-                }
-                else
-                {
-                    if (request.StartEdge == StartEdge.Left)
-                        p.X = extents.MinPoint.X + currentPos;
-                    else
-                        p.X = extents.MaxPoint.X - currentPos - request.PanelWidthMm;
-                    p.Y = spanResult.Origin;
-                }
-
-                // Ngàm luôn -/+ (không phụ thuộc chiều xếp)
-                p.JointLeft = JointType.Female;
-                p.JointRight = JointType.Male;
-
-                // === STEP waste: tính waste bậc thang per-panel ===
-                double spanDiff = Math.Abs(spanLeft.Span - spanRight.Span);
-                if (spanDiff > 1.0)
-                {
-                    // Có bậc nhảy trong tấm → binary search tìm vị trí step
-                    double stepPos = BinarySearchStepPosition(
-                        pl, leftEdge, rightEdge, request.Direction, extents,
-                        spanLeft.Span, spanRight.Span);
-
-                    // Waste = phần panel ở bên "ngắn"
-                    if (spanLeft.Span < spanRight.Span)
-                    {
-                        // Bên trái ngắn → waste ở góc trái
-                        p.StepWasteWidth = stepPos - leftEdge;
-                    }
-                    else
-                    {
-                        // Bên phải ngắn → waste ở góc phải
-                        p.StepWasteWidth = rightEdge - stepPos;
-                    }
-                    p.StepWasteHeight = spanDiff;
-                }
-
-                res.FullPanels.Add(p);
-                currentPos += slotWidth;
+                var divisionWindow = GetDivisionWindow(currentOffset, request.PanelWidthMm, divisionSpan, request.StartEdge);
+                var panel = BuildPanel(request, polyline, extents, divisionWindow, isRemnant: false);
+                result.FullPanels.Add(panel);
+                currentOffset += slotWidth;
             }
 
-            // 2. Tạo tấm lẻ (Remnant)
             if (remnantWidth > 1.0)
             {
-                double leftEdge = currentPos + 1.0;
-                double rightEdge = currentPos + remnantWidth - 1.0;
-                if (rightEdge < leftEdge) rightEdge = leftEdge;
-                var spanLeft = GetPolylineSpanAt(pl, leftEdge, request.Direction, extents);
-                var spanRight = GetPolylineSpanAt(pl, rightEdge, request.Direction, extents);
-                var spanResult = spanLeft.Span >= spanRight.Span ? spanLeft : spanRight;
-
-                var remnant = new Panel
-                {
-                    WallCode = request.WallCode,
-                    ThickMm = request.ThicknessMm,
-                    Spec = request.Spec,
-                    WidthMm = remnantWidth,
-                    LengthMm = spanResult.Span,
-                    IsReused = false,
-                    IsHorizontal = request.Direction == LayoutDirection.Horizontal
-                };
-
-                if (request.Direction == LayoutDirection.Horizontal)
-                {
-                    remnant.X = spanResult.Origin;
-                    remnant.Y = extents.MinPoint.Y + currentPos;
-                }
-                else
-                {
-                    if (request.StartEdge == StartEdge.Left)
-                        remnant.X = extents.MinPoint.X + currentPos;
-                    else
-                        remnant.X = extents.MaxPoint.X - currentPos - remnantWidth;
-                    remnant.Y = spanResult.Origin;
-                }
-
-                // Remnant: cạnh trái giữ dấu khớp nối với tấm liền kề
-                // Cạnh phải = cắt tại công trường → JointType.Cut + IsCutPanel=true
-                remnant.JointLeft  = JointType.Female;
-                remnant.JointRight = JointType.Cut;
-                remnant.IsCutPanel = true;  // ← đánh dấu để DrawJointSigns hiện "0" đúng chỗ
-
-                res.RemnantPanel = remnant;
+                var divisionWindow = GetDivisionWindow(currentOffset, remnantWidth, divisionSpan, request.StartEdge);
+                result.RemnantPanel = BuildPanel(request, polyline, extents, divisionWindow, isRemnant: true);
             }
 
-            // 3. Cắt Opening (nếu có)
+            if (request.IsCeilingLayout)
+            {
+                SplitCeilingPanelsByTLines(request, result);
+            }
+
             if (request.Openings.Count > 0)
             {
                 var cutter = new OpeningCutter();
-                cutter.ProcessCuts(res, request.Openings, request);
+                cutter.ProcessCuts(result, request.Openings, request);
             }
 
-            // 4. Gán ID (nhóm BOM)
-            PanelIdGenerator.AssignIds(res.AllPanels, request.WallCode);
-
-            return res;
+            PanelIdGenerator.AssignIds(result.AllPanels, request.WallCode);
+            return result;
         }
 
-        /// <summary>
-        /// Tính chiều dài (span) của polyline tại 1 vị trí dọc theo trục layout.
-        /// Dùng raycast vuông góc với trục layout để tìm giao điểm với polyline.
-        /// 
-        /// VD: Layout Vertical (xếp trái→phải theo X):
-        ///   - pos = vị trí X tương đối (từ MinPoint.X)
-        ///   - Raycast theo Y → tìm Ymin, Ymax giao polyline
-        ///   - Span = Ymax - Ymin (chiều dài tấm)
-        ///   - Origin = Ymin (vị trí Y bắt đầu tấm)
-        /// </summary>
-        private SpanResult GetPolylineSpanAt(Polyline pl, double relativePos, LayoutDirection dir, Extents3d extents)
+        private Panel BuildPanel(
+            LayoutRequest request,
+            Polyline polyline,
+            Extents3d extents,
+            (double Min, double Max) divisionWindow,
+            bool isRemnant)
         {
-            // Vị trí tuyệt đối trên bản vẽ
-            double absPos;
-            if (dir == LayoutDirection.Vertical)
-                absPos = extents.MinPoint.X + relativePos;  // X position
+            double leftEdge = divisionWindow.Min + 1.0;
+            double rightEdge = divisionWindow.Max - 1.0;
+            if (rightEdge < leftEdge)
+            {
+                rightEdge = leftEdge;
+            }
+
+            var spanLeft = GetPolylineSpanAt(polyline, leftEdge, request.Direction, extents);
+            var spanRight = GetPolylineSpanAt(polyline, rightEdge, request.Direction, extents);
+            var spanResult = spanLeft.Span >= spanRight.Span ? spanLeft : spanRight;
+
+            var (jointLeft, jointRight) = ResolvePanelJoints(request.StartEdge, isRemnant);
+
+            var panel = new Panel
+            {
+                WallCode = request.WallCode,
+                ThickMm = request.ThicknessMm,
+                Spec = request.Spec,
+                WidthMm = Math.Max(0, divisionWindow.Max - divisionWindow.Min),
+                LengthMm = spanResult.Span,
+                IsReused = false,
+                IsHorizontal = request.Direction == LayoutDirection.Horizontal,
+                JointLeft = jointLeft,
+                JointRight = jointRight,
+                IsCutPanel = isRemnant,
+                Application = request.Application,
+                TopPanelTreatment = request.TopPanelTreatment,
+                StartPanelTreatment = request.StartPanelTreatment,
+                EndPanelTreatment = request.EndPanelTreatment,
+                BottomEdgeEnabled = request.BottomEdgeEnabled
+            };
+
+            if (request.Direction == LayoutDirection.Horizontal)
+            {
+                panel.X = spanResult.Origin;
+                panel.Y = extents.MinPoint.Y + divisionWindow.Min;
+            }
             else
-                absPos = extents.MinPoint.Y + relativePos;  // Y position
+            {
+                panel.X = extents.MinPoint.X + divisionWindow.Min;
+                panel.Y = spanResult.Origin;
+            }
+
+            double spanDiff = Math.Abs(spanLeft.Span - spanRight.Span);
+            if (spanDiff > 1.0)
+            {
+                double stepPos = BinarySearchStepPosition(
+                    polyline,
+                    leftEdge,
+                    rightEdge,
+                    request.Direction,
+                    extents,
+                    spanLeft.Span,
+                    spanRight.Span);
+
+                panel.StepWasteWidth = spanLeft.Span < spanRight.Span
+                    ? stepPos - leftEdge
+                    : rightEdge - stepPos;
+                panel.StepWasteHeight = spanDiff;
+            }
+
+            return panel;
+        }
+
+        private static (JointType Left, JointType Right) ResolvePanelJoints(
+            StartEdge startEdge,
+            bool isRemnant)
+        {
+            if (!isRemnant)
+            {
+                return (JointType.Female, JointType.Male);
+            }
+
+            return startEdge == StartEdge.Right
+                ? (JointType.Cut, JointType.Male)
+                : (JointType.Female, JointType.Cut);
+        }
+
+        private static (double Min, double Max) GetDivisionWindow(
+            double currentOffset,
+            double panelWidth,
+            double divisionSpan,
+            StartEdge startEdge)
+        {
+            if (startEdge == StartEdge.Right)
+            {
+                double max = divisionSpan - currentOffset;
+                return (max - panelWidth, max);
+            }
+
+            return (currentOffset, currentOffset + panelWidth);
+        }
+
+        private SpanResult GetPolylineSpanAt(Polyline polyline, double relativePos, LayoutDirection direction, Extents3d extents)
+        {
+            double absolutePos = direction == LayoutDirection.Vertical
+                ? extents.MinPoint.X + relativePos
+                : extents.MinPoint.Y + relativePos;
 
             var intersections = new List<double>();
-            int numVerts = pl.NumberOfVertices;
+            int vertexCount = polyline.NumberOfVertices;
 
-            for (int i = 0; i < numVerts; i++)
+            for (int i = 0; i < vertexCount; i++)
             {
-                int j = (i + 1) % numVerts;
-                var p1 = pl.GetPoint2dAt(i);
-                var p2 = pl.GetPoint2dAt(j);
+                int j = (i + 1) % vertexCount;
+                var p1 = polyline.GetPoint2dAt(i);
+                var p2 = polyline.GetPoint2dAt(j);
 
-                double a, b, c, d;
-                if (dir == LayoutDirection.Vertical)
+                double a;
+                double b;
+                double c;
+                double d;
+                if (direction == LayoutDirection.Vertical)
                 {
-                    // Layout along X → ray along Y
-                    a = p1.X; b = p2.X;   // along layout axis
-                    c = p1.Y; d = p2.Y;   // perpendicular (span axis)
+                    a = p1.X;
+                    b = p2.X;
+                    c = p1.Y;
+                    d = p2.Y;
                 }
                 else
                 {
-                    // Layout along Y → ray along X
-                    a = p1.Y; b = p2.Y;
-                    c = p1.X; d = p2.X;
+                    a = p1.Y;
+                    b = p2.Y;
+                    c = p1.X;
+                    d = p2.X;
                 }
 
-                // Kiểm tra absPos nằm trong đoạn [a, b]
                 double minAB = Math.Min(a, b);
                 double maxAB = Math.Max(a, b);
-
-                if (absPos < minAB - 0.01 || absPos > maxAB + 0.01)
+                if (absolutePos < minAB - 0.01 || absolutePos > maxAB + 0.01)
+                {
                     continue;
+                }
 
                 if (Math.Abs(b - a) < 0.01)
                 {
-                    // Đoạn song song với ray (vertical riser) → BỎ QUA
-                    // Các đoạn ngang (top/bottom) đã cung cấp đủ giao điểm
+                    intersections.Add(c);
+                    intersections.Add(d);
                     continue;
                 }
-                else
-                {
-                    double t = (absPos - a) / (b - a);
-                    double intersection = c + t * (d - c);
-                    intersections.Add(intersection);
-                }
+
+                double t = (absolutePos - a) / (b - a);
+                intersections.Add(c + t * (d - c));
             }
 
             if (intersections.Count < 2)
             {
-                // Fallback: dùng bounding box
-                if (dir == LayoutDirection.Vertical)
-                    return new SpanResult(extents.MaxPoint.Y - extents.MinPoint.Y, extents.MinPoint.Y);
-                else
-                    return new SpanResult(extents.MaxPoint.X - extents.MinPoint.X, extents.MinPoint.X);
+                return direction == LayoutDirection.Vertical
+                    ? new SpanResult(extents.MaxPoint.Y - extents.MinPoint.Y, extents.MinPoint.Y)
+                    : new SpanResult(extents.MaxPoint.X - extents.MinPoint.X, extents.MinPoint.X);
             }
 
             double spanMin = intersections.Min();
@@ -259,40 +257,180 @@ namespace ShopDrawing.Plugin.Core
             return new SpanResult(spanMax - spanMin, spanMin);
         }
 
-        /// <summary>Kết quả raycast: chiều dài span và vị trí gốc.</summary>
         private record SpanResult(double Span, double Origin);
 
-        /// <summary>
-        /// Binary search tìm vị trí X (hoặc Y) nơi span thay đổi đột ngột (bậc nhảy).
-        /// Trả về tọa độ position của step trong hệ local (offset từ biên polyline).
-        /// </summary>
         private double BinarySearchStepPosition(
-            Polyline pl, double posA, double posB,
-            LayoutDirection dir, Extents3d extents,
-            double spanA, double spanB, int maxIter = 15)
+            Polyline polyline,
+            double posA,
+            double posB,
+            LayoutDirection direction,
+            Extents3d extents,
+            double spanA,
+            double spanB,
+            int maxIter = 15)
         {
-            double tol = 2.0; // mm tolerance
+            double tolerance = 2.0;
             for (int i = 0; i < maxIter; i++)
             {
                 double mid = (posA + posB) / 2.0;
-                var spanMid = GetPolylineSpanAt(pl, mid, dir, extents);
-
-                // So sánh span tại mid với spanA
-                if (Math.Abs(spanMid.Span - spanA) < tol)
+                var spanMid = GetPolylineSpanAt(polyline, mid, direction, extents);
+                if (Math.Abs(spanMid.Span - spanA) < tolerance)
                 {
-                    // mid cùng bậc với A → step nằm giữa mid và B
                     posA = mid;
                 }
                 else
                 {
-                    // mid cùng bậc với B → step nằm giữa A và mid
                     posB = mid;
                 }
 
-                if (Math.Abs(posB - posA) < tol)
+                if (Math.Abs(posB - posA) < tolerance)
+                {
                     break;
+                }
             }
+
             return (posA + posB) / 2.0;
+        }
+
+        private static void SplitCeilingPanelsByTLines(LayoutRequest request, LayoutResult result)
+        {
+            if (request.BoundaryPolyline == null || request.CeilingTSpacingMm <= 0)
+            {
+                return;
+            }
+
+            CeilingSuspensionLayoutData? tLayout = CeilingSuspensionPreviewService.BuildLayout(
+                request.BoundaryPolyline,
+                request.CeilingSuspensionDirection,
+                request.CeilingDivideFromMaxSide,
+                request.CeilingTSpacingMm,
+                0,
+                request.CeilingBaySpansMm);
+
+            if (tLayout == null || tLayout.TPositions.Count == 0)
+            {
+                return;
+            }
+
+            result.FullPanels = result.FullPanels
+                .SelectMany(panel => SplitPanelByTLines(panel, tLayout, request.CeilingTClearGapMm))
+                .ToList();
+
+            if (result.RemnantPanel == null)
+            {
+                return;
+            }
+
+            List<Panel> remnantPieces = SplitPanelByTLines(result.RemnantPanel, tLayout, request.CeilingTClearGapMm);
+            if (remnantPieces.Count == 1)
+            {
+                result.RemnantPanel = remnantPieces[0];
+                return;
+            }
+
+            result.FullPanels.AddRange(remnantPieces);
+            result.RemnantPanel = null;
+        }
+
+        private static List<Panel> SplitPanelByTLines(
+            Panel sourcePanel,
+            CeilingSuspensionLayoutData tLayout,
+            double tClearGapMm)
+        {
+            bool splitAlongX = !tLayout.RunAlongX;
+            if (splitAlongX != sourcePanel.IsHorizontal)
+            {
+                return new List<Panel> { sourcePanel };
+            }
+
+            double panelStart = splitAlongX ? sourcePanel.X : sourcePanel.Y;
+            double panelLength = sourcePanel.LengthMm;
+            double panelEnd = panelStart + panelLength;
+            const double tolerance = 1.0;
+
+            List<double> splitPositions = tLayout.TPositions
+                .Where(pos => pos > panelStart + tolerance && pos < panelEnd - tolerance)
+                .Distinct()
+                .OrderBy(pos => pos)
+                .ToList();
+
+            if (splitPositions.Count == 0)
+            {
+                return new List<Panel> { sourcePanel };
+            }
+
+            var pieces = new List<Panel>();
+            double cursor = panelStart;
+            double halfGap = Math.Max(0, tClearGapMm) / 2.0;
+
+            for (int i = 0; i < splitPositions.Count; i++)
+            {
+                double splitPosition = splitPositions[i];
+                double segmentStart = cursor;
+                double segmentEnd = Math.Min(panelEnd, splitPosition - halfGap);
+                double segmentLength = segmentEnd - segmentStart;
+                if (segmentLength > tolerance)
+                {
+                    pieces.Add(CreateSplitPanelPiece(
+                        sourcePanel,
+                        splitAlongX,
+                        segmentStart,
+                        segmentLength,
+                        pieces.Count == 0 ? sourcePanel.JointLeft : JointType.Female,
+                        JointType.Male));
+                }
+
+                cursor = Math.Max(cursor, Math.Min(panelEnd, splitPosition + halfGap));
+            }
+
+            double lastSegmentLength = panelEnd - cursor;
+            if (lastSegmentLength > tolerance)
+            {
+                pieces.Add(CreateSplitPanelPiece(
+                    sourcePanel,
+                    splitAlongX,
+                    cursor,
+                    lastSegmentLength,
+                    pieces.Count == 0 ? sourcePanel.JointLeft : JointType.Female,
+                    sourcePanel.JointRight));
+            }
+
+            return pieces.Count > 0 ? pieces : new List<Panel> { sourcePanel };
+        }
+
+        private static Panel CreateSplitPanelPiece(
+            Panel sourcePanel,
+            bool splitAlongX,
+            double segmentStart,
+            double segmentLength,
+            JointType jointLeft,
+            JointType jointRight)
+        {
+            return new Panel
+            {
+                PanelId = sourcePanel.PanelId,
+                WallCode = sourcePanel.WallCode,
+                X = splitAlongX ? segmentStart : sourcePanel.X,
+                Y = splitAlongX ? sourcePanel.Y : segmentStart,
+                WidthMm = sourcePanel.WidthMm,
+                LengthMm = segmentLength,
+                ThickMm = sourcePanel.ThickMm,
+                Spec = sourcePanel.Spec,
+                JointLeft = jointLeft,
+                JointRight = jointRight,
+                IsReused = sourcePanel.IsReused,
+                SourceId = sourcePanel.SourceId,
+                IsCutPanel = sourcePanel.IsCutPanel,
+                IsHorizontal = sourcePanel.IsHorizontal,
+                ParentPanelId = sourcePanel.ParentPanelId,
+                StepWasteWidth = 0,
+                StepWasteHeight = 0,
+                Application = sourcePanel.Application,
+                TopPanelTreatment = sourcePanel.TopPanelTreatment,
+                StartPanelTreatment = sourcePanel.StartPanelTreatment,
+                EndPanelTreatment = sourcePanel.EndPanelTreatment,
+                BottomEdgeEnabled = sourcePanel.BottomEdgeEnabled
+            };
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace ShopDrawing.Plugin.Models
+﻿namespace ShopDrawing.Plugin.Models
 {
     /// <summary>
     /// Quy tắc tính khối lượng phụ kiện.
@@ -12,16 +12,34 @@ namespace ShopDrawing.Plugin.Models
         /// <summary>Chiều cao vách x hệ số</summary>
         PER_WALL_HEIGHT,
 
-        /// <summary>Chiều dài cạnh trên lộ x hệ số</summary>
+        /// <summary>Chiều dài đỉnh vách xử lý x hệ số</summary>
         PER_TOP_EDGE_LENGTH,
 
-        /// <summary>Chiều dài cạnh dưới lộ x hệ số</summary>
+        /// <summary>Chiều dài đỉnh vách cho chi tiết giao trần giữa x hệ số</summary>
+        PER_TOP_PANEL_CEILING_CENTER_LENGTH,
+
+        /// <summary>Chiều dài đỉnh vách cho chi tiết giao biên trần x hệ số</summary>
+        PER_TOP_PANEL_CEILING_PERIMETER_LENGTH,
+
+        /// <summary>Chiều dài đỉnh vách cho mép tự do x hệ số</summary>
+        PER_TOP_PANEL_FREE_LENGTH,
+
+        /// <summary>Chiều dài chân vách xử lý x hệ số</summary>
         PER_BOTTOM_EDGE_LENGTH,
 
-        /// <summary>Tổng chiều dài hai cạnh đầu/cuối lộ x hệ số</summary>
+        /// <summary>Tổng chiều dài đầu/cuối cho chi tiết giao giữa x hệ số</summary>
+        PER_END_PANEL_CENTER_LENGTH,
+
+        /// <summary>Tổng chiều dài đầu/cuối cho chi tiết giao biên x hệ số</summary>
+        PER_END_PANEL_PERIMETER_LENGTH,
+
+        /// <summary>Tổng chiều dài đầu/cuối cho mép tự do x hệ số</summary>
+        PER_END_PANEL_FREE_LENGTH,
+
+        /// <summary>Tổng chiều dài hai mép đứng xử lý ở đầu/cuối vách x hệ số</summary>
         PER_EXPOSED_END_LENGTH,
 
-        /// <summary>Tổng chiều dài các cạnh lộ thiên (trên + dưới + đầu/cuối) x hệ số</summary>
+        /// <summary>Tổng chiều dài các biên vách xử lý (đỉnh + chân + đầu/cuối) x hệ số</summary>
         PER_TOTAL_EXPOSED_EDGE_LENGTH,
 
         /// <summary>Tổng chiều cao các góc ngoài x hệ số</summary>
@@ -104,7 +122,13 @@ namespace ShopDrawing.Plugin.Models
         /// Số vít TEK = EstimatedPanelCount × ceil(PanelSpan / 1500mm) × 2 vít/điểm.
         /// Tự động điều chỉnh theo chiều xếp tấm (Dọc/Ngang) và chiều cao/dài vách.
         /// </summary>
-        PER_TEK_SCREW_QTY
+        PER_TEK_SCREW_QTY,
+
+        /// <summary>
+        /// Số bát thép chân panel = ceil(Chiều dài vách / 1500mm).
+        /// Dùng cho vách ngoài nhà theo nhịp xà gồ/kết cấu đỡ.
+        /// </summary>
+        PER_PANEL_SUPPORT_BRACKET_QTY
     }
 
     /// <summary>
@@ -152,7 +176,7 @@ namespace ShopDrawing.Plugin.Models
         public string Position { get; set; } = string.Empty;
 
         /// <summary>Danh sách đơn vị cho dropdown</summary>
-        public static readonly string[] UnitOptions = { "md", "m²", "cái", "bộ", "kg" };
+        public static readonly string[] UnitOptions = { "md", "m²", "cái", "bộ", "cây", "chai", "kg" };
 
         /// <summary>Danh sách hạng mục áp dụng cho dropdown</summary>
         public static readonly string[] CategoryScopeOptions =

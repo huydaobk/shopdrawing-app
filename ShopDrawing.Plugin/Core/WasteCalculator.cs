@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -17,54 +16,61 @@ namespace ShopDrawing.Plugin.Core
             {
                 try
                 {
-                    // Tổng m² tấm available (kho lẻ sẵn dùng)
-                    var availableWastes = wasteRepo.GetAll("available");
-                    foreach (var w in availableWastes)
-                        stats.TotalWasteAreaMm2 += (w.WidthMm * w.LengthMm);
+                    // Status co the bi lech hoa/thuong hoac du khoang trang o du lieu cu,
+                    // nen luon normalize khi tong hop.
+                    var allWastes = wasteRepo.GetAll();
+                    foreach (var w in allWastes)
+                    {
+                        double areaMm2 = w.WidthMm * w.LengthMm;
+                        if (HasStatus(w.Status, "available"))
+                        {
+                            stats.AvailableCount++;
+                            stats.TotalWasteAreaMm2 += areaMm2;
+                            continue;
+                        }
 
-                    // Tổng m² tấm discarded (STEP/OPEN/TRIM/REM bỏ)
-                    var discardedWastes = wasteRepo.GetAll("discarded");
-                    foreach (var w in discardedWastes)
-                        stats.TotalDiscardedAreaMm2 += (w.WidthMm * w.LengthMm);
+                        if (HasStatus(w.Status, "discarded"))
+                        {
+                            stats.TotalDiscardedAreaMm2 += areaMm2;
+                        }
+                    }
                 }
-                catch { /* Ignore DB errors */ }
+                catch (System.Exception ex)
+                {
+                    PluginLogger.Warn("WasteCalculator DB error: " + ex.Message);
+                }
             }
 
-            // Tổng m² panel trên bản vẽ (SD_PANEL layer)
+            // 4. Tong m2 panel huu ich tren ban ve (layer SD_PANEL)
+            //    Scan qua toan bo entity trong ModelSpace
+            //    Luu y: Don vi phu thuoc cai dat trong CAD (thong thuong = mm)
             if (doc != null)
             {
                 try
                 {
                     using (var tr = doc.TransactionManager.StartTransaction())
                     {
-                        var bt = (BlockTable)tr.GetObject(doc.Database.BlockTableId, OpenMode.ForRead);
-                        var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+                        var rows = ShopDrawing.Plugin.Commands.ShopDrawingCommands.BomManager.ScanDocumentForPanels(tr, doc.Database);
                         
-                        foreach (ObjectId id in ms)
+                        // rows: grouped, so we need AreaM2 * Qty
+                        foreach (var r in rows)
                         {
-                            var ent = tr.GetObject(id, OpenMode.ForRead) as Entity;
-                            if (ent != null && ent.Layer == "SD_PANEL" && ent is Polyline pl)
-                            {
-                                try
-                                {
-                                    var ext = pl.GeometricExtents;
-                                    double w = ext.MaxPoint.X - ext.MinPoint.X;
-                                    double h = ext.MaxPoint.Y - ext.MinPoint.Y;
-                                    stats.TotalUsefulAreaMm2 += (w * h);
-                                }
-                                catch { }
-                            }
+                            stats.TotalUsefulAreaMm2 += (r.AreaM2 * r.Qty) * 1_000_000.0;
                         }
+
                         tr.Commit();
                     }
                 }
-                catch (System.Exception)
+                catch (System.Exception ex)
                 {
-                    // Ignore transient transaction errors during auto-update
+                    PluginLogger.Warn("WasteCalculator CAD scan error: " + ex.Message);
                 }
             }
 
             return stats;
         }
+
+        private static bool HasStatus(string? status, string expected)
+            => string.Equals((status ?? string.Empty).Trim(), expected, System.StringComparison.OrdinalIgnoreCase);
     }
 }

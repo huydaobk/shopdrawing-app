@@ -1,4 +1,4 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -27,7 +27,7 @@ namespace ShopDrawing.Plugin.UI
                 .ToDictionary(mapping => mapping.AttributeTag, mapping => mapping.PluginField, StringComparer.OrdinalIgnoreCase)
                 ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            Title = "Mapping Title Block External";
+            Title = "Ánh xạ title block ngoài";
             Width = 620;
             Height = 520;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -42,7 +42,7 @@ namespace ShopDrawing.Plugin.UI
 
             var header = new TextBlock
             {
-                Text = "Gan attribute trong DWG vao field cua plugin",
+                Text = "Gán attribute trong DWG vào field của plugin",
                 FontSize = 15,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(44, 62, 80)),
@@ -68,7 +68,7 @@ namespace ShopDrawing.Plugin.UI
             };
             sourceRow.Children.Add(new TextBlock
             {
-                Text = "Nguon block:",
+                Text = "Nguồn block:",
                 Width = 90,
                 VerticalAlignment = VerticalAlignment.Center,
                 FontWeight = FontWeights.SemiBold
@@ -104,7 +104,7 @@ namespace ShopDrawing.Plugin.UI
 
             var btnCancel = new Button
             {
-                Content = "Huy",
+                Content = "Hủy",
                 Width = 90,
                 Height = 32,
                 Margin = new Thickness(0, 0, 8, 0)
@@ -113,7 +113,7 @@ namespace ShopDrawing.Plugin.UI
 
             var btnSave = new Button
             {
-                Content = "Luu mapping",
+                Content = "Lưu ánh xạ",
                 Width = 120,
                 Height = 32,
                 IsDefault = true,
@@ -131,6 +131,7 @@ namespace ShopDrawing.Plugin.UI
             root.Children.Add(footer);
 
             Content = root;
+            UiText.NormalizeWindow(this);
 
             _cbSource.SelectedItem = _cbSource.Items
                 .OfType<LayoutTitleBlockSource>()
@@ -196,11 +197,7 @@ namespace ShopDrawing.Plugin.UI
 
             if (mappings.Count == 0)
             {
-                MessageBox.Show(
-                    "Can gan it nhat 1 attribute vao field cua plugin.",
-                    "Mapping chua hop le",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                UiFeedback.ShowWarning("Cần gán ít nhất 1 attribute vào field của plugin.", "Ánh xạ chưa hợp lệ");
                 return;
             }
 

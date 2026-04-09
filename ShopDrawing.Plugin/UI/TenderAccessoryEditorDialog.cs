@@ -1,4 +1,4 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -17,13 +17,16 @@ namespace ShopDrawing.Plugin.UI
         private readonly ObservableCollection<TenderAccessoryRow> _rows;
         private readonly string[] _specOptions;
         private readonly string[] _categoryOptions;
+        private readonly TenderAccessoryRules.RuleOption[] _ruleOptions;
         private DataGrid _grid = null!;
 
         public TenderAccessoryEditorDialog(IEnumerable<TenderAccessory> accessories, IEnumerable<string> specKeys)
         {
             Title = "Cấu hình phụ kiện đấu thầu";
-            Width = 1220;
-            Height = 620;
+            Width = 1460;
+            Height = 760;
+            MinWidth = 1320;
+            MinHeight = 680;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             Background = Brushes.WhiteSmoke;
 
@@ -34,6 +37,7 @@ namespace ShopDrawing.Plugin.UI
             _categoryOptions = TenderAccessory.CategoryScopeOptions
                 .Where(option => !TenderAccessoryRules.IsAllScope(option))
                 .ToArray();
+            _ruleOptions = TenderAccessoryRules.GetRuleOptions().ToArray();
 
             _rows = new ObservableCollection<TenderAccessoryRow>(
                 AccessoryDataManager.NormalizeConfiguredAccessories(accessories)
@@ -42,13 +46,16 @@ namespace ShopDrawing.Plugin.UI
             if (_rows.Count == 0)
             {
                 foreach (var item in AccessoryDataManager.GetDefaults())
+                {
                     _rows.Add(TenderAccessoryRow.FromModel(item));
+                }
             }
 
             SortRowsByApplication();
             ReindexRows();
 
             Content = BuildLayout();
+            UiText.NormalizeWindow(this);
         }
 
         public List<TenderAccessory> GetAccessories()
@@ -82,7 +89,7 @@ namespace ShopDrawing.Plugin.UI
             var info = new TextBlock
             {
                 Text = "Danh mục này dùng để tính bảng phụ kiện cho giai đoạn đấu thầu. " +
-                       "Khối lượng chốt = tự động × (1 + hao hụt %) + điều chỉnh.",
+                       "Khối lượng chốt = tự động x (1 + hao hụt %) + điều chỉnh.",
                 Foreground = Brushes.DimGray,
                 Margin = new Thickness(0, 0, 0, 8)
             };
@@ -100,9 +107,9 @@ namespace ShopDrawing.Plugin.UI
                 Orientation = Orientation.Horizontal,
                 Margin = new Thickness(0, 0, 0, 8)
             };
-            toolbar.Children.Add(CreateButton("＋ Thêm dòng", new SolidColorBrush(Color.FromRgb(39, 174, 96)), OnAddRow));
-            toolbar.Children.Add(CreateButton("🗑 Xóa dòng", new SolidColorBrush(Color.FromRgb(231, 76, 60)), OnDeleteRows));
-            toolbar.Children.Add(CreateButton("↺ Khôi phục mặc định", new SolidColorBrush(Color.FromRgb(52, 152, 219)), OnResetDefaults));
+            toolbar.Children.Add(CreateButton("Thêm dòng", new SolidColorBrush(Color.FromRgb(39, 174, 96)), OnAddRow));
+            toolbar.Children.Add(CreateButton("Xóa dòng", new SolidColorBrush(Color.FromRgb(231, 76, 60)), OnDeleteRows));
+            toolbar.Children.Add(CreateButton("Khôi phục mặc định", new SolidColorBrush(Color.FromRgb(52, 152, 219)), OnResetDefaults));
             Grid.SetRow(toolbar, 0);
             main.Children.Add(toolbar);
 
@@ -114,24 +121,30 @@ namespace ShopDrawing.Plugin.UI
                 HeadersVisibility = DataGridHeadersVisibility.Column,
                 AlternatingRowBackground = new SolidColorBrush(Color.FromRgb(248, 250, 255)),
                 SelectionMode = DataGridSelectionMode.Extended,
+                SelectionUnit = DataGridSelectionUnit.FullRow,
+                FrozenColumnCount = 4,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 ItemsSource = _rows
             };
             _grid.CellEditEnding += OnGridCellEditEnding;
+            _grid.Columns.Clear();
             _grid.Columns.Add(CreateTextColumn("STT", "Index", 45));
-            _grid.Columns.Add(CreateComboColumn("Hạng mục", "CategoryScope", _categoryOptions, 85));
-            _grid.Columns.Add(CreateComboColumn("Ứng dụng", "Application", TenderWall.ApplicationOptions, 90));
-            _grid.Columns.Add(CreateComboColumn("Mã spec", "SpecKey", _specOptions, 95));
-            _grid.Columns.Add(CreateTextColumn("Tên phụ kiện", "Name", 160));
-            _grid.Columns.Add(CreateTextColumn("Vật liệu", "Material", 80));
-            _grid.Columns.Add(CreateTextColumn("Vị trí", "Position", 120));
-            _grid.Columns.Add(CreateComboColumn("Đơn vị", "Unit", TenderAccessory.UnitOptions, 65));
-            _grid.Columns.Add(CreateEnumComboColumn("Mã quy tắc", "CalcRule", typeof(AccessoryCalcRule), 125));
-            _grid.Columns.Add(CreateReadOnlyColumn("Diễn giải", "RuleDescription", 155));
+            _grid.Columns.Add(CreateComboColumn("Hạng mục", "CategoryScope", _categoryOptions, 95));
+            _grid.Columns.Add(CreateComboColumn("Ứng dụng", "Application", TenderWall.ApplicationOptions, 105));
+            _grid.Columns.Add(CreateComboColumn("Mã spec", "SpecKey", _specOptions, 110));
+            _grid.Columns.Add(CreateTextColumn("Tên phụ kiện", "Name", 180));
+            _grid.Columns.Add(CreateTextColumn("Vật liệu", "Material", 95));
+            _grid.Columns.Add(CreateTextColumn("Vị trí", "Position", 130));
+            _grid.Columns.Add(CreateComboColumn("Đơn vị", "Unit", TenderAccessory.UnitOptions, 75));
+            _grid.Columns.Add(CreateRuleComboColumn("Mã quy tắc", "CalcRule", _ruleOptions, 240));
+            _grid.Columns.Add(CreateReadOnlyColumn("Diễn giải", "RuleDescription", 220));
             _grid.Columns.Add(CreateTextColumn("Hệ số", "Factor", 65, "F2"));
             _grid.Columns.Add(CreateTextColumn("Hao hụt (%)", "WasteFactor", 80, "F1"));
             _grid.Columns.Add(CreateTextColumn("Điều chỉnh", "Adjustment", 80, "F2"));
             _grid.Columns.Add(CreateCheckColumn("Nhập tay", "IsManualOnly", 65));
-            _grid.Columns.Add(CreateTextColumn("Ghi chú", "Note", 180));
+            _grid.Columns.Add(CreateTextColumn("Ghi chú", "Note", 340));
+
             Grid.SetRow(_grid, 1);
             main.Children.Add(_grid);
 
@@ -150,11 +163,11 @@ namespace ShopDrawing.Plugin.UI
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right
             };
-            var btnCancel = CreateButton("Hủy", new SolidColorBrush(Color.FromRgb(149, 165, 166)), (s, e) => { DialogResult = false; });
+            var btnCancel = CreateButton("Hủy", new SolidColorBrush(Color.FromRgb(149, 165, 166)), (_, _) => { DialogResult = false; });
             btnCancel.Width = 90;
             actions.Children.Add(btnCancel);
 
-            var btnSave = CreateButton("Lưu", new SolidColorBrush(Color.FromRgb(41, 128, 185)), (s, e) => { SaveAndClose(); });
+            var btnSave = CreateButton("Lưu", new SolidColorBrush(Color.FromRgb(41, 128, 185)), (_, _) => { SaveAndClose(); });
             btnSave.Width = 90;
             actions.Children.Add(btnSave);
             DockPanel.SetDock(actions, Dock.Right);
@@ -176,7 +189,7 @@ namespace ShopDrawing.Plugin.UI
                 Unit = "md",
                 CalcRule = AccessoryCalcRule.PER_WALL_LENGTH,
                 Factor = 1,
-                Note = ""
+                Note = string.Empty
             });
 
             SortRowsByApplication();
@@ -187,10 +200,14 @@ namespace ShopDrawing.Plugin.UI
         {
             var selected = _grid.SelectedItems.Cast<TenderAccessoryRow>().ToList();
             if (selected.Count == 0)
+            {
                 return;
+            }
 
             foreach (var row in selected)
+            {
                 _rows.Remove(row);
+            }
 
             SortRowsByApplication();
             ReindexRows();
@@ -198,18 +215,19 @@ namespace ShopDrawing.Plugin.UI
 
         private void OnResetDefaults(object? sender, RoutedEventArgs e)
         {
-            var confirm = MessageBox.Show(
-                "Khôi phục danh mục phụ kiện mặc định cho dự án này?",
-                "Khôi phục mặc định",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+            var confirm = UiFeedback.AskYesNo("Khôi phục danh mục phụ kiện mặc định cho dự án này?", "Khôi phục mặc định");
 
             if (confirm != MessageBoxResult.Yes)
+            {
                 return;
+            }
 
             _rows.Clear();
             foreach (var item in AccessoryDataManager.GetDefaults())
+            {
                 _rows.Add(TenderAccessoryRow.FromModel(item));
+            }
+
             SortRowsByApplication();
             ReindexRows();
         }
@@ -220,7 +238,10 @@ namespace ShopDrawing.Plugin.UI
             {
                 SortRowsByApplication();
                 foreach (var row in _rows)
+                {
                     row.RefreshDescriptions();
+                }
+
                 ReindexRows();
                 _grid.Items.Refresh();
             }));
@@ -238,28 +259,44 @@ namespace ShopDrawing.Plugin.UI
             var sorted = _rows.OrderBy(row => row, Comparer<TenderAccessoryRow>.Create(CompareRows)).ToList();
             _rows.Clear();
             foreach (var row in sorted)
+            {
                 _rows.Add(row);
+            }
         }
 
         private void ReindexRows()
         {
             for (int i = 0; i < _rows.Count; i++)
+            {
                 _rows[i].Index = i + 1;
+            }
         }
 
         private static int CompareRows(TenderAccessoryRow left, TenderAccessoryRow right)
         {
             int result = TenderAccessoryRules.CompareApplications(left.Application, right.Application);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             result = TenderAccessoryRules.CompareScopes(left.CategoryScope, right.CategoryScope);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             result = TenderAccessoryRules.CompareScopes(left.SpecKey, right.SpecKey);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             result = string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             return string.Compare(left.Position, right.Position, StringComparison.OrdinalIgnoreCase);
         }
@@ -267,16 +304,28 @@ namespace ShopDrawing.Plugin.UI
         private static int CompareAccessories(TenderAccessory left, TenderAccessory right)
         {
             int result = TenderAccessoryRules.CompareApplications(left.Application, right.Application);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             result = TenderAccessoryRules.CompareScopes(left.CategoryScope, right.CategoryScope);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             result = TenderAccessoryRules.CompareScopes(left.SpecKey, right.SpecKey);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             result = string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase);
-            if (result != 0) return result;
+            if (result != 0)
+            {
+                return result;
+            }
 
             return string.Compare(left.Position, right.Position, StringComparison.OrdinalIgnoreCase);
         }
@@ -330,6 +379,19 @@ namespace ShopDrawing.Plugin.UI
             };
         }
 
+        private static DataGridComboBoxColumn CreateRuleComboColumn(string header, string binding, IEnumerable<TenderAccessoryRules.RuleOption> items, double width)
+        {
+            return new DataGridComboBoxColumn
+            {
+                Header = header,
+                SelectedValueBinding = new Binding(binding) { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
+                SelectedValuePath = nameof(TenderAccessoryRules.RuleOption.Value),
+                DisplayMemberPath = nameof(TenderAccessoryRules.RuleOption.Label),
+                ItemsSource = items.ToArray(),
+                Width = new DataGridLength(width)
+            };
+        }
+
         private static DataGridComboBoxColumn CreateEnumComboColumn(string header, string binding, Type enumType, double width)
         {
             return new DataGridComboBoxColumn
@@ -358,16 +420,16 @@ namespace ShopDrawing.Plugin.UI
         public string CategoryScope { get; set; } = "Tất cả";
         public string Application { get; set; } = "Tất cả";
         public string SpecKey { get; set; } = "Tất cả";
-        public string Name { get; set; } = "";
-        public string Material { get; set; } = "";
-        public string Position { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
+        public string Material { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
         public string Unit { get; set; } = "md";
         public AccessoryCalcRule CalcRule { get; set; }
         public double Factor { get; set; } = 1.0;
         public double WasteFactor { get; set; }
         public double Adjustment { get; set; }
         public bool IsManualOnly { get; set; }
-        public string Note { get; set; } = "";
+        public string Note { get; set; } = string.Empty;
 
         public string RuleDescription => TenderAccessoryRules.GetRuleLabel(CalcRule);
 
@@ -419,5 +481,3 @@ namespace ShopDrawing.Plugin.UI
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 }
-
-

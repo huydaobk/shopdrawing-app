@@ -49,11 +49,11 @@ namespace ShopDrawing.Plugin.Runtime
 
         public double DefaultCeilingCableDropMm { get; set; } = 1500;
 
-        public string DefaultWallTopPanelTreatment { get; set; } = TenderWall.TopPanelTreatmentNone;
+        public string DefaultWallTopPanelTreatment { get; set; } = "Không áp dụng";
 
-        public string DefaultWallStartPanelTreatment { get; set; } = TenderWall.EndPanelTreatmentNone;
+        public string DefaultWallStartPanelTreatment { get; set; } = "Không áp dụng";
 
-        public string DefaultWallEndPanelTreatment { get; set; } = TenderWall.EndPanelTreatmentNone;
+        public string DefaultWallEndPanelTreatment { get; set; } = "Không áp dụng";
 
         public bool DefaultWallBottomEdgeEnabled { get; set; } = true;
 

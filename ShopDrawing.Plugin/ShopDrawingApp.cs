@@ -2,6 +2,7 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.EditorInput;
 using ShopDrawing.Plugin.Core;
+using ShopDrawing.Plugin.Runtime;
 
 [assembly: ExtensionApplication(typeof(ShopDrawing.Plugin.ShopDrawingApp))]
 
@@ -12,6 +13,7 @@ namespace ShopDrawing.Plugin
         public void Initialize()
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            ShopDrawingRuntimeServices.RefreshProjectScopedServices();
             PluginUpdateService.TryScheduleStartupCheck();
             InitLayersForDocument(Application.DocumentManager.MdiActiveDocument);
             EnsurePlotStyleForDocument(Application.DocumentManager.MdiActiveDocument);
@@ -19,12 +21,14 @@ namespace ShopDrawing.Plugin
 
             Application.DocumentManager.DocumentCreated   += (_, e) =>
             {
+                ShopDrawingRuntimeServices.RefreshProjectScopedServices();
                 InitLayersForDocument(e.Document);
                 EnsurePlotStyleForDocument(e.Document);
                 HookAnnotationScaleForDocument(e.Document);
             };
             Application.DocumentManager.DocumentActivated += (_, e) =>
             {
+                ShopDrawingRuntimeServices.RefreshProjectScopedServices();
                 InitLayersForDocument(e.Document);
                 EnsurePlotStyleForDocument(e.Document);
                 HookAnnotationScaleForDocument(e.Document);

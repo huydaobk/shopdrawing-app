@@ -1,4 +1,4 @@
-# Deploy Runbook
+﻿# Deploy Runbook
 
 Muc tieu: bien release thanh viec lap lai duoc, khong phu thuoc vao nho tay.
 
@@ -89,20 +89,43 @@ gh api repos/huydaobk/shopdrawing-app/actions/runners
 
 ## Runtime data cua plugin
 
-Plugin khong con luu data runtime trong repo code hay thu muc ban ve.
+Plugin khong luu data runtime trong repo code hay thu muc cai dat.
 
-Data local cua plugin nam tai:
+Data theo du an se nam trong:
 
-- `%AppData%\ShopDrawing\shopdrawing_plugin.log`
-- `%AppData%\ShopDrawing\Data\shopdrawing_waste.db`
-- `%AppData%\ShopDrawing\Data\panel_specs.json`
-- `%AppData%\ShopDrawing\Data\tender_projects\*.json`
+```text
+ProjectRoot/
+|-- Drawings/
+|-- ShopDrawingData/
+|   |-- shopdrawing_waste.db
+|   |-- panel_specs.json
+|   |-- tender_projects/
+|   `-- logs/
+`-- .shopdrawing-project.json
+```
 
 Y nghia:
 
-- code/release tách riêng với data local
-- gui ban ve cho khach se khong lom rom data test cua plugin
-- git khong con bi dinh db, autosave, artifact build
+- code/release tach rieng voi data du an
+- gui khach chi can nen folder `Drawings`
+- team mo cung mot project Dropbox se thay cung data
+- git khong bi dinh db, autosave, artifact build
+
+Co che nhan dien `ProjectRoot`:
+
+- plugin lay duong dan file `.dwg` dang mo
+- di nguoc len cac thu muc cha de tim `.shopdrawing-project.json`
+- neu tim thay thi do la root du an
+- neu chua tim thay:
+  - neu file dang nam trong folder `Drawings` thi lay thu muc cha cua `Drawings`
+  - neu khong thi lay chinh thu muc chua file `.dwg`
+- plugin se tu tao marker file va `ShopDrawingData`
+
+Fallback AppData chi dung khi:
+
+- file `.dwg` chua duoc save
+- khong lay duoc duong dan document hien tai
+- khong xac dinh duoc root du an
 
 ## Khi nao can bat may dev
 
@@ -148,3 +171,4 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-runner-tasks.ps1
 Tai lieu thao tac chi tiet:
 
 - `docs/runner-service.md`
+

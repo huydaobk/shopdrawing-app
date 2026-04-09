@@ -10,46 +10,15 @@ namespace ShopDrawing.Plugin.Core
     {
         public static event System.Action? SpecsChanged;
 
-        private readonly string _configPath;
         private List<PanelSpec>? _inMemorySpecs;
 
         public SpecConfigManager()
         {
-            _configPath = Path.Combine(PluginLogger.GetDataDirectory(), "panel_specs.json");
-
-            try
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(_configPath)!);
-            }
-            catch (System.Exception ex)
-            {
-                PluginLogger.Error("Suppressed exception in SpecConfigManager.cs", ex);
-            }
-
-            if (!File.Exists(_configPath))
-            {
-                try
-                {
-                    string bundledConfigPath = Path.Combine(PluginLogger.GetBundledResourcesDirectory(), "panel_specs.json");
-                    if (File.Exists(bundledConfigPath))
-                    {
-                        File.Copy(bundledConfigPath, _configPath, overwrite: false);
-                    }
-                    else
-                    {
-                        Save(BuildDefaultSpecs());
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    PluginLogger.Warn("Suppressed exception: " + ex.Message);
-                }
-            }
+            EnsureConfigFileExists();
         }
 
         public SpecConfigManager(List<PanelSpec> specs)
         {
-            _configPath = string.Empty;
             _inMemorySpecs = specs.Select(s => new PanelSpec
             {
                 Key = s.Key,
@@ -82,7 +51,7 @@ namespace ShopDrawing.Plugin.Core
 
             try
             {
-                string json = File.ReadAllText(_configPath);
+                string json = File.ReadAllText(GetConfigPath());
                 return JsonSerializer.Deserialize<List<PanelSpec>>(json) ?? new List<PanelSpec>();
             }
             catch (System.Exception ex)
@@ -102,13 +71,55 @@ namespace ShopDrawing.Plugin.Core
 
             var options = new JsonSerializerOptions { WriteIndented = true };
             string json = JsonSerializer.Serialize(specs, options);
-            File.WriteAllText(_configPath, json);
+            File.WriteAllText(GetConfigPath(), json);
             SpecsChanged?.Invoke();
         }
 
         public PanelSpec? GetByKey(string key)
         {
             return GetAll().Find(s => s.Key == key);
+        }
+
+        private static string GetConfigPath()
+        {
+            return Path.Combine(PluginLogger.GetDataDirectory(), "panel_specs.json");
+        }
+
+        private static void EnsureConfigFileExists()
+        {
+            string configPath = GetConfigPath();
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+            }
+            catch (System.Exception ex)
+            {
+                PluginLogger.Error("Suppressed exception in SpecConfigManager.cs", ex);
+            }
+
+            if (File.Exists(configPath))
+            {
+                return;
+            }
+
+            try
+            {
+                string bundledConfigPath = Path.Combine(PluginLogger.GetBundledResourcesDirectory(), "panel_specs.json");
+                if (File.Exists(bundledConfigPath))
+                {
+                    File.Copy(bundledConfigPath, configPath, overwrite: false);
+                }
+                else
+                {
+                    string json = JsonSerializer.Serialize(BuildDefaultSpecs(), new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(configPath, json);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
+            }
         }
 
         private static List<PanelSpec> BuildDefaultSpecs()

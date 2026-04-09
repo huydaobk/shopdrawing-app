@@ -12,7 +12,6 @@ namespace ShopDrawing.Plugin.Core
     /// </summary>
     public class TenderProjectManager
     {
-        private readonly string _projectsFolder;
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
             WriteIndented = true,
@@ -21,15 +20,7 @@ namespace ShopDrawing.Plugin.Core
 
         public TenderProjectManager()
         {
-            _projectsFolder = Path.Combine(PluginLogger.GetDataDirectory(), "tender_projects");
-            try
-            {
-                Directory.CreateDirectory(_projectsFolder);
-            }
-            catch (Exception ex)
-            {
-                PluginLogger.Error("Suppressed exception in TenderProjectManager.cs", ex);
-            }
+            EnsureProjectsFolder();
         }
 
         public TenderProject CreateNew(string projectName, string customerName)
@@ -68,7 +59,7 @@ namespace ShopDrawing.Plugin.Core
                     }
 
                     string timestamp = DateTime.Now.ToString("yyMMdd_HHmm");
-                    filePath = Path.Combine(_projectsFolder, $"{safeName}_{timestamp}.json");
+                    filePath = Path.Combine(GetProjectsFolder(), $"{safeName}_{timestamp}.json");
                 }
             }
 
@@ -104,7 +95,7 @@ namespace ShopDrawing.Plugin.Core
             var files = new List<string>();
             try
             {
-                foreach (var file in Directory.GetFiles(_projectsFolder, "*.json"))
+                foreach (var file in Directory.GetFiles(GetProjectsFolder(), "*.json"))
                 {
                     files.Add(file);
                 }
@@ -117,7 +108,7 @@ namespace ShopDrawing.Plugin.Core
             return files;
         }
 
-        public string ProjectsFolder => _projectsFolder;
+        public string ProjectsFolder => GetProjectsFolder();
 
         public string GetAutoSavePath(string dwgFileName)
         {
@@ -127,7 +118,7 @@ namespace ShopDrawing.Plugin.Core
                 safeName = "untitled";
             }
 
-            return Path.Combine(_projectsFolder, $"autosave_{safeName}.json");
+            return Path.Combine(GetProjectsFolder(), $"autosave_{safeName}.json");
         }
 
         public string AutoSave(TenderProject project, string dwgFileName)
@@ -150,6 +141,23 @@ namespace ShopDrawing.Plugin.Core
             }
 
             return name.Trim().Replace(' ', '_');
+        }
+
+        private static string GetProjectsFolder()
+        {
+            return Path.Combine(PluginLogger.GetDataDirectory(), "tender_projects");
+        }
+
+        private static void EnsureProjectsFolder()
+        {
+            try
+            {
+                Directory.CreateDirectory(GetProjectsFolder());
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Error("Suppressed exception in TenderProjectManager.cs", ex);
+            }
         }
     }
 }

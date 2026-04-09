@@ -6,14 +6,6 @@ namespace ShopDrawing.Plugin.Core
 {
     internal static class PluginLogger
     {
-        private static readonly string AppDataRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ShopDrawing");
-
-        private static readonly string LogPath = Path.Combine(AppDataRoot, "shopdrawing_plugin.log");
-
-        private static readonly string DataFolder = Path.Combine(AppDataRoot, "Data");
-
         private static readonly string BundledResourcesFolder = Path.Combine(
             Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
             "Resources");
@@ -22,8 +14,8 @@ namespace ShopDrawing.Plugin.Core
         {
             try
             {
-                EnsureDirectory(AppDataRoot);
-                EnsureDirectory(DataFolder);
+                EnsureDirectory(ProjectDataPathResolver.GetDataDirectory());
+                EnsureDirectory(Path.GetDirectoryName(ProjectDataPathResolver.GetLogPath())!);
             }
             catch (Exception ex)
             {
@@ -33,14 +25,16 @@ namespace ShopDrawing.Plugin.Core
 
         public static string GetDataDirectory()
         {
-            EnsureDirectory(DataFolder);
-            return DataFolder;
+            string dataDirectory = ProjectDataPathResolver.GetDataDirectory();
+            EnsureDirectory(dataDirectory);
+            return dataDirectory;
         }
 
         public static string GetAppDataRoot()
         {
-            EnsureDirectory(AppDataRoot);
-            return AppDataRoot;
+            string runtimeRoot = ProjectDataPathResolver.GetRuntimeRoot();
+            EnsureDirectory(runtimeRoot);
+            return runtimeRoot;
         }
 
         public static string GetBundledResourcesDirectory()
@@ -62,10 +56,16 @@ namespace ShopDrawing.Plugin.Core
         {
             try
             {
-                EnsureDirectory(AppDataRoot);
+                string logPath = ProjectDataPathResolver.GetLogPath();
+                string? logDirectory = Path.GetDirectoryName(logPath);
+                if (!string.IsNullOrWhiteSpace(logDirectory))
+                {
+                    EnsureDirectory(logDirectory);
+                }
+
                 var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 var threadId = Environment.CurrentManagedThreadId;
-                File.AppendAllText(LogPath, $"[{timestamp}] [Thread:{threadId:D2}] [{level}] {msg}\n");
+                File.AppendAllText(logPath, $"[{timestamp}] [Thread:{threadId:D2}] [{level}] {msg}\n");
             }
             catch
             {

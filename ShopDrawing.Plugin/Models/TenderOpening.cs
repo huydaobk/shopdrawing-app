@@ -11,6 +11,9 @@
         /// <summary>Chieu cao opening (mm)</summary>
         public double Height { get; set; }
 
+        /// <summary>Cao do day opening (mm, tinh tu cot 0 cua vach)</summary>
+        public double BottomElevationMm { get; set; }
+
         /// <summary>So luong opening cung kich thuoc</summary>
         public int Quantity { get; set; } = 1;
 

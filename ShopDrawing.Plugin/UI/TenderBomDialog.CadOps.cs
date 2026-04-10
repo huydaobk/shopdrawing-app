@@ -367,6 +367,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     targetRow.ColdStorageDivideFromMaxSide = divideFromMaxSide;
 
                     targetRow.Refresh();
+                    if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
+                    {
+                        LoadOpeningsForWall(targetRow);
+                    }
 
                     SafeRefreshWallGrid();
 
@@ -450,7 +454,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         StartEdgeExposed = template.StartEdgeExposed,
                         EndEdgeExposed = template.EndEdgeExposed,
                         HeightSegments = template.HeightSegments
-                            ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm })
+                            ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm, CadHandle = s.CadHandle })
                             .ToList()
                             ?? new List<TenderHeightSegment>(),
                         Openings = new List<TenderOpening>(),
@@ -485,6 +489,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         _wallGrid.SelectedItem = popupRow;
                         _wallGrid.ScrollIntoView(popupRow);
                     }
+                    LoadOpeningsForWall(popupRow);
                     RefreshFooter();
                     RefreshPanelBreakdown(popupRow);
                     _lastCadPreviewKey = null;
@@ -756,6 +761,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     _wallGrid.SelectedItem = newRow;
 
                     _wallGrid.ScrollIntoView(newRow);
+                    LoadOpeningsForWall(newRow);
 
                     RefreshFooter();
 
@@ -974,7 +980,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     confirmed = true;
 
-                    dlg.DialogResult = true;
+                    dlg.Close();
 
                 }
 
@@ -988,7 +994,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     confirmed = false;
 
-                    dlg.DialogResult = false;
+                    dlg.Close();
 
                 }, 110);
 
@@ -1045,6 +1051,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         {
             private double _lengthMm;
             private double _heightMm;
+            public string? CadHandle { get; set; }
 
             public double LengthMm
             {
@@ -1090,6 +1097,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             bool confirmed = false;
             var selectedSegments = new List<TenderHeightSegment>();
             var pickedOpenings = new List<TenderOpening>();
+            var createdSpanEntityIds = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
             double selectedHeight = representativeHeightMm;
             double seedLength = initialSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
             bool hasLengthReference = totalLengthMm > 0.5 || seedLength > 0.5;
@@ -1105,6 +1113,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
                     Width = Math.Max(1, Math.Round(o.Width)),
                     Height = Math.Max(1, Math.Round(o.Height)),
+                    BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
                     Quantity = Math.Max(1, o.Quantity)
                 })
                 .ToList();
@@ -1131,7 +1140,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         rows.Add(new HeightSegmentInputRow
                         {
                             LengthMm = Math.Round(segment.LengthMm),
-                            HeightMm = Math.Round(segment.HeightMm)
+                            HeightMm = Math.Round(segment.HeightMm),
+                            CadHandle = segment.CadHandle
                         });
                     }
                 }
@@ -1243,11 +1253,22 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 rows.Clear();
                             }
 
+                            string? cadHandle = null;
+                            Autodesk.AutoCAD.DatabaseServices.ObjectId createdId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
+                            if (TryCreatePersistentPickSpanLine(p1Result.Value, p2Result.Value, out var createdHandle, out var entityId))
+                            {
+                                cadHandle = createdHandle;
+                                createdId = entityId;
+                            }
+
                             rows.Add(new HeightSegmentInputRow
                             {
                                 LengthMm = lengthMm,
-                                HeightMm = Math.Round(heightMm)
+                                HeightMm = Math.Round(heightMm),
+                                CadHandle = cadHandle
                             });
+                            if (!createdId.IsNull)
+                                createdSpanEntityIds.Add(createdId);
                         }
                     }
                     finally
@@ -1370,11 +1391,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
                     confirmed = false;
-                    dlg.DialogResult = false;
+                    dlg.Close();
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
-                    if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
+                if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
                     {
                         lblNote.Text = note;
                         lblNote.Foreground = Brushes.Firebrick;
@@ -1395,11 +1416,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
                             Width = Math.Max(1, Math.Round(o.Width)),
                             Height = Math.Max(1, Math.Round(o.Height)),
+                            BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
                             Quantity = Math.Max(1, o.Quantity)
                         })
                         .ToList();
+                    createdSpanEntityIds.Clear();
                     confirmed = true;
-                    dlg.DialogResult = true;
+                    dlg.Close();
                 }, 120);
 
                 footer.Children.Add(btnCancel);
@@ -1408,7 +1431,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 void RefreshPreview()
                 {
                     BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: false);
-                    DrawHeightProfilePreview(previewCanvas, normalized, lengthTarget, panelWidthMm, currentLayoutDirection);
+                    DrawHeightProfilePreview(previewCanvas, normalized, lengthTarget, panelWidthMm, currentLayoutDirection, draftOpenings);
 
                     int panelCount = 0;
                     if (panelWidthMm > 0)
@@ -1451,6 +1474,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 selectedLayoutDirection = selectedDirection;
                 selectedOpenings = pickedOpenings;
             }
+            else if (createdSpanEntityIds.Count > 0)
+            {
+                TryEraseCadEntities(createdSpanEntityIds);
+            }
 
             return confirmed;
         }
@@ -1468,7 +1495,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 .Select(r => new TenderHeightSegment
                 {
                     LengthMm = Math.Round(r.LengthMm),
-                    HeightMm = Math.Round(r.HeightMm)
+                    HeightMm = Math.Round(r.HeightMm),
+                    CadHandle = string.IsNullOrWhiteSpace(r.CadHandle) ? null : r.CadHandle
                 })
                 .ToList();
 
@@ -1477,7 +1505,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 normalized.Add(new TenderHeightSegment
                 {
                     LengthMm = totalLengthMm,
-                    HeightMm = defaultHeightMm
+                    HeightMm = defaultHeightMm,
+                    CadHandle = null
                 });
                 note = "Đang dùng 1 nhịp mặc định toàn tuyến.";
                 return true;
@@ -1493,7 +1522,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             IReadOnlyList<TenderHeightSegment> segments,
             double totalLengthMm,
             int panelWidthMm,
-            string layoutDirection)
+            string layoutDirection,
+            IReadOnlyList<TenderOpening>? openings = null)
         {
             canvas.Children.Clear();
             double drawingLength = segments.Sum(s => Math.Max(0, s.LengthMm));
@@ -1604,7 +1634,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
 
             if (panelWidthMm <= 0)
+            {
+                DrawOpeningPreviewMarkers(canvas, openings, margin, plotW, plotH, bottomY, maxHeight, drawingLength);
                 return;
+            }
 
             if (string.Equals(layoutDirection, "Dọc", StringComparison.OrdinalIgnoreCase))
             {
@@ -1653,6 +1686,67 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         canvas.Children.Add(divLine);
                     }
                 }
+            }
+
+            DrawOpeningPreviewMarkers(canvas, openings, margin, plotW, plotH, bottomY, maxHeight, drawingLength);
+        }
+
+        private static void DrawOpeningPreviewMarkers(
+            Canvas canvas,
+            IReadOnlyList<TenderOpening>? openings,
+            double margin,
+            double plotW,
+            double plotH,
+            double bottomY,
+            double maxHeight,
+            double drawingLength)
+        {
+            if (openings == null || openings.Count == 0 || drawingLength <= 0 || plotW <= 0 || plotH <= 0 || maxHeight <= 0)
+                return;
+
+            var valid = openings
+                .Where(o => o != null && o.Width > 0 && o.Height > 0 && o.Quantity > 0)
+                .SelectMany(o => Enumerable.Range(0, Math.Max(1, o.Quantity)).Select(_ => o))
+                .ToList();
+            if (valid.Count == 0)
+                return;
+
+            int count = valid.Count;
+            for (int i = 0; i < count; i++)
+            {
+                var opening = valid[i];
+                double ratio = (i + 1.0) / (count + 1.0);
+                double centerX = margin + ratio * plotW;
+                double rectW = Math.Max(10, Math.Min(plotW * 0.22, (opening.Width / drawingLength) * plotW));
+                double rectH = Math.Max(10, Math.Min(plotH * 0.65, (opening.Height / maxHeight) * plotH));
+                double left = centerX - rectW / 2.0;
+                double bottomElevationMm = Math.Max(0, opening.BottomElevationMm);
+                double openingBottomY = bottomY - (bottomElevationMm / maxHeight) * plotH;
+                openingBottomY = Math.Max(margin + rectH, Math.Min(bottomY, openingBottomY));
+                double top = Math.Max(margin, openingBottomY - rectH);
+
+                var rect = new System.Windows.Shapes.Rectangle
+                {
+                    Width = rectW,
+                    Height = rectH,
+                    Stroke = new SolidColorBrush(Color.FromRgb(196, 44, 44)),
+                    StrokeThickness = 1.5,
+                    Fill = new SolidColorBrush(Color.FromArgb(50, 255, 255, 255))
+                };
+                Canvas.SetLeft(rect, left);
+                Canvas.SetTop(rect, top);
+                canvas.Children.Add(rect);
+
+                var lbl = new TextBlock
+                {
+                    Text = $"Lỗ{i + 1}: {opening.Width:F0}x{opening.Height:F0} | Đáy {bottomElevationMm:F0}",
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.FromRgb(128, 20, 20)),
+                    Background = new SolidColorBrush(Color.FromArgb(210, 255, 255, 255))
+                };
+                Canvas.SetLeft(lbl, Math.Max(margin, left));
+                Canvas.SetTop(lbl, Math.Max(margin, top - 16));
+                canvas.Children.Add(lbl);
             }
         }
 
@@ -1713,13 +1807,177 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (heightMm <= 0)
                 return false;
 
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao độ đáy lỗ mở (mm):")
+            {
+                DefaultValue = 0,
+                AllowNegative = false,
+                AllowZero = true
+            };
+            var bottomRes = ed.GetDouble(bottomOpt);
+            if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+            double bottomElevationMm = Math.Max(0, Math.Round(bottomRes.Value));
+
             opening = new TenderOpening
             {
                 Type = heightMm >= 2000 ? "Cửa đi" : "Cửa sổ",
                 Width = widthMm,
                 Height = heightMm,
+                BottomElevationMm = bottomElevationMm,
                 Quantity = 1
             };
+            return true;
+        }
+
+        private bool TryCreatePersistentPickSpanLine(
+            Autodesk.AutoCAD.Geometry.Point3d start,
+            Autodesk.AutoCAD.Geometry.Point3d end,
+            out string cadHandle,
+            out Autodesk.AutoCAD.DatabaseServices.ObjectId entityId)
+        {
+            cadHandle = string.Empty;
+            entityId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
+            if (start.DistanceTo(end) <= 1.0)
+                return false;
+
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return false;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    var layerId = EnsureHighlightLayer(doc.Database, tr);
+                    var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(
+                        doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
+                    var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
+                        bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
+                        Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
+
+                    var line = new Autodesk.AutoCAD.DatabaseServices.Line(start, end)
+                    {
+                        LayerId = layerId,
+                        ColorIndex = PanelPreviewColorIndex,
+                        LineWeight = Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030
+                    };
+
+                    btr.AppendEntity(line);
+                    tr.AddNewlyCreatedDBObject(line, true);
+                    entityId = line.ObjectId;
+                    cadHandle = line.Handle.ToString();
+                    tr.Commit();
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void TryEraseCadEntities(IEnumerable<Autodesk.AutoCAD.DatabaseServices.ObjectId> entityIds)
+        {
+            var ids = (entityIds ?? Enumerable.Empty<Autodesk.AutoCAD.DatabaseServices.ObjectId>())
+                .Where(id => !id.IsNull)
+                .Distinct()
+                .ToList();
+            if (ids.Count == 0)
+                return;
+
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    foreach (var id in ids)
+                    {
+                        if (!id.IsValid || id.IsErased)
+                            continue;
+
+                        var dbObj = tr.GetObject(id, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite, false);
+                        dbObj?.Erase();
+                    }
+                    tr.Commit();
+                }
+            }
+            catch
+            {
+                // Không chặn luồng popup khi xóa line tạm lỗi.
+            }
+        }
+
+        private bool SyncHeightSegmentsFromCadLines(TenderWallRow row)
+        {
+            if (row == null || row.HeightSegments == null || row.HeightSegments.Count == 0)
+                return false;
+
+            var linked = row.HeightSegments
+                .Where(s => s != null && !string.IsNullOrWhiteSpace(s.CadHandle))
+                .ToList();
+            if (linked.Count == 0)
+                return false;
+
+            bool changed = false;
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return false;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    foreach (var seg in linked)
+                    {
+                        if (!long.TryParse(seg.CadHandle, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var rawHandle))
+                            continue;
+
+                        var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                        if (!doc.Database.TryGetObjectId(handle, out var objId))
+                            continue;
+
+                        var line = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false)
+                            as Autodesk.AutoCAD.DatabaseServices.Line;
+                        if (line == null)
+                            continue;
+
+                        double newLength = Math.Round(line.Length);
+                        if (newLength <= 0)
+                            continue;
+
+                        if (Math.Abs(seg.LengthMm - newLength) > 0.5)
+                        {
+                            seg.LengthMm = newLength;
+                            changed = true;
+                        }
+                    }
+
+                    tr.Commit();
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (!changed)
+                return false;
+
+            double totalLength = row.HeightSegments.Sum(s => Math.Max(0, s.LengthMm));
+            if (totalLength > 0)
+            {
+                row.Length = totalLength;
+                row.Height = row.HeightSegments.Sum(s => Math.Max(0, s.LengthMm) * Math.Max(0, s.HeightMm)) / totalLength;
+            }
+
+            row.Refresh();
             return true;
         }
 
@@ -1850,6 +2108,23 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double finalW = widthMm;
 
                 double finalH = heightMm;
+                double finalBottom = Math.Max(0, Math.Round(existingRow?.BottomElevationMm ?? 0));
+
+                var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions(
+
+                    "\nNhập cao độ đáy lỗ mở (mm):");
+
+                bottomOpt.DefaultValue = finalBottom;
+
+                bottomOpt.AllowNegative = false;
+
+                bottomOpt.AllowZero = true;
+
+                var bottomResult = ed.GetDouble(bottomOpt);
+
+                if (bottomResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
+
+                finalBottom = Math.Max(0, Math.Round(bottomResult.Value));
 
                 bool confirmed = false;
 
@@ -1887,7 +2162,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     {
 
-                        Text = $"Rộng: {finalW:F0} mm\nCao:  {finalH:F0} mm",
+                        Text = $"Rộng: {finalW:F0} mm\nCao:  {finalH:F0} mm\nĐáy: {finalBottom:F0} mm",
 
                         FontSize = 15,
 
@@ -1915,7 +2190,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                         finalH = tmp;
 
-                        lblInfo.Text = $"Rộng: {finalW:F0} mm\nCao:  {finalH:F0} mm";
+                        lblInfo.Text = $"Rộng: {finalW:F0} mm\nCao:  {finalH:F0} mm\nĐáy: {finalBottom:F0} mm";
 
                     });
 
@@ -1968,6 +2243,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         existingRow.Width = finalW;
 
                         existingRow.Height = finalH;
+                        existingRow.BottomElevationMm = finalBottom;
 
                         existingRow.Type = finalH >= 2000 ? "Cửa đi" : "Cửa sổ";
 
@@ -1988,6 +2264,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             Width = finalW,
 
                             Height = finalH,
+
+                            BottomElevationMm = finalBottom,
 
                             Quantity = 1
 
@@ -2017,7 +2295,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     string action = existingRow != null ? "Cập nhật" : "Đã thêm";
 
-                    SetStatus($"{action} lỗ mở {finalW:F0}x{finalH:F0} mm");
+                    SetStatus($"{action} lỗ mở {finalW:F0}x{finalH:F0} mm | Đáy {finalBottom:F0} mm");
 
                 }));
 
@@ -2235,6 +2513,23 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 ShowCadPreview(_pendingPreviewRow);
 
+        }
+
+        private void OnCadSegmentSyncTimerTick(object? sender, EventArgs e)
+        {
+            if (_suspendCadOperations || _isEditingCell || _wallGrid == null)
+                return;
+
+            if (!(_wallGrid.SelectedItem is TenderWallRow row))
+                return;
+
+            if (!SyncHeightSegmentsFromCadLines(row))
+                return;
+
+            SafeRefreshWallGrid();
+            RefreshFooter();
+            RefreshPanelBreakdown(row);
+            RequestCadPreview(row, force: true);
         }
 
 

@@ -20,7 +20,8 @@ namespace ShopDrawing.Plugin.Core
                 .Select(s => new TenderHeightSegment
                 {
                     LengthMm = s.LengthMm,
-                    HeightMm = s.HeightMm
+                    HeightMm = s.HeightMm,
+                    CadHandle = s.CadHandle
                 })
                 .ToList();
 

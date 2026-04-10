@@ -12,6 +12,9 @@ namespace ShopDrawing.Plugin.Models
 
         /// <summary>Chiều cao đoạn (mm)</summary>
         public double HeightMm { get; set; }
+
+        /// <summary>Handle CAD của line nhịp (nếu đoạn được pick từ CAD)</summary>
+        public string? CadHandle { get; set; }
     }
 
     /// <summary>Mot dong trong bang phan tich tam so bo</summary>

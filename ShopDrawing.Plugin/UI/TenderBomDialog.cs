@@ -54,6 +54,7 @@ namespace ShopDrawing.Plugin.UI
         private ComboBox _pickApplicationPreset = null!;
         private ComboBox _pickSpecPreset = null!;
         private readonly DispatcherTimer _cadPreviewTimer;
+        private readonly DispatcherTimer _cadSegmentSyncTimer;
         private TenderWallRow? _pendingPreviewRow;
         private string? _lastCadPreviewKey;
         private bool _isEditingCell; // Guard: suppress CAD LockDocument while a DataGrid cell is being edited
@@ -77,26 +78,36 @@ namespace ShopDrawing.Plugin.UI
             _openingRows = new ObservableCollection<TenderOpeningRow>();
             _cadPreviewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
             _cadPreviewTimer.Tick += OnCadPreviewTimerTick;
+            _cadSegmentSyncTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
+            _cadSegmentSyncTimer.Tick += OnCadSegmentSyncTimerTick;
             LoadProjectData();
 
             Content = BuildLayout();
             UiText.NormalizeWindow(this);
             Loaded += (_, _) => UiText.NormalizeWindow(this);
+            Loaded += (_, _) => _cadSegmentSyncTimer.Start();
             Deactivated += (_, _) =>
             {
                 _cadPreviewTimer.Stop();
+                _cadSegmentSyncTimer.Stop();
                 _pendingPreviewRow = null;
                 _lastCadPreviewKey = null;
                 ForceClearHighlight();
             };
             Activated += (_, _) =>
             {
+                _cadSegmentSyncTimer.Start();
                 if (!_suspendCadOperations
                     && !_isEditingCell
                     && _wallGrid?.SelectedItem is TenderWallRow selectedRow)
                 {
                     RequestCadPreview(selectedRow, force: true);
                 }
+            };
+            Closed += (_, _) =>
+            {
+                _cadPreviewTimer.Stop();
+                _cadSegmentSyncTimer.Stop();
             };
         }
         private UIElement BuildLayout()
@@ -777,7 +788,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 return;
             }
 
-            _openingRows.Add(new TenderOpeningRow { Type = "Cửa đi", Width = 2000, Height = 2500, Quantity = 1 });
+            _openingRows.Add(new TenderOpeningRow { Type = "Cửa đi", Width = 2000, Height = 2500, BottomElevationMm = 0, Quantity = 1 });
             wallRow.SyncOpenings(_openingRows);
             wallRow.Refresh();
             SafeRefreshWallGrid();
@@ -2049,7 +2060,14 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         {
             _openingRows.Clear();
             foreach (var op in wallRow.Openings)
-                _openingRows.Add(new TenderOpeningRow { Type = op.Type, Width = op.Width, Height = op.Height, Quantity = op.Quantity });
+                _openingRows.Add(new TenderOpeningRow
+                {
+                    Type = op.Type,
+                    Width = op.Width,
+                    Height = op.Height,
+                    BottomElevationMm = op.BottomElevationMm,
+                    Quantity = op.Quantity
+                });
         }
 
         private List<TenderWall> GetWallModels() => _wallRows.Select(r => r.ToModel()).ToList();
@@ -2437,7 +2455,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             HeightSegments = HeightSegments.Select(s => new TenderHeightSegment
             {
                 LengthMm = s.LengthMm,
-                HeightMm = s.HeightMm
+                HeightMm = s.HeightMm,
+                CadHandle = s.CadHandle
             }).ToList(),
             SpecKey = SpecKey,
             PanelWidth = PanelWidth,
@@ -2611,7 +2630,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 segments.Add(new TenderHeightSegment
                 {
                     LengthMm = lengthMm,
-                    HeightMm = heightMm
+                    HeightMm = heightMm,
+                    CadHandle = null
                 });
             }
 
@@ -2637,7 +2657,11 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         {
             Openings = rows.Select(r => new TenderOpening
             {
-                Type = r.Type, Width = r.Width, Height = r.Height, Quantity = r.Quantity
+                Type = r.Type,
+                Width = r.Width,
+                Height = r.Height,
+                BottomElevationMm = Math.Max(0, r.BottomElevationMm),
+                Quantity = r.Quantity
             }).ToList();
         }
 
@@ -2655,7 +2679,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 HeightSegments = HeightSegments.Select(s => new TenderHeightSegment
                 {
                     LengthMm = s.LengthMm,
-                    HeightMm = s.HeightMm
+                    HeightMm = s.HeightMm,
+                    CadHandle = s.CadHandle
                 }).ToList(),
                 PanelWidth = PanelWidth, PanelThickness = PanelThickness,
                 LayoutDirection = LayoutDirection,
@@ -2689,7 +2714,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     .Select(s => new TenderHeightSegment
                     {
                         LengthMm = s.LengthMm,
-                        HeightMm = s.HeightMm
+                        HeightMm = s.HeightMm,
+                        CadHandle = s.CadHandle
                     }).ToList(),
                 PanelWidth = w.PanelWidth, PanelThickness = w.PanelThickness,
                 LayoutDirection = w.LayoutDirection,
@@ -2727,6 +2753,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public string Type { get; set; } = "Cửa đi";
         public double Width { get; set; }
         public double Height { get; set; }
+        public double BottomElevationMm { get; set; }
         public int Quantity { get; set; } = 1;
 
         public string TotalAreaDisplay => (Width * Height * Quantity / 1_000_000.0).ToString("F2");

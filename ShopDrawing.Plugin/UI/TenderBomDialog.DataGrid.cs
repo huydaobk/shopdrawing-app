@@ -176,7 +176,8 @@ namespace ShopDrawing.Plugin.UI
             {
                 if (_wallGrid.SelectedItem is TenderWallRow row)
                 {
-                    LoadOpeningsForWall(row);
+                    SyncHeightSegmentsFromCadLines(row);
+                    LoadOpeningsForWall(row);
                     RefreshPanelBreakdown(row);
                     RequestCadPreview(row);
                 }
@@ -342,7 +343,8 @@ namespace ShopDrawing.Plugin.UI
 
             grid.Columns.Add(ColTemplateCombo("Loại", "Type", 100, TenderOpening.TypeOptions));
             grid.Columns.Add(Col("Rộng (mm)", "Width", 85, "F0"));
-            grid.Columns.Add(Col("Cao (mm)", "Height", 85, "F0"));
+            grid.Columns.Add(Col("Cao (mm)", "Height", 85, "F0"));
+            grid.Columns.Add(Col("Cao độ đáy (mm)", "BottomElevationMm", 115, "F0"));
             grid.Columns.Add(Col("Số lượng", "Quantity", 70));
 
             var cellStyleBold = new Style(typeof(DataGridCell));
@@ -443,7 +445,7 @@ namespace ShopDrawing.Plugin.UI
                 PanelWidth = GetWidthForSpec(specKey),
                 PanelThickness = GetThicknessForSpec(specKey),
                 HeightSegments = selectedRow?.HeightSegments
-                    ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm })
+                    ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm, CadHandle = s.CadHandle })
                     .ToList()
                     ?? new List<TenderHeightSegment>(),
                 LayoutDirection = selectedRow?.LayoutDirection ?? TenderWall.DefaultLayoutDirection(category),

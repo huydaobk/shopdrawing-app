@@ -223,9 +223,7 @@ internal sealed class InstallerArguments
         {
             BundleUrl = values.TryGetValue("--bundle-url", out string? bundleUrl) ? bundleUrl : string.Empty,
             BundleZipPath = values.TryGetValue("--bundle-zip", out string? bundleZip) ? bundleZip : string.Empty,
-            InstallDirectory = values.TryGetValue("--install-dir", out string? installDir) && !string.IsNullOrWhiteSpace(installDir)
-                ? installDir
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "ApplicationPlugins"),
+            InstallDirectory = NormalizeInstallDirectory(values.TryGetValue("--install-dir", out string? installDir) ? installDir : null),
             TargetProcessId = targetPid,
             Version = values.TryGetValue("--version", out string? version) ? version : string.Empty,
             Silent = values.TryGetValue("--silent", out string? silentValue)
@@ -257,12 +255,37 @@ internal sealed class InstallerArguments
         {
             BundleUrl = settings.BundleUrl ?? string.Empty,
             BundleZipPath = settings.BundleZipPath ?? string.Empty,
-            InstallDirectory = string.IsNullOrWhiteSpace(settings.InstallDirectory)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "ApplicationPlugins")
-                : settings.InstallDirectory,
+            InstallDirectory = NormalizeInstallDirectory(settings.InstallDirectory),
             Version = settings.Version ?? string.Empty,
             Silent = settings.Silent
         };
+    }
+
+    private static string NormalizeInstallDirectory(string? installDirectory)
+    {
+        string defaultRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Autodesk",
+            "ApplicationPlugins");
+
+        if (string.IsNullOrWhiteSpace(installDirectory))
+        {
+            return defaultRoot;
+        }
+
+        string fullPath = Path.GetFullPath(installDirectory);
+        DirectoryInfo? current = new(fullPath);
+        while (current != null)
+        {
+            if (current.Name.Equals("ApplicationPlugins", StringComparison.OrdinalIgnoreCase))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        return fullPath;
     }
 }
 

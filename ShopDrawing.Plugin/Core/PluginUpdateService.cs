@@ -153,7 +153,13 @@ namespace ShopDrawing.Plugin.Core
             {
                 string pluginDirectory = PluginVersionProvider.GetInstallDirectory();
                 string installerPath = Path.Combine(pluginDirectory, "ShopDrawing.Installer.exe");
-                if (!File.Exists(installerPath))
+                bool hasInstaller = File.Exists(installerPath);
+                if (!string.IsNullOrWhiteSpace(result.InstallerUrl))
+                {
+                    hasInstaller = TryDownloadInstaller(result.InstallerUrl, installerPath) || hasInstaller;
+                }
+
+                if (!hasInstaller)
                 {
                     if (!TryDownloadInstaller(result.InstallerUrl, installerPath))
                     {

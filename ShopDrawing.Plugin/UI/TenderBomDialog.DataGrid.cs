@@ -195,9 +195,19 @@ namespace ShopDrawing.Plugin.UI
                 return;
 
             var source = e.OriginalSource as DependencyObject;
-            bool clickedOnRow = FindVisualParent<DataGridRow>(source) != null;
-            if (clickedOnRow)
+            var clickedRow = FindVisualParent<DataGridRow>(source);
+            if (clickedRow != null)
+            {
+                // Click lại đúng dòng đang chọn thì ép refresh preview ngay,
+                // tránh tình trạng phải bấm nhiều lần mới hiện highlight.
+                if (ReferenceEquals(clickedRow.DataContext, _wallGrid.SelectedItem)
+                    && clickedRow.DataContext is TenderWallRow sameRow)
+                {
+                    _lastCadPreviewKey = null;
+                    RequestCadPreview(sameRow, force: true);
+                }
                 return;
+            }
 
             _wallGrid.UnselectAll();
             _cadPreviewTimer.Stop();
@@ -212,12 +222,11 @@ namespace ShopDrawing.Plugin.UI
                 return;
 
             var source = e.OriginalSource as DependencyObject;
-            var clickedRow = FindVisualParent<DataGridRow>(source);
-            var clickedGrid = FindVisualParent<DataGrid>(source);
-            if (clickedRow != null && ReferenceEquals(clickedGrid, _wallGrid))
+            // Chỉ clear khi click hoàn toàn ngoài bảng vách.
+            // Không can thiệp các click bên trong grid để tránh phải bấm nhiều lần.
+            if (IsDescendantOf(source, _wallGrid))
                 return;
 
-            _wallGrid.UnselectAll();
             _cadPreviewTimer.Stop();
             _pendingPreviewRow = null;
             _lastCadPreviewKey = null;
@@ -234,6 +243,18 @@ namespace ShopDrawing.Plugin.UI
             }
 
             return null;
+        }
+
+        private static bool IsDescendantOf(DependencyObject? child, DependencyObject ancestor)
+        {
+            while (child != null)
+            {
+                if (ReferenceEquals(child, ancestor))
+                    return true;
+                child = VisualTreeHelper.GetParent(child);
+            }
+
+            return false;
         }
 
         private void OnWallCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)

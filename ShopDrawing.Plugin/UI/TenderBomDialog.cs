@@ -1262,12 +1262,9 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (row.PanelWidth <= 0)
                 return;
 
-            if (string.Equals(UiText.Normalize(row.Category), "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
-                && vertices.Count >= 3
-                && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr))
-            {
-                return;
-            }
+            // Đồng bộ preview với logic tính tấm đã chốt:
+            // luôn chia theo scan-line liên tục cho vùng khép kín (kể cả đa giác),
+            // tránh nhánh developed riêng làm sai khác so với bảng tính.
 
             bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
             double min = horizontal ? vertices.Min(v => v[1]) : vertices.Min(v => v[0]);

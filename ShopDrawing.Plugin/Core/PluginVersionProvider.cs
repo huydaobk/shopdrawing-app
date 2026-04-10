@@ -17,7 +17,10 @@ namespace ShopDrawing.Plugin.Core
 
             if (!string.IsNullOrWhiteSpace(informationalVersion))
             {
-                return informationalVersion;
+                int metadataIndex = informationalVersion.IndexOf('+');
+                return metadataIndex > 0
+                    ? informationalVersion[..metadataIndex].Trim()
+                    : informationalVersion;
             }
 
             string fileVersion = assembly

@@ -41,5 +41,25 @@ namespace ShopDrawing.Plugin.Core
             string assemblyLocation = Assembly.GetExecutingAssembly().Location;
             return Path.GetDirectoryName(assemblyLocation) ?? AppContext.BaseDirectory;
         }
+
+        public static string GetApplicationPluginsDirectory()
+        {
+            string installDirectory = GetInstallDirectory();
+            DirectoryInfo? current = new DirectoryInfo(installDirectory);
+            while (current != null)
+            {
+                if (current.Name.Equals("ApplicationPlugins", StringComparison.OrdinalIgnoreCase))
+                {
+                    return current.FullName;
+                }
+
+                current = current.Parent;
+            }
+
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Autodesk",
+                "ApplicationPlugins");
+        }
     }
 }

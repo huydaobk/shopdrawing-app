@@ -151,8 +151,8 @@ namespace ShopDrawing.Plugin.Core
         {
             try
             {
-                string installDirectory = PluginVersionProvider.GetInstallDirectory();
-                string installerPath = Path.Combine(installDirectory, "ShopDrawing.Installer.exe");
+                string pluginDirectory = PluginVersionProvider.GetInstallDirectory();
+                string installerPath = Path.Combine(pluginDirectory, "ShopDrawing.Installer.exe");
                 if (!File.Exists(installerPath))
                 {
                     if (!TryDownloadInstaller(result.InstallerUrl, installerPath))
@@ -171,9 +171,10 @@ namespace ShopDrawing.Plugin.Core
                 ProcessStartInfo startInfo = new()
                 {
                     FileName = installerPath,
-                    WorkingDirectory = installDirectory,
+                    WorkingDirectory = pluginDirectory,
                     UseShellExecute = false,
-                    Arguments = BuildUpdaterArguments(result, installDirectory)
+                    CreateNoWindow = true,
+                    Arguments = BuildUpdaterArguments(result)
                 };
 
                 Process.Start(startInfo);
@@ -212,11 +213,11 @@ namespace ShopDrawing.Plugin.Core
             }
         }
 
-        private static string BuildUpdaterArguments(UpdateCheckResult result, string installDirectory)
+        private static string BuildUpdaterArguments(UpdateCheckResult result)
         {
             StringBuilder builder = new();
             AppendArgument(builder, "--bundle-url", result.PackageUrl);
-            AppendArgument(builder, "--install-dir", installDirectory);
+            AppendArgument(builder, "--install-dir", PluginVersionProvider.GetApplicationPluginsDirectory());
             AppendArgument(builder, "--target-pid", Process.GetCurrentProcess().Id.ToString());
             AppendArgument(builder, "--version", result.LatestVersion);
             AppendArgument(builder, "--silent", "true");

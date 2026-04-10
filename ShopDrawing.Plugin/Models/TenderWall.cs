@@ -5,6 +5,15 @@ using ShopDrawing.Plugin.Core;
 
 namespace ShopDrawing.Plugin.Models
 {
+    public class TenderHeightSegment
+    {
+        /// <summary>Chiều dài đoạn theo tuyến vách (mm)</summary>
+        public double LengthMm { get; set; }
+
+        /// <summary>Chiều cao đoạn (mm)</summary>
+        public double HeightMm { get; set; }
+    }
+
     /// <summary>Mot dong trong bang phan tich tam so bo</summary>
     public class TenderPanelEntry
     {
@@ -40,6 +49,12 @@ namespace ShopDrawing.Plugin.Models
 
         /// <summary>Chieu cao vach (mm)</summary>
         public double Height { get; set; }
+
+        /// <summary>
+        /// Danh sách cao độ theo từng đoạn chiều dài.
+        /// Để trống => dùng Height như logic cũ.
+        /// </summary>
+        public List<TenderHeightSegment> HeightSegments { get; set; } = new();
 
         /// <summary>Ma Spec (VD: "ISOFRIGO-TT")</summary>
         public string SpecKey { get; set; } = string.Empty;
@@ -208,7 +223,56 @@ namespace ShopDrawing.Plugin.Models
         /// </summary>
         public List<double[]>? PolygonVertices { get; set; }
 
-        public double WallAreaM2 => Length * Height / 1_000_000.0;
+        public IReadOnlyList<TenderHeightSegment> GetEffectiveHeightSegments()
+        {
+            return WallHeightResolver.Normalize(Length, Height, HeightSegments);
+        }
+
+        public double RepresentativeHeightMm
+        {
+            get
+            {
+                var segments = GetEffectiveHeightSegments();
+                if (segments.Count == 0)
+                    return Math.Max(0, Height);
+
+                double totalLength = segments.Sum(s => s.LengthMm);
+                if (totalLength <= 0)
+                    return Math.Max(0, Height);
+
+                return segments.Sum(s => s.LengthMm * s.HeightMm) / totalLength;
+            }
+        }
+
+        public double StartEdgeHeightMm
+        {
+            get
+            {
+                var segments = GetEffectiveHeightSegments();
+                return segments.Count == 0 ? Math.Max(0, Height) : Math.Max(0, segments[0].HeightMm);
+            }
+        }
+
+        public double EndEdgeHeightMm
+        {
+            get
+            {
+                var segments = GetEffectiveHeightSegments();
+                return segments.Count == 0 ? Math.Max(0, Height) : Math.Max(0, segments[^1].HeightMm);
+            }
+        }
+
+        public double WallAreaM2
+        {
+            get
+            {
+                var segments = GetEffectiveHeightSegments();
+                if (segments.Count == 0)
+                    return Math.Max(0, Length) * Math.Max(0, Height) / 1_000_000.0;
+
+                return segments.Sum(s => s.LengthMm * s.HeightMm) / 1_000_000.0;
+            }
+        }
         public double OpeningAreaM2 => Openings.Sum(o => o.TotalAreaM2);
         public double NetAreaM2 => Math.Max(0, WallAreaM2 - OpeningAreaM2);
         public double TotalOpeningWidth => Openings.Sum(o => o.TotalWidth);
@@ -222,7 +286,7 @@ namespace ShopDrawing.Plugin.Models
         // Cap opening edge dimensions to wall bounds.
         // Prevents over-counting sealant when user inputs opening height/width > wall size.
         public double TotalOpeningVerticalEdges =>
-            Openings.Sum(o => Math.Min(o.Height, Height) * 2 * o.Quantity);
+            Openings.Sum(o => Math.Min(o.Height, RepresentativeHeightMm) * 2 * o.Quantity);
         public double TotalOpeningHorizontalTopLength =>
             Openings.Sum(o => Math.Min(o.Width, Length) * o.Quantity);
         public double TotalOpeningSillLength =>
@@ -262,10 +326,10 @@ namespace ShopDrawing.Plugin.Models
             string.Equals(ResolvedEndPanelTreatment, EndPanelTreatmentFree, StringComparison.OrdinalIgnoreCase)
                 ? ExposedEndLength
                 : 0;
-        public double ExposedEndLength => (StartEdgeExposed ? Height : 0) + (EndEdgeExposed ? Height : 0);
+        public double ExposedEndLength => (StartEdgeExposed ? StartEdgeHeightMm : 0) + (EndEdgeExposed ? EndEdgeHeightMm : 0);
         public double TotalExposedEdgeLength => TopEdgeLength + BottomEdgeLength + ExposedEndLength;
-        public double OutsideCornerHeight => Math.Max(0, OutsideCornerCount) * Height;
-        public double InsideCornerHeight => Math.Max(0, InsideCornerCount) * Height;
+        public double OutsideCornerHeight => Math.Max(0, OutsideCornerCount) * RepresentativeHeightMm;
+        public double InsideCornerHeight => Math.Max(0, InsideCornerCount) * RepresentativeHeightMm;
 
         /// <summary>
         /// Tổng chiều dài khe nối đứng (mm). = VerticalJointCount × Height.
@@ -273,7 +337,7 @@ namespace ShopDrawing.Plugin.Models
         /// </summary>
         public double VerticalJointTotalLength =>
             string.Equals(LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase)
-                ? Math.Max(0, VerticalJointCount) * Height
+                ? Math.Max(0, VerticalJointCount) * RepresentativeHeightMm
                 : 0.0;
 
         /// <summary>
@@ -281,14 +345,14 @@ namespace ShopDrawing.Plugin.Models
         /// Doc: chia theo chieu dai vach.
         /// Ngang: chia theo chieu cao vach.
         /// </summary>
-        public double DivisionSpan => LayoutDirection == "Ngang" ? Height : Length;
+        public double DivisionSpan => LayoutDirection == "Ngang" ? RepresentativeHeightMm : Length;
 
         /// <summary>
         /// Chieu span cua tam (mm) - chieu con lai.
         /// Doc: span = chieu cao vach.
         /// Ngang: span = chieu dai vach.
         /// </summary>
-        public double PanelSpan => LayoutDirection == "Ngang" ? Length : Height;
+        public double PanelSpan => LayoutDirection == "Ngang" ? Length : RepresentativeHeightMm;
 
         public int EstimatedPanelCount
         {
@@ -307,6 +371,15 @@ namespace ShopDrawing.Plugin.Models
             {
                 bool isHorizontal = LayoutDirection == "Ngang";
                 return ScanLineAnalyzer.Analyze(PolygonVertices, PanelWidth, isHorizontal);
+            }
+
+            // Vách đa cao độ + lắp dọc: trải tấm liên tục toàn tuyến (không reset theo từng nhịp).
+            // Mỗi dải tấm lấy cao độ cấp theo max(H) trong dải; phần chênh lệch là hao hụt giao bậc.
+            if (LayoutDirection == "Dọc" && Openings.Count == 0)
+            {
+                var effectiveSegments = GetEffectiveHeightSegments();
+                if (effectiveSegments.Count > 1)
+                    return BuildContinuousVerticalBreakdown(effectiveSegments);
             }
 
             var entries = new List<TenderPanelEntry>();
@@ -382,6 +455,106 @@ namespace ShopDrawing.Plugin.Models
             }
 
             return entries;
+        }
+
+        private List<TenderPanelEntry> BuildContinuousVerticalBreakdown(IReadOnlyList<TenderHeightSegment> segments)
+        {
+            var entries = new List<TenderPanelEntry>();
+            if (PanelWidth <= 0 || Length <= 0 || segments.Count == 0)
+                return entries;
+
+            int stripCount = (int)Math.Ceiling(Length / PanelWidth);
+            if (stripCount <= 0)
+                return entries;
+
+            var ranges = BuildSegmentRanges(segments);
+            var orderedGroups = new Dictionary<(double Width, double Height), int>();
+            var wasteGroups = new Dictionary<(double Width, double WasteHeight), int>();
+
+            for (int strip = 0; strip < stripCount; strip++)
+            {
+                double stripStart = strip * PanelWidth;
+                double stripEnd = Math.Min((strip + 1) * PanelWidth, Length);
+                double stripWidth = Math.Max(0, stripEnd - stripStart);
+                if (stripWidth <= 0)
+                    continue;
+
+                double maxHeight = 0;
+                double netArea = 0;
+
+                foreach (var range in ranges)
+                {
+                    double overlap = Math.Max(0, Math.Min(stripEnd, range.End) - Math.Max(stripStart, range.Start));
+                    if (overlap <= 0)
+                        continue;
+
+                    maxHeight = Math.Max(maxHeight, range.HeightMm);
+                    netArea += overlap * range.HeightMm;
+                }
+
+                if (maxHeight <= 0)
+                    continue;
+
+                // Khối lượng cấp: mỗi dải lấy theo cao độ max trong dải.
+                var orderedKey = (Width: Math.Round((double)PanelWidth), Height: Math.Round(maxHeight));
+                if (orderedGroups.ContainsKey(orderedKey))
+                    orderedGroups[orderedKey]++;
+                else
+                    orderedGroups[orderedKey] = 1;
+
+                // Hao hụt giao bậc trong dải (nếu có).
+                double orderedArea = PanelWidth * maxHeight;
+                double stepWasteArea = Math.Max(0, orderedArea - netArea);
+                if (stepWasteArea > 1.0)
+                {
+                    double wasteHeight = stepWasteArea / PanelWidth;
+                    var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
+                    if (wasteGroups.ContainsKey(wasteKey))
+                        wasteGroups[wasteKey]++;
+                    else
+                        wasteGroups[wasteKey] = 1;
+                }
+
+            }
+
+            foreach (var pair in orderedGroups.OrderByDescending(p => p.Key.Height).ThenByDescending(p => p.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.Height,
+                    Count = pair.Value,
+                    Label = "Nguyên"
+                });
+            }
+
+            foreach (var pair in wasteGroups.OrderByDescending(p => p.Key.WasteHeight).ThenByDescending(p => p.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.WasteHeight,
+                    Count = pair.Value,
+                    Label = "Hao hụt"
+                });
+            }
+
+            return entries;
+        }
+
+        private static IReadOnlyList<(double Start, double End, double HeightMm)> BuildSegmentRanges(
+            IReadOnlyList<TenderHeightSegment> segments)
+        {
+            var ranges = new List<(double Start, double End, double HeightMm)>(segments.Count);
+            double cursor = 0;
+            foreach (var segment in segments)
+            {
+                double end = cursor + Math.Max(0, segment.LengthMm);
+                ranges.Add((cursor, end, Math.Max(0, segment.HeightMm)));
+                cursor = end;
+            }
+
+            return ranges;
         }
 
         public double OrderedAreaM2

@@ -2,11 +2,12 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Media;
-using System.Windows.Threading;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Models;
 
@@ -36,15 +37,16 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(Col("Tầng", "Floor", 50));
             grid.Columns.Add(Col("Ký hiệu", "Name", 70));
             grid.Columns.Add(Col("Dài (mm)", "Length", 80, "F0"));
-            grid.Columns.Add(Col("Cao (mm)", "Height", 80, "F0"));
+            grid.Columns.Add(Col("Cao (mm)", "Height", 80, "F0"));
+            grid.Columns.Add(Col("Đoạn cao độ (LxH)", "HeightSegmentsInput", 150));
             grid.Columns.Add(Col("Thả cáp (mm)", "CableDropLengthMm", 90, "F0"));
             grid.Columns.Add(ColTemplateCombo("Mã spec", "SpecKey", 100, _project.Specs.Select(s => s.Key).ToArray()));
             grid.Columns.Add(ColTemplateCombo("Khổ tấm", "PanelWidth", 70, new[] { "900", "1000", "1100", "1150", "1200" }));
             grid.Columns.Add(ColTemplateCombo("Hướng", "LayoutDirection", 60, TenderWall.LayoutDirectionOptions));
             grid.Columns.Add(ColSuspensionLayout("Hướng PK", "SuspensionLayoutDirection", 75));
             grid.Columns.Add(ColTemplateCombo("Ứng dụng", "Application", 85, TenderWall.ApplicationOptions));
-            grid.Columns[6] = ColCableDrop("Thả cáp (mm)", "CableDropLengthMm", 90, "F0");
-            grid.Columns[8].IsReadOnly = true;
+            grid.Columns[7] = ColCableDrop("Thả cáp (mm)", "CableDropLengthMm", 90, "F0");
+            grid.Columns[9].IsReadOnly = true;
             grid.Columns.Add(ColTopPanelTreatment("Chi tiết đỉnh vách", "TopPanelTreatment", 130));
             grid.Columns.Add(ColEndPanelTreatment("Chi tiết đầu/cuối vách", "EndPanelTreatment", 130));
             grid.Columns.Add(ColBottomPanelTreatment("Chi tiết chân vách", "BottomPanelTreatment", 135));
@@ -75,9 +77,10 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(colNet);
             grid.Columns.Add(colPanels);
 
-            grid.SelectionChanged += OnWallSelectionChanged;
-            grid.BeginningEdit += OnWallBeginningEdit;
-            grid.CellEditEnding += OnWallCellEditEnding;
+            grid.SelectionChanged += OnWallSelectionChanged;
+            grid.PreviewMouseLeftButtonDown += OnWallGridPreviewMouseLeftButtonDown;
+            grid.BeginningEdit += OnWallBeginningEdit;
+            grid.CellEditEnding += OnWallCellEditEnding;
 
             return grid;
         }
@@ -166,9 +169,9 @@ namespace ShopDrawing.Plugin.UI
             _isEditingCell = true;
         }
 
-        private void OnWallSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isEditingCell || _suspendCadOperations) return; // Suppress CAD ops during cell edit/programmatic updates
+        private void OnWallSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isEditingCell || _suspendCadOperations) return; // Suppress CAD ops during cell edit/programmatic updates
             try
             {
                 if (_wallGrid.SelectedItem is TenderWallRow row)
@@ -183,8 +186,55 @@ namespace ShopDrawing.Plugin.UI
                     ClearHighlight();
                 }
             }
-            catch (Exception ex) { SetStatus($"Canh bao: {ex.Message}"); }
-        }
+            catch (Exception ex) { SetStatus($"Canh bao: {ex.Message}"); }
+        }
+
+        private void OnWallGridPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_isEditingCell || _suspendCadOperations || _wallGrid == null)
+                return;
+
+            var source = e.OriginalSource as DependencyObject;
+            bool clickedOnRow = FindVisualParent<DataGridRow>(source) != null;
+            if (clickedOnRow)
+                return;
+
+            _wallGrid.UnselectAll();
+            _cadPreviewTimer.Stop();
+            _pendingPreviewRow = null;
+            _lastCadPreviewKey = null;
+            ForceClearHighlight();
+        }
+
+        private void OnDialogBackgroundMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_isEditingCell || _suspendCadOperations || _wallGrid == null || !_wallGrid.IsVisible)
+                return;
+
+            var source = e.OriginalSource as DependencyObject;
+            var clickedRow = FindVisualParent<DataGridRow>(source);
+            var clickedGrid = FindVisualParent<DataGrid>(source);
+            if (clickedRow != null && ReferenceEquals(clickedGrid, _wallGrid))
+                return;
+
+            _wallGrid.UnselectAll();
+            _cadPreviewTimer.Stop();
+            _pendingPreviewRow = null;
+            _lastCadPreviewKey = null;
+            ForceClearHighlight();
+        }
+
+        private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T matched)
+                    return matched;
+                child = VisualTreeHelper.GetParent(child);
+            }
+
+            return null;
+        }
 
         private void OnWallCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
@@ -337,7 +387,8 @@ namespace ShopDrawing.Plugin.UI
             var combo = new ComboBox
             {
                 Width = width,
-                Height = 28,
+                Height = 28,
+                MinWidth = 64,
                 Margin = new Thickness(0, 0, 4, 0),
                 ItemsSource = normalizedItems,
                 VerticalContentAlignment = VerticalAlignment.Center
@@ -366,11 +417,15 @@ namespace ShopDrawing.Plugin.UI
             var row = new TenderWallRow
             {
                 Category = category,
-                Floor = selectedRow?.Floor ?? _wallRows.LastOrDefault()?.Floor ?? "T1",
-                SpecKey = specKey,
-                PanelWidth = GetWidthForSpec(specKey),
-                PanelThickness = GetThicknessForSpec(specKey),
-                LayoutDirection = selectedRow?.LayoutDirection ?? TenderWall.DefaultLayoutDirection(category),
+                Floor = selectedRow?.Floor ?? _wallRows.LastOrDefault()?.Floor ?? "T1",
+                SpecKey = specKey,
+                PanelWidth = GetWidthForSpec(specKey),
+                PanelThickness = GetThicknessForSpec(specKey),
+                HeightSegments = selectedRow?.HeightSegments
+                    ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm })
+                    .ToList()
+                    ?? new List<TenderHeightSegment>(),
+                LayoutDirection = selectedRow?.LayoutDirection ?? TenderWall.DefaultLayoutDirection(category),
                 Application = _pickApplicationPreset?.SelectedItem as string
                     ?? selectedRow?.Application
                     ?? TenderWall.ApplicationOptions[0],
@@ -405,8 +460,10 @@ namespace ShopDrawing.Plugin.UI
                 Height = 28,
                 Padding = new Thickness(8, 2, 8, 2),
                 Margin = new Thickness(0, 0, 4, 0),
-                BorderThickness = new Thickness(0),
-                Cursor = System.Windows.Input.Cursors.Hand
+                BorderThickness = new Thickness(0),
+                VerticalContentAlignment = VerticalAlignment.Center,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                Cursor = System.Windows.Input.Cursors.Hand
             };
             if (width > 0) btn.Width = width;
             btn.Click += click;

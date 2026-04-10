@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -81,10 +82,27 @@ namespace ShopDrawing.Plugin.UI
             Content = BuildLayout();
             UiText.NormalizeWindow(this);
             Loaded += (_, _) => UiText.NormalizeWindow(this);
+            Deactivated += (_, _) =>
+            {
+                _cadPreviewTimer.Stop();
+                _pendingPreviewRow = null;
+                _lastCadPreviewKey = null;
+                ForceClearHighlight();
+            };
+            Activated += (_, _) =>
+            {
+                if (!_suspendCadOperations
+                    && !_isEditingCell
+                    && _wallGrid?.SelectedItem is TenderWallRow selectedRow)
+                {
+                    RequestCadPreview(selectedRow, force: true);
+                }
+            };
         }
         private UIElement BuildLayout()
         {
             var root = new Grid { Margin = new Thickness(12) };
+            root.PreviewMouseLeftButtonDown += OnDialogBackgroundMouseDown;
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 0: header
             root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // 1: tabs
             root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 2: footer
@@ -285,7 +303,7 @@ namespace ShopDrawing.Plugin.UI
             openingBar.Children.Add(Btn("Pick mặt đứng", AccentBlue, Brushes.White, (s, e) => PickOpeningFromCad(true, null)));
             openingBar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
             openingBar.Children.Add(Btn("Pick lại", BtnGray, Brushes.White, OnRepickOpening));
-            openingBar.Children.Add(Btn("Xóa", AccentRed, Brushes.White, OnDeleteOpening, 28));
+            openingBar.Children.Add(Btn("Xóa", AccentRed, Brushes.White, OnDeleteOpening));
             Grid.SetRow(openingBar, 3);
             panel.Children.Add(openingBar);
 
@@ -513,8 +531,27 @@ private void SetStatus(string message)
             }
 
             var normalized = UiText.Normalize(message);
-            _lblStatus.Text = normalized;
+            _lblStatus.Text = CapitalizeFirstLetter(normalized);
             _lblStatus.Foreground = ResolveStatusBrush(normalized);
+        }
+
+        private static string CapitalizeFirstLetter(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return input;
+
+            var chars = input.ToCharArray();
+            var vi = CultureInfo.GetCultureInfo("vi-VN");
+            for (int i = 0; i < chars.Length; i++)
+            {
+                if (!char.IsLetter(chars[i]))
+                    continue;
+
+                chars[i] = char.ToUpper(chars[i], vi);
+                break;
+            }
+
+            return new string(chars);
         }
         private static Brush ResolveStatusBrush(string message)
         {
@@ -767,7 +804,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 return;
             }
 
-            var choice = UiFeedback.AskYesNoCancel("Chọn chế độ pick:\n\nYES = Mặt bằng (chỉ lấy Rộng)\nNO = Mặt đứng (lấy Rộng + Cao)", "Chọn lại opening");
+            var choice = UiFeedback.AskYesNoCancel("Chọn chế độ:\n\nYES = Mặt bằng (chỉ lấy Rộng)\nNO = Mặt đứng (lấy Rộng + Cao)", "Chọn lại lỗ mở");
 
             if (choice == MessageBoxResult.Cancel) return;
             PickOpeningFromCad(choice == MessageBoxResult.No, selectedOp);
@@ -780,7 +817,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 return;
             }
 
-            var choice = UiFeedback.AskYesNoCancel("Chọn chế độ pick:\n\nYES = Pick Line (chỉ lấy Chiều dài)\nNO = Pick Polyline kín (lấy Dài x Cao)", "Chọn lại vách");
+            var choice = UiFeedback.AskYesNoCancel("Chọn chế độ:\n\nYES = Chọn đoạn thẳng (chỉ lấy Chiều dài)\nNO = Chọn đa tuyến kín (lấy Dài x Cao)", "Chọn lại vách");
 
             if (choice == MessageBoxResult.Cancel) return;
             RepickWallFromCad(selectedRow, pickArea: choice == MessageBoxResult.No);
@@ -2295,6 +2332,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public string Name { get; set; } = "";
         public double Length { get; set; }
         public double Height { get; set; }
+        public List<TenderHeightSegment> HeightSegments { get; set; } = new();
         public string SpecKey { get; set; } = "";
         public int PanelWidth { get; set; } = 1100;
         public int PanelThickness { get; set; } = 50;
@@ -2339,15 +2377,70 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         /// <summary>ChiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âu span tÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂºÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥m (mm) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â DÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âc: chiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âu cao, Ngang: chiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âu dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â i</summary>
         private double PanelSpan => LayoutDirection == "Ngang" ? Length : Height;
 
-        public string WallAreaM2Display => (Length * Height / 1_000_000.0).ToString("F2");
-        public string OpeningAreaM2Display => Openings.Sum(o => o.TotalAreaM2).ToString("F2");
-        public string NetAreaM2Display => Math.Max(0, Length * Height / 1e6 - Openings.Sum(o => o.TotalAreaM2)).ToString("F2");
+        public string HeightSegmentsInput
+        {
+            get => FormatHeightSegments(HeightSegments);
+            set
+            {
+                if (!TryParseHeightSegments(value, out var parsed))
+                    return;
+
+                HeightSegments = parsed;
+                if (HeightSegments.Count > 0)
+                {
+                    double weightedLength = HeightSegments.Sum(s => Math.Max(0, s.LengthMm));
+                    if (weightedLength > 0)
+                    {
+                        Height = HeightSegments.Sum(s => Math.Max(0, s.LengthMm) * Math.Max(0, s.HeightMm)) / weightedLength;
+                    }
+                }
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HeightSegmentsInput)));
+            }
+        }
+
+        private TenderWall BuildComputedWall() => new TenderWall
+        {
+            Category = UiText.Normalize(Category),
+            Floor = Floor,
+            Name = Name,
+            Length = Length,
+            Height = Height,
+            HeightSegments = HeightSegments.Select(s => new TenderHeightSegment
+            {
+                LengthMm = s.LengthMm,
+                HeightMm = s.HeightMm
+            }).ToList(),
+            SpecKey = SpecKey,
+            PanelWidth = PanelWidth,
+            PanelThickness = PanelThickness,
+            LayoutDirection = LayoutDirection,
+            Application = UiText.Normalize(Application),
+            CableDropLengthMm = CableDropLengthMm,
+            ColdStorageDivideFromMaxSide = ColdStorageDivideFromMaxSide,
+            SuspensionLayoutDirection = SuspensionLayoutDirection,
+            TopPanelTreatment = TopPanelTreatment,
+            EndPanelTreatment = EndPanelTreatment,
+            BottomPanelTreatment = BottomPanelTreatment,
+            TopEdgeExposed = TopEdgeExposed,
+            BottomEdgeExposed = BottomEdgeExposed,
+            StartEdgeExposed = StartEdgeExposed,
+            EndEdgeExposed = EndEdgeExposed,
+            OutsideCornerCount = OutsideCornerCount,
+            InsideCornerCount = InsideCornerCount,
+            CadHandle = CadHandle,
+            Openings = Openings,
+            VerticalJointCount = VerticalJointCount,
+            PolygonVertices = PolygonVertices
+        };
+
+        public string WallAreaM2Display => BuildComputedWall().WallAreaM2.ToString("F2");
+        public string OpeningAreaM2Display => BuildComputedWall().OpeningAreaM2.ToString("F2");
+        public string NetAreaM2Display => BuildComputedWall().NetAreaM2.ToString("F2");
         public string EstimatedPanelCountDisplay
         {
             get
             {
-                if (PanelWidth <= 0 || DivisionSpan <= 0) return "0";
-                return ((int)Math.Ceiling(DivisionSpan / PanelWidth)).ToString();
+                return BuildComputedWall().EstimatedPanelCount.ToString();
             }
         }
 
@@ -2356,6 +2449,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Category)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Length)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Height)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HeightSegmentsInput)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PanelWidth)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PanelThickness)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LayoutDirection)));
@@ -2449,6 +2543,67 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             BottomEdgeExposed = !string.Equals(BottomPanelTreatment, TenderWall.BottomPanelTreatmentNone, StringComparison.OrdinalIgnoreCase);
         }
 
+        private static string FormatHeightSegments(IReadOnlyList<TenderHeightSegment>? segments)
+        {
+            if (segments == null || segments.Count == 0)
+                return string.Empty;
+
+            return string.Join(";", segments
+                .Where(s => s != null && s.LengthMm > 0 && s.HeightMm > 0)
+                .Select(s => $"{Math.Round(s.LengthMm):F0}x{Math.Round(s.HeightMm):F0}"));
+        }
+
+        private static bool TryParseHeightSegments(string? input, out List<TenderHeightSegment> segments)
+        {
+            segments = new List<TenderHeightSegment>();
+            if (string.IsNullOrWhiteSpace(input))
+                return true;
+
+            var tokens = input
+                .Split(new[] { ';', '|', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.Trim())
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .ToList();
+
+            foreach (var token in tokens)
+            {
+                string normalizedToken = token
+                    .Replace("*", "x", StringComparison.Ordinal)
+                    .Replace("X", "x", StringComparison.Ordinal)
+                    .Replace("×", "x", StringComparison.Ordinal);
+
+                var pair = normalizedToken.Split('x');
+                if (pair.Length != 2)
+                    return false;
+
+                if (!TryParsePositiveMm(pair[0], out var lengthMm) || !TryParsePositiveMm(pair[1], out var heightMm))
+                    return false;
+
+                segments.Add(new TenderHeightSegment
+                {
+                    LengthMm = lengthMm,
+                    HeightMm = heightMm
+                });
+            }
+
+            return true;
+        }
+
+        private static bool TryParsePositiveMm(string text, out double value)
+        {
+            value = 0;
+            string normalized = (text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+                return false;
+
+            if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out value) && value > 0)
+                return true;
+            if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.GetCultureInfo("vi-VN"), out value) && value > 0)
+                return true;
+
+            return false;
+        }
+
         public void SyncOpenings(IEnumerable<TenderOpeningRow> rows)
         {
             Openings = rows.Select(r => new TenderOpening
@@ -2468,6 +2623,11 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             {
                 Category = UiText.Normalize(Category), Floor = Floor, Name = Name,
                 Length = Length, Height = Height, SpecKey = SpecKey,
+                HeightSegments = HeightSegments.Select(s => new TenderHeightSegment
+                {
+                    LengthMm = s.LengthMm,
+                    HeightMm = s.HeightMm
+                }).ToList(),
                 PanelWidth = PanelWidth, PanelThickness = PanelThickness,
                 LayoutDirection = LayoutDirection,
                 Application = UiText.Normalize(Application),
@@ -2496,6 +2656,12 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             {
                 Index = index, Category = UiText.Normalize(w.Category), Floor = w.Floor, Name = w.Name,
                 Length = w.Length, Height = w.Height, SpecKey = w.SpecKey,
+                HeightSegments = (w.HeightSegments ?? new List<TenderHeightSegment>())
+                    .Select(s => new TenderHeightSegment
+                    {
+                        LengthMm = s.LengthMm,
+                        HeightMm = s.HeightMm
+                    }).ToList(),
                 PanelWidth = w.PanelWidth, PanelThickness = w.PanelThickness,
                 LayoutDirection = w.LayoutDirection,
                 Application = UiText.Normalize(w.Application),

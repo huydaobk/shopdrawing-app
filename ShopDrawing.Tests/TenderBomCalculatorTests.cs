@@ -216,19 +216,6 @@ namespace ShopDrawing.Tests
 
             Assert.Equal(3, expandedLegacyRows.Count);
             Assert.Equal(3, expandedLegacyRows.Select(item => item.Application).Distinct().Count());
-            return;
-
-            Assert.True(normalized.Count >= 3);
-            Assert.Contains(normalized, item => item.CategoryScope == "VÃ¡ch" && item.Application == "NgoÃ i nhÃ ");
-            Assert.Contains(normalized, item => item.CategoryScope == "VÃ¡ch" && item.Application == "PhÃ²ng sáº¡ch");
-            Assert.Contains(normalized, item => item.CategoryScope == "VÃ¡ch" && item.Application == "Kho láº¡nh");
-            return;
-
-            Assert.Equal(3, normalized.Count);
-            Assert.All(normalized, item => Assert.Equal("Vách", item.CategoryScope));
-            Assert.Contains(normalized, item => item.Application == "Ngoài nhà");
-            Assert.Contains(normalized, item => item.Application == "Phòng sạch");
-            Assert.Contains(normalized, item => item.Application == "Kho lạnh");
         }
 
         [Fact]
@@ -316,33 +303,6 @@ namespace ShopDrawing.Tests
             Assert.Single(normalized.Where(item =>
                 item.CalcRule == AccessoryCalcRule.PER_TOP_EDGE_LENGTH &&
                 item.Factor == 1.25));
-            return;
-
-            Assert.Contains(normalized, item =>
-                item.CategoryScope == "Tráº§n" &&
-                item.Application == "Kho láº¡nh" &&
-                item.Name == "T-profile 68x75" &&
-                item.CalcRule == AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH);
-
-            Assert.Contains(normalized, item =>
-                item.CategoryScope == "Tráº§n" &&
-                item.Application == "Kho láº¡nh" &&
-                item.Name == "Bulong náº¥m nhá»±a" &&
-                item.CalcRule == AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_BOLT_QTY);
-
-            Assert.Single(normalized.Where(item =>
-                item.CategoryScope == "VÃ¡ch" &&
-                item.Application == "Kho láº¡nh" &&
-                item.Name == "Diá»m 01" &&
-                item.Position == "Cáº¡nh trÃªn" &&
-                item.CalcRule == AccessoryCalcRule.PER_TOP_EDGE_LENGTH));
-
-            Assert.Contains(normalized, item =>
-                item.CategoryScope == "VÃ¡ch" &&
-                item.Application == "Kho láº¡nh" &&
-                item.Name == "Diá»m 01" &&
-                item.Position == "Cáº¡nh trÃªn" &&
-                item.Factor == 1.25);
         }
 
         [Fact]

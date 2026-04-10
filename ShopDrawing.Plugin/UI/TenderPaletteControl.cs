@@ -155,7 +155,7 @@ namespace ShopDrawing.Plugin.UI
 
             var btnBom = SdPaletteStyles.CreateActionButton("Quản lý Khối lượng", SdPaletteStyles.AccentBlueBrush);
 
-            btnBom.ToolTip = "Nhập vách, opening và tính BOM";
+            btnBom.ToolTip = "Nhập vách, lỗ mở và tính BOM";
 
             btnBom.Click += OnOpenBomDialog;
 

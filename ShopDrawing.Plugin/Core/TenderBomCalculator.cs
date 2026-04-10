@@ -120,7 +120,7 @@ namespace ShopDrawing.Plugin.Core
                         Category = g.Key.Category,
                         WallCount = g.Count(),
                         TotalLengthM = g.Sum(w => w.Length) / 1000.0,
-                        HeightMm = g.Average(w => w.Height),
+                        HeightMm = g.Average(w => w.RepresentativeHeightMm),
                         WallAreaM2 = g.Sum(w => w.WallAreaM2),
                         OpeningAreaM2 = g.Sum(w => w.OpeningAreaM2),
                         NetAreaM2 = netArea,
@@ -279,7 +279,7 @@ namespace ShopDrawing.Plugin.Core
             return rule switch
             {
                 AccessoryCalcRule.PER_WALL_LENGTH => wall.Length / 1000.0,
-                AccessoryCalcRule.PER_WALL_HEIGHT => wall.Height / 1000.0,
+                AccessoryCalcRule.PER_WALL_HEIGHT => wall.RepresentativeHeightMm / 1000.0,
                 AccessoryCalcRule.PER_TOP_EDGE_LENGTH => wall.TopEdgeLength / 1000.0,
                 AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH => wall.TopPanelCeilingCenterLength / 1000.0,
                 AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH => wall.TopPanelCeilingPerimeterLength / 1000.0,
@@ -981,7 +981,7 @@ namespace ShopDrawing.Plugin.Core
                 AccessoryCalcRule.PER_WALL_LENGTH =>
                     $"lấy chiều dài {wall.Length / 1000.0:F2} md",
                 AccessoryCalcRule.PER_WALL_HEIGHT =>
-                    $"lấy chiều cao {wall.Height / 1000.0:F2} md",
+                    $"lấy chiều cao hiệu dụng {wall.RepresentativeHeightMm / 1000.0:F2} md",
                 AccessoryCalcRule.PER_TOP_EDGE_LENGTH =>
                     $"đỉnh vách: {wall.ResolvedTopPanelTreatment}, dài {wall.TopEdgeLength / 1000.0:F2} md",
                 AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH =>
@@ -1003,9 +1003,9 @@ namespace ShopDrawing.Plugin.Core
                 AccessoryCalcRule.PER_TOTAL_EXPOSED_EDGE_LENGTH =>
                     $"tổng chiều dài biên vách xử lý {wall.TotalExposedEdgeLength / 1000.0:F2} md",
                 AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT =>
-                    $"{Math.Max(0, wall.OutsideCornerCount)} góc ngoài × cao {wall.Height / 1000.0:F2} m = {basisValue:F2} md",
+                    $"{Math.Max(0, wall.OutsideCornerCount)} góc ngoài × cao hiệu dụng {wall.RepresentativeHeightMm / 1000.0:F2} m = {basisValue:F2} md",
                 AccessoryCalcRule.PER_INSIDE_CORNER_HEIGHT =>
-                    $"{Math.Max(0, wall.InsideCornerCount)} góc trong × cao {wall.Height / 1000.0:F2} m = {basisValue:F2} md",
+                    $"{Math.Max(0, wall.InsideCornerCount)} góc trong × cao hiệu dụng {wall.RepresentativeHeightMm / 1000.0:F2} m = {basisValue:F2} md",
                 AccessoryCalcRule.PER_PANEL_QTY =>
                     $"{wall.EstimatedPanelCount} tấm sơ bộ | khổ {wall.PanelWidth} | span {wall.PanelSpan:F0} mm",
                 AccessoryCalcRule.PER_JOINT_LENGTH =>
@@ -1049,7 +1049,7 @@ namespace ShopDrawing.Plugin.Core
                 AccessoryCalcRule.FIXED_PER_WALL =>
                     "1 bộ cho 1 vùng tính khối lượng",
                 AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT =>
-                    $"{Math.Max(0, wall.VerticalJointCount)} khe đứng × cao {wall.Height / 1000.0:F2} m = {basisValue:F2} md",
+                    $"{Math.Max(0, wall.VerticalJointCount)} khe đứng × cao hiệu dụng {wall.RepresentativeHeightMm / 1000.0:F2} m = {basisValue:F2} md",
                 AccessoryCalcRule.PER_TEK_SCREW_QTY =>
                     $"{wall.EstimatedPanelCount} tấm × {Math.Max(1, Math.Ceiling(wall.PanelSpan / 1500.0))} điểm/tấm × 2 vít = {basisValue:F0} cái",
                 AccessoryCalcRule.PER_PANEL_SUPPORT_BRACKET_QTY =>

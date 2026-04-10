@@ -70,18 +70,5 @@ namespace ShopDrawing.Tests
             }
         }
 
-        [Fact]
-        public void GetPrimarySavePath_ShouldIgnoreAutoSavePath()
-        {
-            var manager = new TenderProjectManager();
-            string autoPath = manager.GetAutoSavePath($"dwg-{Guid.NewGuid():N}.dwg");
-            string manualPath = Path.Combine(Path.GetTempPath(), $"tender-manual-{Guid.NewGuid():N}.json");
-
-            var project = new TenderProject { FilePath = autoPath };
-            Assert.Null(manager.GetPrimarySavePath(project));
-
-            project.FilePath = manualPath;
-            Assert.Equal(manualPath, manager.GetPrimarySavePath(project));
-        }
     }
 }

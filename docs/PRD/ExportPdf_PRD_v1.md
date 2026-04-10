@@ -1,132 +1,127 @@
-# PRD — Xuất PDF (ExportPdf) v1.1
+# PRD - Xuất PDF (ExportPdf) v1.1
 
-**Plugin:** Shop Drawing Plugin (AutoCAD .NET)
-**Command:** `SD_EXPORT`
-**Trạng thái:** ✅ Confirmed — Sẵn sàng code
+**Plugin:** Shop Drawing Plugin (AutoCAD .NET)  
+**Command:** `SD_EXPORT`  
+**Trạng thái:** Confirmed - Sẵn sàng code
 
 ---
 
 ## 1. Mục tiêu
 
-Xuất **toàn bộ Layout tabs** của bản vẽ sang 1 file PDF multipage, trực tiếp từ palette.
-Hỗ trợ chọn máy in, plot style, và nhiều khổ giấy khác nhau trên từng trang.
+Xuất toàn bộ layout tab của bản vẽ sang một file PDF nhiều trang trực tiếp từ palette.
+
+Yêu cầu của v1:
+- Mỗi layout là một trang PDF.
+- Giữ khổ giấy theo từng layout.
+- Cho phép chọn plotter, plot style, thư mục lưu và tên file.
+- Hỏi xử lý khi file đích đã tồn tại.
+- Có thể mở PDF sau khi xuất xong.
 
 ---
 
-## 2. Phạm vi (Scope v1)
+## 2. Phạm vi v1
 
 | Hạng mục | v1 |
-|----------|----|
+|---|---|
 | Xuất tất cả layouts ra 1 PDF | ✅ |
 | Mỗi layout = 1 trang | ✅ |
-| Nhiều khổ giấy khác nhau (per-layout) | ✅ |
+| Nhiều khổ giấy khác nhau theo layout | ✅ |
 | Chọn thư mục + tên file | ✅ |
-| Khi file tồn tại: hỏi ghi đè hoặc auto-version | ✅ |
-| Layout trống → bỏ qua | ✅ |
-| Thứ tự theo tab layout | ✅ |
-| Chọn máy in (PC3 plotter) | ✅ |
-| Chọn Plot Style (CTB) | ✅ |
+| Xử lý trùng file | ✅ |
+| Bỏ qua layout trống | ✅ |
+| Giữ thứ tự theo tab layout | ✅ |
+| Chọn máy in (PC3) | ✅ |
+| Chọn plot style (CTB) | ✅ |
 | Mở PDF sau khi xong | ✅ |
-| Tạo file `SD_Black.ctb` | ✅ |
+| Tạo `SD_Black.ctb` | ✅ |
 | Watermark | ❌ v2 |
-| Chọn từng layout | ❌ v2 |
+| Chọn từng layout riêng lẻ | ❌ v2 |
 
 ---
 
 ## 3. Luồng người dùng
 
-```
+```text
 [Ribbon] Xuất PDF
     ↓
 [Palette SD_EXPORT]
-    ├─ Máy in:   [▼ DWG To PDF.pc3    ]
-    ├─ PlotStyle:[▼ SD_Black.ctb       ]
-    ├─ Thư mục: [C:\...\output] [📁]
-    ├─ Tên file: [W1-ShopDrg.pdf     ]
-    ├─ ☑ Mở PDF sau khi xong
-    └─ [📄 Xuất PDF]
+    |- Máy in:   [DWG To PDF.pc3]
+    |- PlotStyle:[SD_Black.ctb]
+    |- Thư mục:  [C:\...\output] [...]
+    |- Tên file: [W1-ShopDrg.pdf]
+    |- [x] Mở PDF sau khi xong
+    `- [Xuất PDF]
             ↓
-    Kiểm tra file tồn tại?
-    ├─ Chưa có → xuất luôn
-    └─ Đã có → Dialog:
-          [Ghi đè] [Tự thêm _v2] [Huỷ]
+    Kiểm tra file đích
+    |- Chưa tồn tại -> xuất luôn
+    `- Đã tồn tại -> [Ghi đè] [Tự thêm _v2] [Huỷ]
             ↓
-    Loop từng layout:
-    ├─ Layout trống? → skip
-    └─ Plot từng trang vào PDF
+    Duyệt từng layout theo tab order
+    |- Layout trống -> bỏ qua
+    `- Layout hợp lệ -> plot vào PDF
             ↓
-    Xong → "✅ Đã xuất 5 trang → W1-ShopDrg.pdf"
-    + Mở PDF (nếu tick)
+    Xong -> thông báo thành công và mở file nếu người dùng bật tuỳ chọn
 ```
 
 ---
 
-## 4. Plot Style — `SD_Black.ctb`
+## 4. Plot Style - `SD_Black.ctb`
 
-### 4.1 Tại sao tạo mới
+### 4.1 Lý do tạo mới
 
-`monochrome.ctb` mặc định của AutoCAD không có phân cấp nét phù hợp với shopdrawing.
-`SD_Black.ctb` được thiết kế theo **ISO/DIN pen hierarchy (7 nét)**, cross-map trực tiếp với
-màu layer của Shop Drawing Plugin.
+`monochrome.ctb` mặc định của AutoCAD không phản ánh tốt phân cấp nét của shop drawing.
 
-### 4.2 Quy tắc SD_Black — Tối ưu theo ISO/DIN
+`SD_Black.ctb` dùng hệ phân cấp nét theo ISO/DIN để:
+- Giữ toàn bộ output màu đen.
+- Tách rõ nét tường, panel, dim, text và hatch.
+- Đồng bộ với mapping layer/màu của plugin.
 
-**7 cấp nét phân cấp:**
+### 4.2 Hệ phân cấp nét
 
-| Nét | Lineweight | Mục đích |
-|-----|-----------|---------|
-| Ultra thin | 0.09mm | Hatch screening (nền) |
-| Very thin | 0.13mm | Chi tiết rất nhỏ |
+| Mức nét | Lineweight | Mục đích |
+|---|---:|---|
+| Ultra thin | 0.09mm | Hatch nền |
+| Very thin | 0.13mm | Chi tiết nhỏ |
 | Thin | 0.18mm | Dim, text, annotation |
 | Medium thin | 0.25mm | Đường phụ thông thường |
 | Medium | 0.35mm | Outline panel, opening |
 | Heavy | 0.50mm | Outline tường chính |
-| Extra heavy | 0.70mm | Section cut (dự phòng v2) |
+| Extra heavy | 0.70mm | Dự phòng cho section cut |
 
-**Bảng mapping màu → nét (cross-map với layer thực tế của plugin):**
+### 4.3 Mapping màu chính
 
-| ACI | Màu | Layer SD dùng | Lineweight | Ghi chú |
-|-----|-----|---------------|-----------|---------| 
-| 1 | Red | DetailPlacer, dim detail | **0.13mm** | Fine detail |
-| 2 | Yellow | General lines | **0.18mm** | ISO thin |
-| 3 | Green | `Defpoints` (viewport frame) | **Không plot** | ⚡ AutoCAD system layer — không bao giờ print, không bị tắt ảnh hưởng content |
-| 4 | Cyan | `SD_DIM_PANEL`, elevation line | **0.18mm** | Dim = thin |
-| 5 | Blue | General med | **0.25mm** | ISO medium-thin |
-| 6 | Magenta | `SD_DIM_OPENING` | **0.18mm** | Dim = thin |
-| 7 | White/Black | `SD_TITLE` (viền ngoài KT), `SD_TITLE_FRAME` (kẻ nội bộ), `SD_TITLE_TEXT` (text) | **0.50mm / 0.35mm / 0.18mm** | Theo sub-layer |
-| 8 | Dark gray | `SD_TAG` text | **0.18mm** | Annotation |
-| 9 | Lt gray | Phụ nhạt | **0.13mm** | Very thin |
-| 30 | Orange | `SD_OPENING` outline | **0.35mm** | Opening nổi rõ |
-| 251 | Very dark | `SD_WALL` | **0.50mm** | Tường heavy |
-| 252 | Dark gray | Panel border | **0.35mm** | Panel outline |
-| 253 | Gray | Hatch filling | **0.09mm** | Hatch screening |
-| 254 | Lt gray | Non-plot | **0.00mm** | ⚡ Không in |
-| 255 | White | Background | **0.25mm** | Standard |
-| 10–250 (còn lại) | — | Chung | **0.18mm** | Safe default |
+| ACI | Vai trò | Lineweight |
+|---|---|---:|
+| 1 | Detail nhỏ | 0.13mm |
+| 2 | General lines | 0.18mm |
+| 3 | `Defpoints` | Không plot |
+| 4 | `SD_DIM_PANEL`, elevation | 0.18mm |
+| 6 | `SD_DIM_OPENING` | 0.18mm |
+| 7 | Title/frame/text | 0.50 / 0.35 / 0.18mm |
+| 30 | `SD_OPENING` outline | 0.35mm |
+| 251 | `SD_WALL` | 0.50mm |
+| 252 | Panel border | 0.35mm |
+| 253 | Hatch filling | 0.09mm |
+| 254 | Non-plot | 0.00mm |
+| Còn lại | Safe default | 0.18mm |
 
-> **Tất cả màu đều in đen** (output color = Black).
+> Tất cả màu đều in đen.
 
-### 4.3 Nguồn tham khảo
+### 4.4 Cài đặt
 
-- ISO 128 / DIN 15-2: Lineweight hierarchy for technical drawings
-- FirstInArchitecture.co.uk: 7-pen lineweight best practices
-- CADTutor.net: ISO CTB color mapping 1-10
+Nguồn trong repo:
 
-### 4.4 Cách tạo CTB file
-
-- **Option A (Đơn giản):** Copy `monochrome.ctb` làm base → patch lineweight values.
-  - CTB = ASCII text format (không phải binary) → có thể chỉnh trực tiếp.
-- **Option B (Programmatic):** Dùng AutoCAD API `PlotStyleTableRecord`.
-
-**Đường dẫn cài đặt:**
+```text
+resources/plotstyles/SD_Black.ctb
 ```
+
+Đường dẫn cài vào AutoCAD:
+
+```text
 %APPDATA%\Autodesk\AutoCAD 2026\R25.1\enu\Plotters\Plot Styles\SD_Black.ctb
 ```
-**Version control:**
-```
-c:\my_project\shopdrawing-app\resources\plotstyles\SD_Black.ctb
-```
-`PlotStyleInstaller.cs` tự copy vào thư mục AutoCAD khi plugin load.
+
+`PlotStyleInstaller.cs` chịu trách nhiệm copy file vào thư mục Plot Styles khi plugin load.
 
 ---
 
@@ -134,137 +129,87 @@ c:\my_project\shopdrawing-app\resources\plotstyles\SD_Black.ctb
 
 ### 5.1 Plotter list
 
-Scan `%APPDATA%\...\Plotters\*.pc3` + `%PROGRAMDATA%\...\*.pc3` → hiển thị tên file (bỏ đuôi `.pc3`).
+Quét danh sách PC3 có sẵn và hiển thị trong palette. Giá trị mặc định ưu tiên `DWG To PDF.pc3`.
 
-```csharp
-PlotSettingsValidator.Current.SetPlotConfigurationName(
-    plotSettings, plotterName + ".pc3", null);
-```
+### 5.2 Plot style list
 
-### 5.2 Plot Style list
+Quét danh sách CTB, ưu tiên `SD_Black.ctb`, fallback về style mặc định nếu cần.
 
-Scan `%APPDATA%\...\Plot Styles\*.ctb` → hiển thị tên.
+### 5.3 Giữ media theo layout
 
-```csharp
-PlotSettingsValidator.Current.SetCurrentStyleSheet(plotSettings, "SD_Black.ctb");
-```
+Khi export, engine giữ `CanonicalMediaName` hiện có trên layout và chỉ thay plotter + plot style.
 
-### 5.3 Per-layout paper size
-
-```csharp
-// Layout Manager dùng SetClosestMediaName để set khổ giấy chính xác (v5.1)
-// Khi export, PdfExportEngine giữ nguyên CanonicalMediaName đã sẵn có trên layout
-// và chỉ thay đổi Plotter + PlotStyle, KHÔNG reset media name.
-string currentMedia = layout.CanonicalMediaName;
-try {
-    psv.SetPlotConfigurationName(ps, options.PlotterName, currentMedia);
-} catch {
-    psv.SetPlotConfigurationName(ps, options.PlotterName, null); // fallback
-}
-```
-
-> ⚠️ Canonical media name dùng thứ tự **Portrait** (vd: `297.00_x_420.00` cho A3).
-> Không nên match bằng string dimension — dùng `SetClosestMediaName(W, H, MM, true)`.
-
-Nếu layout không có PageSetup: fallback `ISO full bleed A3`.
+Nếu media hiện tại không hợp lệ với plotter đã chọn thì fallback sang `SetPlotConfigurationName(..., null)`.
 
 ### 5.4 Multi-sheet PDF
 
-```csharp
-using var engine = PlotFactory.CreatePublishEngine();
-engine.BeginDocument(plotInfo, docName, null, 1, true, filePath);
-foreach (var layout in layouts)
-{
-    engine.BeginPage(pageInfo, plotProgress, true, null);
-    engine.BeginGenerateGraphics(null);
-    engine.EndGenerateGraphics(null);
-    engine.EndPage(null);
-}
-engine.EndDocument(null);
-```
+Engine dùng publish engine của AutoCAD để plot nhiều sheet vào cùng một file PDF.
 
-### 5.5 File conflict handling
+### 5.5 Xử lý trùng file
 
-```
-if (File.Exists(outputPath)):
-    → Dialog 3 nút: [Ghi đè] [Tự thêm _v2] [Huỷ]
-    
-"Tự thêm _v2" → scan: nếu _v2 tồn tại → _v3, v.v. đến _v99
-```
+Nếu file đã tồn tại:
+- `Yes` = ghi đè.
+- `No` = tạo tên mới `_v2`, `_v3`, ...
+- `Cancel` = huỷ export.
 
-### 5.6 Thread Safety
+### 5.6 Thread safety
 
-- Plot engine: **main CAD thread** (`doc.LockDocument()`).
-- Progress UI update: `Application.MainWindow.Dispatcher.Invoke`.
+- Plot chạy trên main CAD thread.
+- Palette chỉ gửi command wrapper và nhận status cập nhật lại từ wrapper.
 
 ---
 
-## 6. UI — Export Palette
+## 6. UI palette
 
-```
-┌────────────────────────────────────────┐
-│  XUẤT PDF                              │
-├────────────────────────────────────────┤
-│  Máy in:     [▼ DWG To PDF.pc3      ] │
-│  PlotStyle:  [▼ SD_Black.ctb        ] │
-├────────────────────────────────────────┤
-│  Thư mục:  [C:\...\output    ] [📁]  │
-│  Tên file: [NhaXuong-SD.pdf  ]        │
-├────────────────────────────────────────┤
-│  ☑ Mở PDF sau khi xong                │
-├────────────────────────────────────────┤
-│  [     📄 Xuất PDF     ]              │
-├────────────────────────────────────────┤
-│  Status: Đang xuất trang 3/7...       │
-└────────────────────────────────────────┘
-```
+Các control chính:
+- ComboBox máy in.
+- ComboBox plot style.
+- TextBox thư mục xuất + nút browse.
+- TextBox tên file PDF.
+- CheckBox mở PDF sau khi hoàn tất.
+- Button `Xuất PDF`.
+- TextBlock trạng thái.
 
-### UI Controls
-
-| Control | Logic |
-|---------|-------|
-| ComboBox Máy in | Scan PC3 files lúc load palette |
-| ComboBox PlotStyle | Scan CTB files lúc load palette |
-| TextBox Thư mục | Mặc định folder chứa DWG |
-| Button `📁` | `FolderBrowserDialog` |
-| TextBox Tên file | Mặc định `<DWGName>.pdf` |
-| CheckBox Mở PDF | Mặc định ☑ |
-| Button Xuất | Trigger export |
-| TextBlock Status | Progress realtime |
+Trạng thái cần hiển thị:
+- Chuẩn bị xuất.
+- Đang xuất layout `i/n`.
+- Thành công.
+- Lỗi hoặc huỷ.
 
 ---
 
 ## 7. Xử lý lỗi
 
 | Trường hợp | Xử lý |
-|------------|-------|
-| File PDF đang mở | "Đóng file PDF đang mở trước" |
-| Layout trống | Bỏ qua, đếm vào log |
-| Plot engine lỗi | Log lỗi, hiện thông báo, không crash |
-| Huỷ giữa chừng | Xóa file PDF tạm |
-| Không có layout nào | "Bản vẽ không có Layout nào" |
+|---|---|
+| Không có layout hợp lệ | Báo lỗi rõ ràng |
+| File PDF đang bị mở | Yêu cầu đóng file trước khi xuất |
+| Người dùng huỷ plot | Huỷ export và xoá file dở dang |
+| Layout trống | Bỏ qua |
+| Plot engine lỗi | Log lỗi, hiện thông báo, không crash plugin |
 
 ---
 
-## 8. Files cần tạo / sửa
+## 8. Files liên quan
 
-| File | Action | Mô tả |
-|------|--------|-------|
-| `Core/PdfExportEngine.cs` | **MỚI** | Logic plot, per-layout, multi-sheet |
-| `UI/ExportPdfPaletteControl.cs` | **MỚI** | WPF palette compact |
-| `Commands/ShopDrawingCommands.cs` | **SỬA** | Thêm lệnh `SD_EXPORT` |
-| `resources/plotstyles/SD_Black.ctb` | **MỚI** | Plot style file |
-| `Core/PlotStyleInstaller.cs` | **MỚI** | Copy CTB vào AutoCAD folder khi load |
+| File | Vai trò |
+|---|---|
+| `ShopDrawing.Plugin/Core/PdfExportEngine.cs` | Engine plot PDF |
+| `ShopDrawing.Plugin/UI/ExportPdfPaletteControl.xaml` | UI palette |
+| `ShopDrawing.Plugin/UI/ExportPdfPaletteControl.xaml.cs` | Validate input, gửi request, nhận progress |
+| `ShopDrawing.Plugin/Modules/Export/ExportModuleFacade.cs` | Wrapper command và orchestration |
+| `ShopDrawing.Plugin/Commands/ExportPdfCommandGroup.cs` | Command entry points |
+| `ShopDrawing.Plugin/Core/PlotStyleInstaller.cs` | Cài `SD_Black.ctb` |
 
 ---
 
-## 9. Kế hoạch kiểm thử
+## 9. Kiểm thử
 
 | Test | Expected |
-|------|----------|
-| DWG có 5 layout (mix A1+A3) | PDF 5 trang, khổ giấy đúng |
-| DWG chỉ có Model | Thông báo "Không có Layout" |
-| File PDF đã tồn tại | Dialog 3 nút hiện ra |
-| Chọn `Tự thêm _v2` | File `_v2.pdf` tạo ra |
-| Huỷ giữa chừng | Không file tạm nào còn lại |
-| Layout trống giữa chuỗi | Bị skip, các layout khác vẫn xuất |
+|---|---|
+| DWG có nhiều layout với khổ giấy khác nhau | PDF nhiều trang, đúng thứ tự, đúng khổ |
+| Chỉ có Model | Báo không có layout hợp lệ |
+| File PDF đã tồn tại | Hiện dialog xử lý trùng file |
+| Chọn auto-version | Tạo `_v2`, `_v3`, ... |
+| Huỷ giữa chừng | Không để lại file PDF dở dang |
+| Có layout trống xen giữa | Layout trống bị bỏ qua, layout còn lại vẫn xuất |

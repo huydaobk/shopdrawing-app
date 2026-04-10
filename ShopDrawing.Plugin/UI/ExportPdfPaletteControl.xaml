@@ -1,19 +1,20 @@
 <UserControl x:Class="ShopDrawing.Plugin.UI.ExportPdfPaletteControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             mc:Ignorable="d" 
-             d:DesignHeight="350" d:DesignWidth="300"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="350"
+             d:DesignWidth="300"
              Background="#2D2D30">
-             
+
     <UserControl.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#E0E0E0" />
             <Setter Property="FontFamily" Value="Segoe UI" />
             <Setter Property="FontSize" Value="12" />
         </Style>
-        <Style TargetType="Border" x:Key="SectionBorder">
+        <Style x:Key="SectionBorder" TargetType="Border">
             <Setter Property="BorderBrush" Value="#3E3E42" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="4" />
@@ -38,7 +39,7 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style TargetType="Button" x:Key="ActionButtonStyle">
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="32" />
             <Setter Property="Background" Value="#007ACC" />
             <Setter Property="Foreground" Value="White" />
@@ -67,48 +68,74 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <TextBlock Text="XUẤT PDF" FontSize="16" FontWeight="Bold" Margin="0,0,0,10" Foreground="#007ACC" />
+            <TextBlock Text="XUẤT PDF"
+                       FontSize="16"
+                       FontWeight="Bold"
+                       Margin="0,0,0,10"
+                       Foreground="#007ACC" />
 
-            <!-- Print Settings -->
             <Border Grid.Row="1" Style="{StaticResource SectionBorder}">
                 <StackPanel>
-                    <TextBlock Text="Cài đặt Máy in (Plotter)" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="#007ACC" />
+                    <TextBlock Text="Cài đặt máy in (Plotter)"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,5"
+                               Foreground="#007ACC" />
                     <TextBlock Text="Máy in:" />
                     <ComboBox x:Name="cmbPlotters" />
 
-                    <TextBlock Text="Plot Style (CTB):" />
+                    <TextBlock Text="Plot style (CTB):" />
                     <ComboBox x:Name="cmbPlotStyles" />
                 </StackPanel>
             </Border>
 
-            <!-- Output Settings -->
             <Border Grid.Row="2" Style="{StaticResource SectionBorder}">
                 <StackPanel>
-                    <TextBlock Text="Cài đặt File đầu ra" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="#007ACC" />
-                    
+                    <TextBlock Text="Cài đặt file đầu ra"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,5"
+                               Foreground="#007ACC" />
+
                     <TextBlock Text="Thư mục xuất PDF:" />
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="txtOutputPath" Grid.Column="0" Margin="0,4,5,10" />
-                        <Button x:Name="btnBrowse" Grid.Column="1" Content="📁" Width="30" Margin="0,4,0,10" Click="BtnBrowse_Click" ToolTip="Chọn thư mục" />
+                        <TextBox x:Name="txtOutputPath"
+                                 Grid.Column="0"
+                                 Margin="0,4,5,10" />
+                        <Button x:Name="btnBrowse"
+                                Grid.Column="1"
+                                Width="30"
+                                Margin="0,4,0,10"
+                                Content="..."
+                                Click="BtnBrowse_Click"
+                                ToolTip="Chọn thư mục" />
                     </Grid>
 
                     <TextBlock Text="Tên file PDF:" />
                     <TextBox x:Name="txtFileName" />
-                    
-                    <CheckBox x:Name="chkOpenPdf" Content="Mở PDF sau khi hoàn tất" IsChecked="True" Foreground="#E0E0E0" Margin="0,5,0,0" />
+
+                    <CheckBox x:Name="chkOpenPdf"
+                              Margin="0,5,0,0"
+                              Foreground="#E0E0E0"
+                              Content="Mở PDF sau khi hoàn tất"
+                              IsChecked="True" />
                 </StackPanel>
             </Border>
 
-            <!-- Export Button -->
-            <Button x:Name="btnExport" Grid.Row="3" Content="📄 Xuất PDF" Style="{StaticResource ActionButtonStyle}" Click="BtnExport_Click" />
+            <Button x:Name="btnExport"
+                    Grid.Row="3"
+                    Content="Xuất PDF"
+                    Style="{StaticResource ActionButtonStyle}"
+                    Click="BtnExport_Click" />
 
-            <!-- Status -->
-            <TextBlock x:Name="txtStatus" Grid.Row="4" Margin="0,15,0,0" Text="Sẵn sàng." TextWrapping="Wrap" Foreground="#9ACD32" />
+            <TextBlock x:Name="txtStatus"
+                       Grid.Row="4"
+                       Margin="0,15,0,0"
+                       Foreground="#9ACD32"
+                       Text="Sẵn sàng."
+                       TextWrapping="Wrap" />
         </Grid>
     </ScrollViewer>
 </UserControl>

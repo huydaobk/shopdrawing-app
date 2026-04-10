@@ -54,5 +54,37 @@ namespace ShopDrawing.Tests
                     Directory.Delete(root, true);
             }
         }
+
+        [Fact]
+        public void NeedsCopy_ShouldUseContentHashInsteadOfTimestampOnly()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "sd-plotstyle-hash-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            string source = Path.Combine(root, "source.ctb");
+            string destination = Path.Combine(root, "destination.ctb");
+            try
+            {
+                File.WriteAllText(source, "A");
+                File.WriteAllText(destination, "B");
+
+                var sameTimestamp = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                File.SetLastWriteTimeUtc(source, sameTimestamp);
+                File.SetLastWriteTimeUtc(destination, sameTimestamp);
+
+                Assert.True(PlotStyleInstaller.NeedsCopy(source, destination));
+
+                File.WriteAllText(destination, "A");
+                File.SetLastWriteTimeUtc(destination, sameTimestamp);
+                Assert.False(PlotStyleInstaller.NeedsCopy(source, destination));
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
     }
 }

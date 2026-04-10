@@ -44,20 +44,29 @@ namespace ShopDrawing.Plugin.Modules.Export
             var engine = new PdfExportEngine();
             try
             {
-                engine.ExportDrawingsToPdf(doc, options, (msg, _, _) =>
+                using (doc.LockDocument())
                 {
-                    palette?.ReportProgress(msg, false, string.Empty, false);
-                });
+                    engine.ExportDrawingsToPdf(doc, options, (msg, _, _) =>
+                    {
+                        palette?.ReportProgress(msg, false, false, string.Empty, false);
+                    });
+                }
 
                 palette?.ReportProgress(
-                    $"✅ Đã xuất PDF thành công ({options.OutputFilePath})",
+                    $"Đã xuất PDF thành công: {options.OutputFilePath}",
+                    true,
                     true,
                     options.OutputFilePath,
                     options.OpenAfterExport);
             }
+            catch (System.OperationCanceledException ex)
+            {
+                palette?.ReportProgress(ex.Message, true, false, string.Empty, false);
+                ed.WriteMessage($"\n[SD_EXPORT] CANCELLED: {ex.Message}\n");
+            }
             catch (System.Exception ex)
             {
-                palette?.ReportProgress($"❌ Lỗi xuất PDF: {ex.Message}", true, string.Empty, false);
+                palette?.ReportProgress($"Lỗi xuất PDF: {ex.Message}", true, false, string.Empty, false);
                 ed.WriteMessage($"\n[SD_EXPORT] ERROR: {ex.Message}\n{ex.StackTrace}\n");
             }
         }

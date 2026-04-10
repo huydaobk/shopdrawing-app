@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using Autodesk.AutoCAD.ApplicationServices;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
+using Autodesk.AutoCAD.ApplicationServices;
 
 namespace ShopDrawing.Plugin.Core
 {
@@ -12,10 +13,10 @@ namespace ShopDrawing.Plugin.Core
         public const string DefaultPlotStyleName = "SD_Black.ctb";
         public const string FallbackPlotStyleName = "monochrome.ctb";
 
-        public static bool EnsureInstalled(Document? doc = null)
-        {
-            try
-            {
+        public static bool EnsureInstalled(Document? doc = null)
+        {
+            try
+            {
                 string? plotStylesDir = TryGetPlotStylesDirectory();
                 if (string.IsNullOrWhiteSpace(plotStylesDir))
                     return false;
@@ -27,10 +28,10 @@ namespace ShopDrawing.Plugin.Core
                 if (string.IsNullOrWhiteSpace(sourcePath))
                     return File.Exists(destinationPath);
 
-                if (NeedsCopy(sourcePath, destinationPath))
-                    File.Copy(sourcePath, destinationPath, true);
-
-                return File.Exists(destinationPath);
+                if (NeedsCopy(sourcePath, destinationPath))
+                    File.Copy(sourcePath, destinationPath, true);
+
+                return File.Exists(destinationPath);
             }
             catch (Exception ex)
             {
@@ -47,8 +48,8 @@ namespace ShopDrawing.Plugin.Core
             }
         }
 
-        public static string ResolvePreferredStyleName(IEnumerable<string>? availableStyles, string? requestedStyleName = null)
-        {
+        public static string ResolvePreferredStyleName(IEnumerable<string>? availableStyles, string? requestedStyleName = null)
+        {
             var styles = new HashSet<string>(
                 availableStyles ?? Array.Empty<string>(),
                 StringComparer.OrdinalIgnoreCase);
@@ -64,8 +65,41 @@ namespace ShopDrawing.Plugin.Core
 
             return !string.IsNullOrWhiteSpace(requestedStyleName)
                 ? requestedStyleName
-                : DefaultPlotStyleName;
-        }
+                : DefaultPlotStyleName;
+        }
+
+        public static bool IsInstalledStyleSynced(out string issue)
+        {
+            issue = string.Empty;
+            string? plotStylesDir = TryGetPlotStylesDirectory();
+            if (string.IsNullOrWhiteSpace(plotStylesDir))
+            {
+                issue = "Không xác định được thư mục Plot Styles.";
+                return false;
+            }
+
+            string installed = Path.Combine(plotStylesDir, DefaultPlotStyleName);
+            if (!File.Exists(installed))
+            {
+                issue = $"Thiếu file đã cài: {installed}";
+                return false;
+            }
+
+            string bundled = GetBundledPlotStylePath();
+            if (!File.Exists(bundled))
+            {
+                issue = $"Thiếu file bundled: {bundled}";
+                return false;
+            }
+
+            if (!AreFilesContentEqual(installed, bundled))
+            {
+                issue = "Nội dung SD_Black.ctb trong AutoCAD khác bản bundled của plugin.";
+                return false;
+            }
+
+            return true;
+        }
 
         internal static string? TryGetPlotStylesDirectory()
         {
@@ -123,15 +157,32 @@ namespace ShopDrawing.Plugin.Core
             return File.Exists(fallbackPath) ? fallbackPath : null;
         }
 
-        internal static bool NeedsCopy(string sourcePath, string destinationPath)
-        {
-            if (!File.Exists(destinationPath))
-                return true;
-
-            var source = new FileInfo(sourcePath);
-            var destination = new FileInfo(destinationPath);
-            return source.Length != destination.Length
-                || source.LastWriteTimeUtc != destination.LastWriteTimeUtc;
-        }
-    }
-}
+        internal static bool NeedsCopy(string sourcePath, string destinationPath)
+        {
+            if (!File.Exists(destinationPath))
+                return true;
+
+            return !AreFilesContentEqual(sourcePath, destinationPath);
+        }
+
+        internal static bool AreFilesContentEqual(string firstPath, string secondPath)
+        {
+            if (!File.Exists(firstPath) || !File.Exists(secondPath))
+                return false;
+
+            var firstInfo = new FileInfo(firstPath);
+            var secondInfo = new FileInfo(secondPath);
+            if (firstInfo.Length != secondInfo.Length)
+                return false;
+
+            return ComputeFileHash(firstPath) == ComputeFileHash(secondPath);
+        }
+
+        internal static string ComputeFileHash(string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
+            using var sha = SHA256.Create();
+            return Convert.ToHexString(sha.ComputeHash(stream));
+        }
+    }
+}

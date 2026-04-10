@@ -11,6 +11,7 @@ Current baseline
 Operational flow
 - The plugin copies SD_Black.ctb into the active AutoCAD "Plotters\\Plot Styles" folder on load.
 - Layout page setup and PDF export both prefer SD_Black.ctb and fall back to monochrome.ctb if needed.
+- In strict export mode, SD_Black.ctb must be selected and layer standards (ACI/lineweight/plottable) are preflight-validated before plotting.
 
 If the office wants a stricter CTB mapping later
 - Edit SD_Black.ctb in AutoCAD Plot Style Table Editor.

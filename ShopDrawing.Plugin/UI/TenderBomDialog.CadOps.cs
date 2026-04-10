@@ -288,16 +288,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             totalLengthMm: length,
                             defaultHeightMm: height,
                             initialSegments: targetRow.HeightSegments,
+                            initialOpenings: targetRow.Openings,
                             panelWidthMm: targetRow.PanelWidth,
                             layoutDirection: targetRow.LayoutDirection,
                             out var promptedSegments,
                             out var promptedHeight,
-                            out var promptedLayoutDirection))
+                            out var promptedLayoutDirection,
+                            out var promptedOpenings))
                         return;
 
                     height = promptedHeight;
                     heightSegments = promptedSegments;
                     targetRow.LayoutDirection = promptedLayoutDirection;
+                    targetRow.Openings = promptedOpenings;
                     polygonVertices = null;
 
                 }
@@ -632,16 +635,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             totalLengthMm: newRow.Length,
                             defaultHeightMm: newRow.Height,
                             initialSegments: newRow.HeightSegments,
+                            initialOpenings: newRow.Openings,
                             panelWidthMm: newRow.PanelWidth,
                             layoutDirection: newRow.LayoutDirection,
                             out var promptedSegments,
                             out var promptedHeight,
-                            out var promptedLayoutDirection))
+                            out var promptedLayoutDirection,
+                            out var promptedOpenings))
                         return;
 
                     newRow.Height = promptedHeight;
                     newRow.HeightSegments = promptedSegments;
                     newRow.LayoutDirection = promptedLayoutDirection;
+                    newRow.Openings = promptedOpenings;
 
                     polygonTag = string.IsNullOrWhiteSpace(polygonTag) ? " [Đoạn thẳng]" : polygonTag;
 
@@ -997,28 +1003,42 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             double totalLengthMm,
             double defaultHeightMm,
             IReadOnlyList<TenderHeightSegment>? initialSegments,
+            IReadOnlyList<TenderOpening>? initialOpenings,
             int panelWidthMm,
             string layoutDirection,
             out List<TenderHeightSegment> segments,
             out double representativeHeightMm,
-            out string selectedLayoutDirection)
+            out string selectedLayoutDirection,
+            out List<TenderOpening> selectedOpenings)
         {
             segments = new List<TenderHeightSegment>();
             representativeHeightMm = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
             selectedLayoutDirection = string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dọc";
+            selectedOpenings = new List<TenderOpening>();
             bool confirmed = false;
             var selectedSegments = new List<TenderHeightSegment>();
+            var pickedOpenings = new List<TenderOpening>();
             double selectedHeight = representativeHeightMm;
             double lengthTarget = Math.Max(1, Math.Round(totalLengthMm));
             double defaultHeight = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
             string currentLayoutDirection = selectedLayoutDirection;
             string selectedDirection = selectedLayoutDirection;
+            var draftOpenings = (initialOpenings ?? Array.Empty<TenderOpening>())
+                .Select(o => new TenderOpening
+                {
+                    Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
+                    Width = Math.Max(1, Math.Round(o.Width)),
+                    Height = Math.Max(1, Math.Round(o.Height)),
+                    Quantity = Math.Max(1, o.Quantity)
+                })
+                .ToList();
 
             Dispatcher.Invoke(() =>
             {
                 Canvas previewCanvas = null!;
                 TextBlock lblNote = null!;
                 ComboBox cboLayoutDirection = null!;
+                TextBlock lblOpeningCount = null!;
                 var rows = new ObservableCollection<HeightSegmentInputRow>();
                 var seedSegments = WallHeightResolver.Normalize(lengthTarget, defaultHeight, initialSegments);
                 if (seedSegments.Count == 0)
@@ -1099,6 +1119,83 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 };
                 directionPanel.Children.Add(cboLayoutDirection);
                 topPanel.Children.Add(directionPanel);
+                var btnPickSpan = Btn("Pick Nhịp", AccentBlue, Brushes.White, (_, _) =>
+                {
+                    dlg.Hide();
+                    try
+                    {
+                        var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                        if (doc == null)
+                            return;
+
+                        var ed = doc.Editor;
+                        while (true)
+                        {
+                            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đầu nhịp (Enter để kết thúc):")
+                            {
+                                AllowNone = true
+                            };
+                            var p1Result = ed.GetPoint(p1Opt);
+                            if (p1Result.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
+                                break;
+                            if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                                break;
+
+                            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm cuối nhịp:");
+                            p2Opt.UseBasePoint = true;
+                            p2Opt.BasePoint = p1Result.Value;
+                            var p2Result = ed.GetPoint(p2Opt);
+                            if (p2Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                                break;
+
+                            double lengthMm = Math.Round(p1Result.Value.DistanceTo(p2Result.Value));
+                            if (lengthMm <= 0)
+                                continue;
+
+                            if (!TryPromptWallHeightInput(defaultHeight, out var heightMm) || heightMm <= 0)
+                                break;
+
+                            if (rows.Count == 1
+                                && Math.Abs(rows[0].LengthMm - lengthTarget) < 0.5
+                                && Math.Abs(rows[0].HeightMm - defaultHeight) < 0.5)
+                            {
+                                rows.Clear();
+                            }
+
+                            rows.Add(new HeightSegmentInputRow
+                            {
+                                LengthMm = lengthMm,
+                                HeightMm = Math.Round(heightMm)
+                            });
+                        }
+                    }
+                    finally
+                    {
+                        dlg.Show();
+                        dlg.Activate();
+                        RefreshPreview();
+                    }
+                }, 100);
+                topPanel.Children.Add(btnPickSpan);
+                var btnPickOpening = Btn("Pick Lỗ Mở", AccentOrange, Brushes.White, (_, _) =>
+                {
+                    dlg.Hide();
+                    try
+                    {
+                        while (TryPickOpeningFromCadForPopup(out var opening))
+                        {
+                            draftOpenings.Add(opening);
+                        }
+                    }
+                    finally
+                    {
+                        dlg.Show();
+                        dlg.Activate();
+                        lblOpeningCount.Text = $"Lỗ Mở: {draftOpenings.Count}";
+                        RefreshPreview();
+                    }
+                }, 120);
+                topPanel.Children.Add(btnPickOpening);
                 var btnAdd = Btn("+ Nhịp", AccentBlue, Brushes.White, (_, _) =>
                 {
                     double h = rows.Count > 0 ? Math.Max(1, Math.Round(rows.Last().HeightMm)) : defaultHeight;
@@ -1115,6 +1212,15 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 }, 90);
                 topPanel.Children.Add(btnAdd);
                 topPanel.Children.Add(btnRemove);
+                lblOpeningCount = new TextBlock
+                {
+                    Text = $"Lỗ Mở: {draftOpenings.Count}",
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(16, 0, 0, 0),
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = FgDark
+                };
+                topPanel.Children.Add(lblOpeningCount);
                 Grid.SetRow(topPanel, 1);
                 root.Children.Add(topPanel);
 
@@ -1218,6 +1324,15 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     selectedDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
                         ? "Ngang"
                         : "Dọc";
+                    pickedOpenings = draftOpenings
+                        .Select(o => new TenderOpening
+                        {
+                            Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
+                            Width = Math.Max(1, Math.Round(o.Width)),
+                            Height = Math.Max(1, Math.Round(o.Height)),
+                            Quantity = Math.Max(1, o.Quantity)
+                        })
+                        .ToList();
                     confirmed = true;
                     dlg.DialogResult = true;
                 }, 120);
@@ -1269,6 +1384,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 segments = selectedSegments;
                 representativeHeightMm = selectedHeight;
                 selectedLayoutDirection = selectedDirection;
+                selectedOpenings = pickedOpenings;
             }
 
             return confirmed;
@@ -1488,6 +1604,58 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
 
             return Math.Max(0, segments.Last().HeightMm);
+        }
+
+        private bool TryPickOpeningFromCadForPopup(out TenderOpening opening)
+        {
+            opening = new TenderOpening();
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            var ed = doc.Editor;
+            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm 1 lỗ mở (Enter để kết thúc):")
+            {
+                AllowNone = true
+            };
+            var p1Result = ed.GetPoint(p1Opt);
+            if (p1Result.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
+                return false;
+            if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm 2 lỗ mở:");
+            p2Opt.UseBasePoint = true;
+            p2Opt.BasePoint = p1Result.Value;
+            var p2Result = ed.GetPoint(p2Opt);
+            if (p2Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            double widthMm = Math.Round(p1Result.Value.DistanceTo(p2Result.Value));
+            if (widthMm <= 0)
+                return false;
+
+            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao lỗ mở (mm):")
+            {
+                DefaultValue = 2100,
+                AllowNegative = false,
+                AllowZero = false
+            };
+            var hRes = ed.GetDouble(hOpt);
+            if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+            double heightMm = Math.Round(hRes.Value);
+            if (heightMm <= 0)
+                return false;
+
+            opening = new TenderOpening
+            {
+                Type = heightMm >= 2000 ? "Cửa đi" : "Cửa sổ",
+                Width = widthMm,
+                Height = heightMm,
+                Quantity = 1
+            };
+            return true;
         }
 
         private void PickOpeningFromCad(bool isElevation, TenderOpeningRow? existingRow)

@@ -158,3 +158,64 @@ Các file này là data local/runtime, không đi theo git và không nên để
 - [docs/release-autoupdate.md](C:\my_project\shopdrawing-app\docs\release-autoupdate.md)
 - [docs/deploy-runbook.md](C:\my_project\shopdrawing-app\docs\deploy-runbook.md)
 - [docs/runner-service.md](C:\my_project\shopdrawing-app\docs\runner-service.md)
+
+---
+
+## Deploy Runbook (Updated 2026-04-10)
+
+Muc tieu: deploy on dinh, khong mat tab `ShopDrawing`, khong lap lai loi update.
+
+### 1) Quy trinh phat hanh chuan
+1. Commit code len `master`.
+2. Chay release script:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Version X.Y.Z
+   ```
+3. Theo doi workflow:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\watch-release.ps1 -Version X.Y.Z
+   ```
+4. Chi thong bao team cap nhat khi workflow `build-release` da xanh va assets da du.
+
+### 2) Checklist bat buoc truoc khi thong bao team update
+- `latest.json` tro dung tag vua release.
+- Release co du 4 assets:
+  - `ShopDrawing.Setup.X.Y.Z.zip`
+  - `ShopDrawing.Installer.exe`
+  - `ShopDrawing.bundle.zip`
+  - `latest.json`
+- Test local 1 lan:
+  - CAD hien tab `ShopDrawing`.
+  - Lenh `Update` hoat dong.
+  - Sau khi dong CAD va mo lai, version da tang.
+
+### 3) Co che update da chot (hien tai)
+- Khi bam `Update`, plugin se mo updater.
+- Uu tien dung installer local de popup dong CAD xuat hien nhanh.
+- Installer ghi ket qua vao `%APPDATA%\Autodesk\ApplicationPlugins\shopdrawing_update_result.json`.
+- Updater co thong bao desktop khi xong.
+- Lan mo CAD tiep theo plugin doc marker va hien thong bao thanh cong/that bai.
+
+### 4) Bai hoc xu ly loi da gap
+- Loi 1: cai nham `install-dir` vao `...\Contents\Windows` -> sinh bundle long.
+  - Da fix: normalize install root ve `%APPDATA%\Autodesk\ApplicationPlugins`.
+- Loi 2: cua so den updater.
+  - Da fix: plugin mo updater voi `CreateNoWindow=true`, installer build `WinExe`.
+- Loi 3: update fail va mat tab do lock `ShopDrawing.Installer.exe`.
+  - Da fix: installer copy/merge an toan, khong xoa bundle theo cach lam lock file dang chay.
+- Loi 4: cho lau truoc popup dong CAD.
+  - Da fix: khong block doi tai installer moi truoc khi mo prompt.
+
+### 5) Quy tac van hanh cho team
+- Khi da bam update: dong CAD va cho thong bao updater xong roi moi mo lai CAD.
+- Neu mo CAD qua som, update co the fail va phai chay lai.
+- Neu may dang o trang thai loi (khong thay tab), cai tay 1 lan bang:
+  - `ShopDrawing.Setup.X.Y.Z.zip` (ban moi nhat).
+
+### 6) Nhat ky va duong dan can check khi co su co
+- `%APPDATA%\Autodesk\ApplicationPlugins\shopdrawing_installer.log`
+- `%APPDATA%\Autodesk\ApplicationPlugins\shopdrawing_update_result.json`
+- `%APPDATA%\Autodesk\ApplicationPlugins\ShopDrawing.bundle\PackageContents.xml`
+
+### 7) Ban baseline on dinh
+- Baseline deploy on dinh moi nhat: `v0.1.30`.

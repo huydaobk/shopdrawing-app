@@ -155,8 +155,11 @@ namespace ShopDrawing.Plugin.Core
                 string installerPath = Path.Combine(installDirectory, "ShopDrawing.Installer.exe");
                 if (!File.Exists(installerPath))
                 {
-                    UiFeedback.ShowWarning("Khong tim thay ShopDrawing.Installer.exe trong thu muc cai dat.");
-                    return false;
+                    if (!TryDownloadInstaller(result.InstallerUrl, installerPath))
+                    {
+                        UiFeedback.ShowWarning("Khong tim thay ShopDrawing.Installer.exe trong thu muc cai dat.");
+                        return false;
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(result.PackageUrl))
@@ -179,6 +182,32 @@ namespace ShopDrawing.Plugin.Core
             catch (Exception ex)
             {
                 UiFeedback.ShowError("Khong the mo updater: " + ex.Message);
+                return false;
+            }
+        }
+
+        private static bool TryDownloadInstaller(string? installerUrl, string installerPath)
+        {
+            if (string.IsNullOrWhiteSpace(installerUrl))
+            {
+                return false;
+            }
+
+            try
+            {
+                using var client = new System.Net.Http.HttpClient
+                {
+                    Timeout = TimeSpan.FromMinutes(2)
+                };
+
+                byte[] payload = client.GetByteArrayAsync(installerUrl).GetAwaiter().GetResult();
+                Directory.CreateDirectory(Path.GetDirectoryName(installerPath) ?? AppContext.BaseDirectory);
+                File.WriteAllBytes(installerPath, payload);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
                 return false;
             }
         }

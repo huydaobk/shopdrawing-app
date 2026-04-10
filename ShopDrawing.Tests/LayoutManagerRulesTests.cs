@@ -67,5 +67,14 @@ namespace ShopDrawing.Tests
         {
             Assert.Equal(expected, LayoutManagerRules.InferDrawingTitleFromLayoutTabName(layoutName));
         }
+
+        [Theory]
+        [InlineData(LayoutViewKind.Elevation, "W1", 1, 1, "MẶT ĐỨNG VÁCH - W1")]
+        [InlineData(LayoutViewKind.Plan, "W1", 1, 1, "MẶT BẰNG - W1")]
+        [InlineData(LayoutViewKind.Plan, "W1", 2, 3, "MẶT BẰNG - W1 (PHẦN 2/3)")]
+        public void BuildViewTitle_ShouldUseCorrectPrefix(LayoutViewKind kind, string userTitle, int pageIndex, int totalPages, string expected)
+        {
+            Assert.Equal(expected, LayoutManagerRules.BuildViewTitle(kind, userTitle, pageIndex, totalPages));
+        }
     }
 }

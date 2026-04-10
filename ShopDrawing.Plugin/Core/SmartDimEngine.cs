@@ -27,21 +27,44 @@ namespace ShopDrawing.Plugin.Core
         // LAYER + STYLE SETUP
         // ═══════════════════════════════════════════════════
 
-        public static void EnsureDimLayer(Database db, Transaction tr, string layerName, short colorIndex)
-        {
-            var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
-            if (lt.Has(layerName)) return;
-
-            lt.UpgradeOpen();
-            var layer = new LayerTableRecord
-            {
-                Name  = layerName,
-                Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(
-                            Autodesk.AutoCAD.Colors.ColorMethod.ByAci, colorIndex)
-            };
-            lt.Add(layer);
-            tr.AddNewlyCreatedDBObject(layer, true);
-        }
+        public static void EnsureDimLayer(
+            Database db,
+            Transaction tr,
+            string layerName,
+            short colorIndex,
+            LineWeight lineWeight = LineWeight.LineWeight018,
+            bool isPlottable = true)
+        {
+            var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+            if (lt.Has(layerName))
+            {
+                var existing = (LayerTableRecord)tr.GetObject(lt[layerName], OpenMode.ForRead);
+                if (existing.Color.ColorIndex != colorIndex
+                    || existing.LineWeight != lineWeight
+                    || existing.IsPlottable != isPlottable)
+                {
+                    existing.UpgradeOpen();
+                    existing.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(
+                        Autodesk.AutoCAD.Colors.ColorMethod.ByAci, colorIndex);
+                    existing.LineWeight = lineWeight;
+                    existing.IsPlottable = isPlottable;
+                }
+
+                return;
+            }
+
+            lt.UpgradeOpen();
+            var layer = new LayerTableRecord
+            {
+                Name = layerName,
+                Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(
+                    Autodesk.AutoCAD.Colors.ColorMethod.ByAci, colorIndex),
+                LineWeight = lineWeight,
+                IsPlottable = isPlottable
+            };
+            lt.Add(layer);
+            tr.AddNewlyCreatedDBObject(layer, true);
+        }
 
         /// <summary>
         /// Tạo hoặc CẬP NHẬT DimStyle (P2 — update existing thay vì skip).

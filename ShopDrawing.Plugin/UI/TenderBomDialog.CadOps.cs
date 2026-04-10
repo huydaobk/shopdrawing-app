@@ -152,8 +152,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var ed = doc.Editor;
 
-
-
                 string prompt = pickArea
 
                     ? "\nChọn polyline kín để lấy Dài x Cao:"
@@ -419,6 +417,80 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 if (doc == null) return;
 
                 var ed = doc.Editor;
+
+                if (!pickArea)
+                {
+                    var template = BuildPickTemplateRow();
+                    var selectedRow = _wallGrid?.SelectedItem as TenderWallRow;
+                    string category = template.Category;
+                    double initialLength = template.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
+                    if (initialLength <= 0)
+                        initialLength = Math.Max(0, selectedRow?.Length ?? 0);
+                    double initialHeight = Math.Max(1, selectedRow?.Height ?? 3000);
+
+                    var popupRow = new TenderWallRow
+                    {
+                        Index = _wallRows.Count + 1,
+                        Category = category,
+                        Floor = template.Floor,
+                        Name = $"{TenderWall.GetCategoryPrefix(category)}-{_wallRows.Count + 1}",
+                        SpecKey = template.SpecKey,
+                        PanelWidth = template.PanelWidth,
+                        PanelThickness = template.PanelThickness,
+                        LayoutDirection = template.LayoutDirection,
+                        Application = template.Application,
+                        CableDropLengthMm = template.CableDropLengthMm,
+                        ColdStorageDivideFromMaxSide = template.ColdStorageDivideFromMaxSide,
+                        SuspensionLayoutDirection = template.SuspensionLayoutDirection,
+                        TopPanelTreatment = template.TopPanelTreatment,
+                        EndPanelTreatment = template.EndPanelTreatment,
+                        BottomPanelTreatment = template.BottomPanelTreatment,
+                        TopEdgeExposed = template.TopEdgeExposed,
+                        BottomEdgeExposed = template.BottomEdgeExposed,
+                        StartEdgeExposed = template.StartEdgeExposed,
+                        EndEdgeExposed = template.EndEdgeExposed,
+                        HeightSegments = template.HeightSegments
+                            ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm })
+                            .ToList()
+                            ?? new List<TenderHeightSegment>(),
+                        Openings = new List<TenderOpening>(),
+                        Length = initialLength,
+                        Height = initialHeight
+                    };
+
+                    if (!TryPromptWallSegmentsInput(
+                            totalLengthMm: popupRow.Length,
+                            defaultHeightMm: popupRow.Height,
+                            initialSegments: popupRow.HeightSegments,
+                            initialOpenings: popupRow.Openings,
+                            panelWidthMm: popupRow.PanelWidth,
+                            layoutDirection: popupRow.LayoutDirection,
+                            out var promptedSegments,
+                            out var promptedHeight,
+                            out var promptedLayoutDirection,
+                            out var promptedOpenings))
+                        return;
+
+                    popupRow.Height = promptedHeight;
+                    popupRow.HeightSegments = promptedSegments;
+                    popupRow.LayoutDirection = promptedLayoutDirection;
+                    popupRow.Openings = promptedOpenings;
+                    popupRow.Length = Math.Max(0, promptedSegments.Sum(s => Math.Max(0, s.LengthMm)));
+                    if (popupRow.Length <= 0)
+                        popupRow.Length = Math.Max(0, initialLength);
+
+                    _wallRows.Add(popupRow);
+                    if (_wallGrid != null)
+                    {
+                        _wallGrid.SelectedItem = popupRow;
+                        _wallGrid.ScrollIntoView(popupRow);
+                    }
+                    RefreshFooter();
+                    RefreshPanelBreakdown(popupRow);
+                    _lastCadPreviewKey = null;
+                    SetStatus($"Đã thêm {popupRow.Name} bằng popup Pick Nhịp.");
+                    return;
+                }
 
 
 
@@ -1019,7 +1091,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             var selectedSegments = new List<TenderHeightSegment>();
             var pickedOpenings = new List<TenderOpening>();
             double selectedHeight = representativeHeightMm;
-            double lengthTarget = Math.Max(1, Math.Round(totalLengthMm));
+            double seedLength = initialSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
+            bool hasLengthReference = totalLengthMm > 0.5 || seedLength > 0.5;
+            double lengthTarget = hasLengthReference
+                ? Math.Max(1, Math.Round(totalLengthMm > 0.5 ? totalLengthMm : seedLength))
+                : 1000;
             double defaultHeight = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
             string currentLayoutDirection = selectedLayoutDirection;
             string selectedDirection = selectedLayoutDirection;
@@ -1043,7 +1119,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var seedSegments = WallHeightResolver.Normalize(lengthTarget, defaultHeight, initialSegments);
                 if (seedSegments.Count == 0)
                 {
-                    rows.Add(new HeightSegmentInputRow { LengthMm = lengthTarget, HeightMm = defaultHeight });
+                    if (hasLengthReference)
+                    {
+                        rows.Add(new HeightSegmentInputRow { LengthMm = lengthTarget, HeightMm = defaultHeight });
+                    }
                 }
                 else
                 {
@@ -1080,7 +1159,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var header = new TextBlock
                 {
-                    Text = $"Chiều dài tham chiếu tuyến: {lengthTarget:F0} mm. Nhập/Pick nhịp độc lập theo thực tế thi công.",
+                    Text = hasLengthReference
+                        ? $"Chiều dài tham chiếu tuyến: {lengthTarget:F0} mm. Nhập/Pick nhịp độc lập theo thực tế thi công."
+                        : "Chưa có chiều dài tham chiếu. Dùng Pick Nhịp để lấy từng nhịp theo thực tế thi công.",
                     TextWrapping = TextWrapping.Wrap,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = FgDark,
@@ -1196,22 +1277,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                 }, 120);
                 topPanel.Children.Add(btnPickOpening);
-                var btnAdd = Btn("+ Nhịp", AccentBlue, Brushes.White, (_, _) =>
-                {
-                    double h = rows.Count > 0 ? Math.Max(1, Math.Round(rows.Last().HeightMm)) : defaultHeight;
-                    rows.Add(new HeightSegmentInputRow { LengthMm = 1000, HeightMm = h });
-                    RefreshPreview();
-                }, 90);
-                var btnRemove = Btn("- Nhịp", AccentRed, Brushes.White, (_, _) =>
-                {
-                    if (rows.Count > 1)
-                    {
-                        rows.RemoveAt(rows.Count - 1);
-                        RefreshPreview();
-                    }
-                }, 90);
-                topPanel.Children.Add(btnAdd);
-                topPanel.Children.Add(btnRemove);
                 lblOpeningCount = new TextBlock
                 {
                     Text = $"Lỗ Mở: {draftOpenings.Count}",

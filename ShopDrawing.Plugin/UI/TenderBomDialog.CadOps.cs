@@ -291,11 +291,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             panelWidthMm: targetRow.PanelWidth,
                             layoutDirection: targetRow.LayoutDirection,
                             out var promptedSegments,
-                            out var promptedHeight))
+                            out var promptedHeight,
+                            out var promptedLayoutDirection))
                         return;
 
                     height = promptedHeight;
                     heightSegments = promptedSegments;
+                    targetRow.LayoutDirection = promptedLayoutDirection;
                     polygonVertices = null;
 
                 }
@@ -633,11 +635,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             panelWidthMm: newRow.PanelWidth,
                             layoutDirection: newRow.LayoutDirection,
                             out var promptedSegments,
-                            out var promptedHeight))
+                            out var promptedHeight,
+                            out var promptedLayoutDirection))
                         return;
 
                     newRow.Height = promptedHeight;
                     newRow.HeightSegments = promptedSegments;
+                    newRow.LayoutDirection = promptedLayoutDirection;
 
                     polygonTag = string.IsNullOrWhiteSpace(polygonTag) ? " [Đoạn thẳng]" : polygonTag;
 
@@ -996,20 +1000,25 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             int panelWidthMm,
             string layoutDirection,
             out List<TenderHeightSegment> segments,
-            out double representativeHeightMm)
+            out double representativeHeightMm,
+            out string selectedLayoutDirection)
         {
             segments = new List<TenderHeightSegment>();
             representativeHeightMm = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
+            selectedLayoutDirection = string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dọc";
             bool confirmed = false;
             var selectedSegments = new List<TenderHeightSegment>();
             double selectedHeight = representativeHeightMm;
             double lengthTarget = Math.Max(1, Math.Round(totalLengthMm));
             double defaultHeight = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
+            string currentLayoutDirection = selectedLayoutDirection;
+            string selectedDirection = selectedLayoutDirection;
 
             Dispatcher.Invoke(() =>
             {
                 Canvas previewCanvas = null!;
                 TextBlock lblNote = null!;
+                ComboBox cboLayoutDirection = null!;
                 var rows = new ObservableCollection<HeightSegmentInputRow>();
                 var seedSegments = WallHeightResolver.Normalize(lengthTarget, defaultHeight, initialSegments);
                 if (seedSegments.Count == 0)
@@ -1026,68 +1035,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             HeightMm = Math.Round(segment.HeightMm)
                         });
                     }
-                }
-
-                void RebalanceRows()
-                {
-                    if (rows.Count == 0)
-                    {
-                        rows.Add(new HeightSegmentInputRow { LengthMm = lengthTarget, HeightMm = defaultHeight });
-                        return;
-                    }
-
-                    foreach (var row in rows)
-                    {
-                        if (row.HeightMm <= 0)
-                            row.HeightMm = defaultHeight;
-                        if (row.LengthMm < 0)
-                            row.LengthMm = 0;
-                    }
-
-                    if (rows.Count == 1)
-                    {
-                        rows[0].LengthMm = lengthTarget;
-                        return;
-                    }
-
-                    double sumEditable = 0;
-                    for (int i = 0; i < rows.Count - 1; i++)
-                        sumEditable += Math.Max(0, rows[i].LengthMm);
-
-                    rows[^1].LengthMm = Math.Max(0, lengthTarget - sumEditable);
-                }
-
-                void AddRow()
-                {
-                    if (rows.Count == 0)
-                    {
-                        rows.Add(new HeightSegmentInputRow { LengthMm = lengthTarget, HeightMm = defaultHeight });
-                        return;
-                    }
-
-                    if (rows.Count == 1)
-                    {
-                        double take = Math.Min(1000.0, Math.Max(1.0, rows[0].LengthMm - 1.0));
-                        rows[0].LengthMm = Math.Max(0, rows[0].LengthMm - take);
-                        rows.Add(new HeightSegmentInputRow
-                        {
-                            LengthMm = take,
-                            HeightMm = rows[0].HeightMm > 0 ? rows[0].HeightMm : defaultHeight
-                        });
-                    }
-                    else
-                    {
-                        double autoLen = Math.Max(0, rows[^1].LengthMm);
-                        double take = Math.Min(1000.0, Math.Max(1.0, autoLen));
-                        rows[^1].LengthMm = Math.Max(0, autoLen - take);
-                        rows.Add(new HeightSegmentInputRow
-                        {
-                            LengthMm = take,
-                            HeightMm = rows[^1].HeightMm > 0 ? rows[^1].HeightMm : defaultHeight
-                        });
-                    }
-
-                    RebalanceRows();
                 }
 
                 var dlg = new Window
@@ -1113,7 +1060,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var header = new TextBlock
                 {
-                    Text = $"Tổng chiều dài đã chọn: {lengthTarget:F0} mm. Hàng dưới cùng luôn tự cân bằng theo tổng chiều dài.",
+                    Text = $"Chiều dài tham chiếu tuyến: {lengthTarget:F0} mm. Nhập/Pick nhịp độc lập theo thực tế thi công.",
                     TextWrapping = TextWrapping.Wrap,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = FgDark,
@@ -1123,9 +1070,39 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 root.Children.Add(header);
 
                 var topPanel = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+                var directionPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 16, 0)
+                };
+                directionPanel.Children.Add(new TextBlock
+                {
+                    Text = "Hướng Chia Tấm:",
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 6, 0),
+                    Foreground = FgDark,
+                    FontWeight = FontWeights.SemiBold
+                });
+                cboLayoutDirection = new ComboBox
+                {
+                    Width = 120,
+                    ItemsSource = new[] { "Dọc", "Ngang" },
+                    SelectedValue = currentLayoutDirection
+                };
+                cboLayoutDirection.SelectionChanged += (_, _) =>
+                {
+                    currentLayoutDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
+                        ? "Ngang"
+                        : "Dọc";
+                    RefreshPreview();
+                };
+                directionPanel.Children.Add(cboLayoutDirection);
+                topPanel.Children.Add(directionPanel);
                 var btnAdd = Btn("+ Nhịp", AccentBlue, Brushes.White, (_, _) =>
                 {
-                    AddRow();
+                    double h = rows.Count > 0 ? Math.Max(1, Math.Round(rows.Last().HeightMm)) : defaultHeight;
+                    rows.Add(new HeightSegmentInputRow { LengthMm = 1000, HeightMm = h });
                     RefreshPreview();
                 }, 90);
                 var btnRemove = Btn("- Nhịp", AccentRed, Brushes.White, (_, _) =>
@@ -1133,7 +1110,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     if (rows.Count > 1)
                     {
                         rows.RemoveAt(rows.Count - 1);
-                        RebalanceRows();
                         RefreshPreview();
                     }
                 }, 90);
@@ -1152,7 +1128,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     ItemsSource = rows,
                     Height = 190
                 };
-                var lengthColumn = new DataGridTextColumn
+                rowGrid.Columns.Add(new DataGridTextColumn
                 {
                     Header = "Dài (mm)",
                     Binding = new Binding(nameof(HeightSegmentInputRow.LengthMm))
@@ -1161,8 +1137,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
                     },
                     Width = new DataGridLength(1, DataGridLengthUnitType.Star)
-                };
-                rowGrid.Columns.Add(lengthColumn);
+                });
                 rowGrid.Columns.Add(new DataGridTextColumn
                 {
                     Header = "Cao (mm)",
@@ -1173,15 +1148,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     },
                     Width = new DataGridLength(1, DataGridLengthUnitType.Star)
                 });
-                rowGrid.BeginningEdit += (_, e) =>
-                {
-                    if (e.Column == lengthColumn && rows.Count > 1 && e.Row.GetIndex() == rows.Count - 1)
-                    {
-                        e.Cancel = true;
-                        lblNote.Text = "Hàng dưới cùng tự cân bằng theo tổng chiều dài, không chỉnh tay.";
-                        lblNote.Foreground = new SolidColorBrush(Color.FromRgb(191, 108, 0));
-                    }
-                };
                 rowGrid.CellEditEnding += (_, _) =>
                     Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
                 Grid.SetRow(rowGrid, 2);
@@ -1237,7 +1203,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
-                    RebalanceRows();
                     if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
                     {
                         lblNote.Text = note;
@@ -1250,6 +1215,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     selectedHeight = total > 0
                         ? selectedSegments.Sum(s => s.LengthMm * s.HeightMm) / total
                         : defaultHeight;
+                    selectedDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
+                        ? "Ngang"
+                        : "Dọc";
                     confirmed = true;
                     dlg.DialogResult = true;
                 }, 120);
@@ -1259,20 +1227,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 void RefreshPreview()
                 {
-                    RebalanceRows();
                     BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: false);
-                    DrawHeightProfilePreview(previewCanvas, normalized, lengthTarget, panelWidthMm, layoutDirection);
+                    DrawHeightProfilePreview(previewCanvas, normalized, lengthTarget, panelWidthMm, currentLayoutDirection);
 
                     int panelCount = 0;
                     if (panelWidthMm > 0)
                     {
-                        if (string.Equals(layoutDirection, "Dọc", StringComparison.OrdinalIgnoreCase))
+                        double totalLen = normalized.Sum(s => s.LengthMm);
+                        if (string.Equals(currentLayoutDirection, "Dọc", StringComparison.OrdinalIgnoreCase))
                         {
-                            panelCount = (int)Math.Ceiling(lengthTarget / panelWidthMm);
+                            panelCount = (int)Math.Ceiling(totalLen / panelWidthMm);
                         }
                         else
                         {
-                            double totalLen = normalized.Sum(s => s.LengthMm);
                             double avgH = totalLen > 0 ? normalized.Sum(s => s.LengthMm * s.HeightMm) / totalLen : defaultHeight;
                             panelCount = (int)Math.Ceiling(avgH / panelWidthMm);
                         }
@@ -1281,7 +1248,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     if (string.IsNullOrWhiteSpace(note))
                     {
                         lblNote.Foreground = Brushes.DarkGreen;
-                        lblNote.Text = $"Ước tính số tấm sơ bộ: {panelCount} (khổ {panelWidthMm} mm, hướng {layoutDirection})";
+                        lblNote.Text = $"Ước tính số tấm sơ bộ: {panelCount} (khổ {panelWidthMm} mm, hướng {currentLayoutDirection})";
                     }
                     else
                     {
@@ -1301,6 +1268,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 segments = selectedSegments;
                 representativeHeightMm = selectedHeight;
+                selectedLayoutDirection = selectedDirection;
             }
 
             return confirmed;
@@ -1334,20 +1302,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return true;
             }
 
-            double sumLength = normalized.Sum(s => s.LengthMm);
-            if (sumLength > totalLengthMm + 1.0)
-            {
-                note = $"Vượt chiều dài đã chọn: {sumLength:F0}/{totalLengthMm:F0} mm.";
-                return false;
-            }
-
             note = string.Empty;
-
-            double correctedTotal = normalized.Sum(s => s.LengthMm);
-            if (Math.Abs(correctedTotal - totalLengthMm) > 0.5 && normalized.Count > 0)
-            {
-                normalized[^1].LengthMm += totalLengthMm - correctedTotal;
-            }
 
             return true;
         }
@@ -1360,7 +1315,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             string layoutDirection)
         {
             canvas.Children.Clear();
-            if (segments.Count == 0 || totalLengthMm <= 0)
+            double drawingLength = segments.Sum(s => Math.Max(0, s.LengthMm));
+            if (segments.Count == 0 || drawingLength <= 0)
                 return;
 
             double w = Math.Max(100, canvas.ActualWidth <= 0 ? canvas.Width : canvas.ActualWidth);
@@ -1374,7 +1330,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             for (int i = 0; i < segments.Count; i++)
             {
                 var segment = segments[i];
-                double segW = plotW * segment.LengthMm / totalLengthMm;
+                double segW = plotW * segment.LengthMm / drawingLength;
                 double segH = plotH * segment.HeightMm / maxHeight;
                 double top = margin + (plotH - segH);
 
@@ -1407,9 +1363,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             double cursorMm = 0;
             for (int i = 0; i < segments.Count; i++)
             {
-                double x1 = margin + (cursorMm / totalLengthMm) * plotW;
+                double x1 = margin + (cursorMm / drawingLength) * plotW;
                 cursorMm += segments[i].LengthMm;
-                double x2 = margin + (cursorMm / totalLengthMm) * plotW;
+                double x2 = margin + (cursorMm / drawingLength) * plotW;
                 double yTop = margin + (plotH - (segments[i].HeightMm / maxHeight) * plotH);
 
                 var topLine = new System.Windows.Shapes.Line
@@ -1471,12 +1427,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             if (string.Equals(layoutDirection, "Dọc", StringComparison.OrdinalIgnoreCase))
             {
-                double cumulative = 0;
-                for (double boundary = panelWidthMm; boundary < totalLengthMm - 0.5; boundary += panelWidthMm)
+                for (double boundary = panelWidthMm; boundary < drawingLength - 0.5; boundary += panelWidthMm)
                 {
-                    double x = margin + (boundary / totalLengthMm) * plotW;
-                    double hLeft = GetHeightAt(boundary - 1, segments, totalLengthMm);
-                    double hRight = GetHeightAt(boundary + 1, segments, totalLengthMm);
+                    double x = margin + (boundary / drawingLength) * plotW;
+                    double hLeft = GetHeightAt(boundary - 1, segments, drawingLength);
+                    double hRight = GetHeightAt(boundary + 1, segments, drawingLength);
                     double hBoundary = Math.Max(hLeft, hRight);
                     double top = margin + (plotH - (hBoundary / maxHeight) * plotH);
 
@@ -1491,7 +1446,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         StrokeThickness = 1
                     };
                     canvas.Children.Add(divLine);
-                    cumulative++;
                 }
             }
             else if (string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase))
@@ -1499,8 +1453,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double cursor = 0;
                 foreach (var segment in segments)
                 {
-                    double x1 = margin + (cursor / totalLengthMm) * plotW;
-                    double x2 = margin + ((cursor + segment.LengthMm) / totalLengthMm) * plotW;
+                    double x1 = margin + (cursor / drawingLength) * plotW;
+                    double x2 = margin + ((cursor + segment.LengthMm) / drawingLength) * plotW;
                     cursor += segment.LengthMm;
                     for (double yMm = panelWidthMm; yMm < segment.HeightMm - 0.5; yMm += panelWidthMm)
                     {

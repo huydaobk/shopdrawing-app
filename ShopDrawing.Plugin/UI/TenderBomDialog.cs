@@ -1262,9 +1262,16 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (row.PanelWidth <= 0)
                 return;
 
-            // Đồng bộ preview với logic tính tấm đã chốt:
-            // luôn chia theo scan-line liên tục cho vùng khép kín (kể cả đa giác),
-            // tránh nhánh developed riêng làm sai khác so với bảng tính.
+            // Với đa giác xiên/không song song trục X-Y, ưu tiên preview theo chain phát triển
+            // để đường chia bám biên dạng thực tế thay vì dựng theo scan-line world-axis.
+            if (HasNonOrthogonalEdges(vertices)
+                && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr))
+            {
+                return;
+            }
+
+            // Trường hợp còn lại (biên dạng vuông/orthogonal) giữ scan-line world-axis
+            // để bám logic đã chốt cho khối lượng hiện tại.
 
             bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
             double min = horizontal ? vertices.Min(v => v[1]) : vertices.Min(v => v[0]);
@@ -1292,6 +1299,31 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                         tr);
                 }
             }
+        }
+
+        private static bool HasNonOrthogonalEdges(IReadOnlyList<double[]> vertices)
+        {
+            if (vertices == null || vertices.Count < 2)
+                return false;
+
+            const double tolerance = 1e-3;
+            int count = vertices.Count;
+            for (int i = 0; i < count; i++)
+            {
+                var p1 = vertices[i];
+                var p2 = vertices[(i + 1) % count];
+                if (p1.Length < 2 || p2.Length < 2)
+                    continue;
+
+                double dx = Math.Abs(p2[0] - p1[0]);
+                double dy = Math.Abs(p2[1] - p1[1]);
+
+                // Cạnh không ngang cũng không dọc => đa giác xiên.
+                if (dx > tolerance && dy > tolerance)
+                    return true;
+            }
+
+            return false;
         }
 
         private bool TryAddDevelopedPanelPreviewLines(

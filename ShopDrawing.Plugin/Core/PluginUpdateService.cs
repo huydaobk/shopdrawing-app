@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -16,10 +17,17 @@ namespace ShopDrawing.Plugin.Core
 
         private static bool _startupScheduled;
         private static bool _idleNotifierRegistered;
+        private static bool _startupResultChecked;
         private static UpdateCheckResult? _pendingNotification;
 
         public static void TryScheduleStartupCheck()
         {
+            if (!_startupResultChecked)
+            {
+                _startupResultChecked = true;
+                TryShowInstallerResult();
+            }
+
             lock (SyncRoot)
             {
                 if (_startupScheduled)
@@ -325,6 +333,64 @@ namespace ShopDrawing.Plugin.Core
             return metadataIndex > 0
                 ? trimmed[..metadataIndex].Trim()
                 : trimmed;
+        }
+
+        private static void TryShowInstallerResult()
+        {
+            try
+            {
+                string markerPath = Path.Combine(
+                    PluginVersionProvider.GetApplicationPluginsDirectory(),
+                    "shopdrawing_update_result.json");
+
+                if (!File.Exists(markerPath))
+                {
+                    return;
+                }
+
+                string json = File.ReadAllText(markerPath);
+                UpdateResultMarker? marker = JsonSerializer.Deserialize<UpdateResultMarker>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                File.Delete(markerPath);
+
+                if (marker == null)
+                {
+                    return;
+                }
+
+                if (marker.Success)
+                {
+                    UiFeedback.ShowInfo(
+                        $"Cap nhat ShopDrawing thanh cong.\nVersion: {FormatVersionForDisplay(marker.Version)}",
+                        "ShopDrawing Update");
+                }
+                else
+                {
+                    string detail = string.IsNullOrWhiteSpace(marker.Message)
+                        ? "Khong ro nguyen nhan."
+                        : marker.Message.Trim();
+
+                    UiFeedback.ShowWarning(
+                        $"Cap nhat ShopDrawing that bai.\nChi tiet: {detail}",
+                        "ShopDrawing Update");
+                }
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
+            }
+        }
+
+        private sealed class UpdateResultMarker
+        {
+            public bool Success { get; set; }
+
+            public string Version { get; set; } = string.Empty;
+
+            public string Message { get; set; } = string.Empty;
         }
     }
 }

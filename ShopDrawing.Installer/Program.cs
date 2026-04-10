@@ -145,6 +145,25 @@ internal static class Program
 
     private static void CopyDirectory(string sourcePath, string destinationPath)
     {
+        CopyDirectory(sourcePath, destinationPath, ignoreLockedInstaller: false, ignoreMissingSource: false);
+    }
+
+    private static void CopyDirectory(
+        string sourcePath,
+        string destinationPath,
+        bool ignoreLockedInstaller,
+        bool ignoreMissingSource)
+    {
+        if (!Directory.Exists(sourcePath))
+        {
+            if (ignoreMissingSource)
+            {
+                return;
+            }
+
+            throw new DirectoryNotFoundException($"Khong tim thay thu muc: {sourcePath}");
+        }
+
         Directory.CreateDirectory(destinationPath);
 
         foreach (string directory in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
@@ -158,7 +177,16 @@ internal static class Program
             string relative = Path.GetRelativePath(sourcePath, file);
             string targetFile = Path.Combine(destinationPath, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
-            File.Copy(file, targetFile, overwrite: true);
+            try
+            {
+                File.Copy(file, targetFile, overwrite: true);
+            }
+            catch (UnauthorizedAccessException) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
+            {
+            }
+            catch (IOException) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
+            {
+            }
         }
     }
 
@@ -183,11 +211,12 @@ internal static class Program
             {
                 backupPath = Path.Combine(installRoot, "_backup", $"ShopDrawing.bundle_{DateTime.Now:yyyyMMdd_HHmmss}");
                 Directory.CreateDirectory(Path.GetDirectoryName(backupPath)!);
-                CopyDirectory(destinationBundle, backupPath);
-                Directory.Delete(destinationBundle, recursive: true);
+                // Best-effort backup: installer file can be locked by current process.
+                CopyDirectory(destinationBundle, backupPath, ignoreLockedInstaller: true, ignoreMissingSource: true);
             }
 
-            Directory.Move(stagingBundle, destinationBundle);
+            // Merge staged files into destination to avoid deleting locked installer executable.
+            CopyDirectory(stagingBundle, destinationBundle, ignoreLockedInstaller: true, ignoreMissingSource: false);
             return destinationBundle;
         }
         catch
@@ -213,6 +242,14 @@ internal static class Program
         {
             TryDeleteDirectory(stagingBundle);
         }
+    }
+
+    private static bool IsInstallerFile(string path)
+    {
+        return string.Equals(
+            Path.GetFileName(path),
+            "ShopDrawing.Installer.exe",
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ValidateStagedBundle(string stagedBundlePath)

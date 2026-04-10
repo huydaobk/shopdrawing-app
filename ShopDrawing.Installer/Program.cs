@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 
@@ -54,6 +55,11 @@ internal static class Program
             string destinationBundle = InstallBundleSafely(bundleSource, options.InstallDirectory, out string backupPath);
             WriteInstallLog(options, destinationBundle, backupPath);
             WriteUpdateResult(options.InstallDirectory, true, options.Version, "Installed successfully.");
+            ShowDesktopNotification(
+                options.Notify,
+                success: true,
+                version: options.Version,
+                message: "Cap nhat ShopDrawing thanh cong.\nBan co the mo lai AutoCAD.");
 
             if (!options.Silent)
             {
@@ -72,6 +78,11 @@ internal static class Program
                 options?.BundleZipPath ?? string.Empty,
                 ex.Message);
             WriteUpdateResult(installRoot, false, options?.Version ?? string.Empty, ex.Message);
+            ShowDesktopNotification(
+                options?.Notify == true,
+                success: false,
+                version: options?.Version ?? string.Empty,
+                message: $"Cap nhat ShopDrawing that bai.\nChi tiet: {ex.Message}");
             Console.Error.WriteLine("Cai dat that bai: " + ex.Message);
             Console.Error.WriteLine(ex);
             return 1;
@@ -304,6 +315,47 @@ internal static class Program
         {
         }
     }
+
+    private static void ShowDesktopNotification(bool enabled, bool success, string version, string message)
+    {
+        if (!enabled)
+        {
+            return;
+        }
+
+        try
+        {
+            string normalizedVersion = NormalizeVersion(version);
+            string title = success
+                ? "ShopDrawing Update"
+                : "ShopDrawing Update Error";
+            string body = success
+                ? $"{message}\nVersion: {normalizedVersion}"
+                : message;
+            uint type = success ? 0x00000040u : 0x00000010u; // MB_ICONINFORMATION / MB_ICONERROR
+            _ = MessageBoxW(IntPtr.Zero, body, title, type);
+        }
+        catch
+        {
+        }
+    }
+
+    private static string NormalizeVersion(string? version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            return "0.0.0";
+        }
+
+        string trimmed = version.Trim();
+        int metadataIndex = trimmed.IndexOf('+');
+        return metadataIndex > 0
+            ? trimmed[..metadataIndex].Trim()
+            : trimmed;
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
 }
 
 internal sealed class InstallerArguments
@@ -322,6 +374,8 @@ internal sealed class InstallerArguments
     public string Version { get; private set; } = string.Empty;
 
     public bool Silent { get; private set; }
+
+    public bool Notify { get; private set; }
 
     public static string GetDefaultInstallDirectory()
     {
@@ -368,7 +422,10 @@ internal sealed class InstallerArguments
             Version = values.TryGetValue("--version", out string? version) ? version : string.Empty,
             Silent = values.TryGetValue("--silent", out string? silentValue)
                 && bool.TryParse(silentValue, out bool silent)
-                && silent
+                && silent,
+            Notify = values.TryGetValue("--notify", out string? notifyValue)
+                && bool.TryParse(notifyValue, out bool notify)
+                && notify
         };
     }
 
@@ -397,7 +454,8 @@ internal sealed class InstallerArguments
             BundleZipPath = settings.BundleZipPath ?? string.Empty,
             InstallDirectory = NormalizeInstallDirectory(settings.InstallDirectory),
             Version = settings.Version ?? string.Empty,
-            Silent = settings.Silent
+            Silent = settings.Silent,
+            Notify = settings.Notify
         };
     }
 
@@ -437,6 +495,8 @@ internal sealed class InstallSettings
     public string? Version { get; set; }
 
     public bool Silent { get; set; } = true;
+
+    public bool Notify { get; set; } = false;
 }
 
 internal sealed class UpdateResultPayload

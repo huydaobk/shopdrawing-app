@@ -14,6 +14,7 @@ namespace ShopDrawing.Plugin.Core
     {
         private static readonly object SyncRoot = new();
         private static readonly UpdateManifestClient ManifestClient = new();
+        private static readonly Version MinimumSafeInstallerVersion = new(0, 1, 28);
 
         private static bool _startupScheduled;
         private static bool _idleNotifierRegistered;
@@ -162,18 +163,18 @@ namespace ShopDrawing.Plugin.Core
                 string pluginDirectory = PluginVersionProvider.GetInstallDirectory();
                 string installerPath = Path.Combine(pluginDirectory, "ShopDrawing.Installer.exe");
                 bool hasInstaller = File.Exists(installerPath);
-                if (!string.IsNullOrWhiteSpace(result.InstallerUrl))
-                {
-                    hasInstaller = TryDownloadInstaller(result.InstallerUrl, installerPath) || hasInstaller;
-                }
-
-                if (!hasInstaller)
+                bool mustDownloadBeforeLaunch = !hasInstaller || IsLegacyInstaller(installerPath);
+                if (mustDownloadBeforeLaunch)
                 {
                     if (!TryDownloadInstaller(result.InstallerUrl, installerPath))
                     {
                         UiFeedback.ShowWarning("Khong tim thay ShopDrawing.Installer.exe trong thu muc cai dat.");
                         return false;
                     }
+                }
+                else if (ShouldRefreshInstallerInBackground(installerPath, result))
+                {
+                    _ = Task.Run(() => TryDownloadInstaller(result.InstallerUrl, installerPath));
                 }
 
                 if (string.IsNullOrWhiteSpace(result.PackageUrl))
@@ -235,6 +236,7 @@ namespace ShopDrawing.Plugin.Core
             AppendArgument(builder, "--target-pid", Process.GetCurrentProcess().Id.ToString());
             AppendArgument(builder, "--version", result.LatestVersion);
             AppendArgument(builder, "--silent", "true");
+            AppendArgument(builder, "--notify", "true");
             return builder.ToString();
         }
 
@@ -250,6 +252,52 @@ namespace ShopDrawing.Plugin.Core
             builder.Append('"');
             builder.Append(value.Replace("\"", "\\\""));
             builder.Append('"');
+        }
+
+        private static bool IsLegacyInstaller(string installerPath)
+        {
+            if (!TryGetInstallerVersion(installerPath, out Version? installedVersion) || installedVersion == null)
+            {
+                return true;
+            }
+
+            return installedVersion < MinimumSafeInstallerVersion;
+        }
+
+        private static bool ShouldRefreshInstallerInBackground(string installerPath, UpdateCheckResult result)
+        {
+            if (string.IsNullOrWhiteSpace(result.InstallerUrl))
+            {
+                return false;
+            }
+
+            if (!TryGetInstallerVersion(installerPath, out Version? installedVersion) || installedVersion == null)
+            {
+                return false;
+            }
+
+            if (!VersionComparer.TryParse(result.LatestVersion, out Version? latestVersion) || latestVersion == null)
+            {
+                return false;
+            }
+
+            return latestVersion > installedVersion;
+        }
+
+        private static bool TryGetInstallerVersion(string installerPath, out Version? version)
+        {
+            version = null;
+
+            try
+            {
+                string fileVersion = FileVersionInfo.GetVersionInfo(installerPath).FileVersion ?? string.Empty;
+                return VersionComparer.TryParse(fileVersion, out version);
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
+                return false;
+            }
         }
 
         private static void OnIdleNotifyUpdate(object? sender, EventArgs e)

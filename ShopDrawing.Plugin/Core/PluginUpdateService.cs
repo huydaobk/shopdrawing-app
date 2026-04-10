@@ -227,7 +227,7 @@ namespace ShopDrawing.Plugin.Core
             if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
             {
                 UiFeedback.ShowWarning(
-                    $"Khong kiem tra duoc cap nhat.\nPhien ban hien tai: {result.CurrentVersion}\nChi tiet: {result.ErrorMessage}",
+                    $"Khong kiem tra duoc cap nhat.\nPhien ban hien tai: {FormatVersionForDisplay(result.CurrentVersion)}\nChi tiet: {result.ErrorMessage}",
                     "ShopDrawing Update");
                 return;
             }
@@ -241,7 +241,7 @@ namespace ShopDrawing.Plugin.Core
             if (!result.IsUpdateAvailable)
             {
                 UiFeedback.ShowInfo(
-                    $"Dang o ban moi nhat.\nPhien ban hien tai: {result.CurrentVersion}",
+                    $"Dang o ban moi nhat.\nPhien ban hien tai: {FormatVersionForDisplay(result.CurrentVersion)}",
                     "ShopDrawing Update");
                 return;
             }
@@ -262,8 +262,8 @@ namespace ShopDrawing.Plugin.Core
         {
             StringBuilder builder = new();
             builder.AppendLine("Co ban cap nhat moi cho ShopDrawing.");
-            builder.AppendLine($"Hien tai: {result.CurrentVersion}");
-            builder.AppendLine($"Moi nhat: {result.LatestVersion}");
+            builder.AppendLine($"Hien tai: {FormatVersionForDisplay(result.CurrentVersion)}");
+            builder.AppendLine($"Moi nhat: {FormatVersionForDisplay(result.LatestVersion)}");
 
             if (!string.IsNullOrWhiteSpace(result.Notes))
             {
@@ -275,6 +275,20 @@ namespace ShopDrawing.Plugin.Core
             builder.AppendLine();
             builder.AppendLine("Mo updater ngay bay gio?");
             return builder.ToString();
+        }
+
+        private static string FormatVersionForDisplay(string? version)
+        {
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                return "0.0.0";
+            }
+
+            string trimmed = version.Trim();
+            int metadataIndex = trimmed.IndexOf('+');
+            return metadataIndex > 0
+                ? trimmed[..metadataIndex].Trim()
+                : trimmed;
         }
     }
 }

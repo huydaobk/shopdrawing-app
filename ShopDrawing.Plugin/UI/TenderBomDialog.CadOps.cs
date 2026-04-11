@@ -483,13 +483,16 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     popupRow.Length = Math.Max(0, promptedSegments.Sum(s => Math.Max(0, s.LengthMm)));
                     if (popupRow.Length <= 0)
                         popupRow.Length = Math.Max(0, initialLength);
+                    popupRow.Refresh();
 
                     _wallRows.Add(popupRow);
                     if (_wallGrid != null)
                     {
                         _wallGrid.SelectedItem = popupRow;
                         _wallGrid.ScrollIntoView(popupRow);
+                        _wallGrid.Items.Refresh();
                     }
+                    SafeRefreshWallGrid();
                     LoadOpeningsForWall(popupRow);
                     RefreshFooter();
                     RefreshPanelBreakdown(popupRow);
@@ -757,12 +760,15 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 if (newRow != null)
 
                 {
+                    newRow.Refresh();
 
                     _wallRows.Add(newRow);
 
                     _wallGrid.SelectedItem = newRow;
 
                     _wallGrid.ScrollIntoView(newRow);
+                    _wallGrid.Items.Refresh();
+                    SafeRefreshWallGrid();
                     LoadOpeningsForWall(newRow);
 
                     RefreshFooter();
@@ -1406,6 +1412,26 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
+                    try { rowGrid.CommitEdit(DataGridEditingUnit.Cell, true); } catch (System.Exception ex)
+            {
+                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+            }
+                    try { rowGrid.CommitEdit(DataGridEditingUnit.Row, true); } catch (System.Exception ex)
+            {
+                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+            }
+                    if (CollectionViewSource.GetDefaultView(rowGrid.ItemsSource) is IEditableCollectionView editView)
+                    {
+                        try { if (editView.IsEditingItem) editView.CommitEdit(); } catch (System.Exception ex)
+            {
+                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+            }
+                        try { if (editView.IsAddingNew) editView.CommitNew(); } catch (System.Exception ex)
+            {
+                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+            }
+                    }
+
                 if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
                     {
                         lblNote.Text = note;
@@ -1737,11 +1763,15 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     stationStartMm = Math.Max(0, ratio * drawingLength - opening.Width * 0.5);
                 }
                 stationStartMm = Math.Max(0, Math.Min(drawingLength, stationStartMm));
-                double stationCenterMm = Math.Max(0, Math.Min(drawingLength, stationStartMm + opening.Width * 0.5));
+                double stationEndMm = Math.Max(stationStartMm, Math.Min(drawingLength, stationStartMm + opening.Width));
+                if (stationEndMm - stationStartMm <= 0.5)
+                    continue;
+
+                double stationCenterMm = (stationStartMm + stationEndMm) * 0.5;
                 double left = margin + (stationStartMm / drawingLength) * plotW;
-                double centerX = margin + (stationCenterMm / drawingLength) * plotW;
-                double rectW = Math.Max(4, (opening.Width / drawingLength) * plotW);
-                rectW = Math.Max(4, Math.Min(rectW, margin + plotW - left));
+                double right = margin + (stationEndMm / drawingLength) * plotW;
+                double centerX = (left + right) * 0.5;
+                double rectW = Math.Max(2, right - left);
                 double localHeightMm = Math.Max(1, GetHeightAt(stationCenterMm, segments, drawingLength));
                 double bottomElevationMm = Math.Max(0, opening.BottomElevationMm);
                 double visibleHeightMm = Math.Max(0, Math.Min(opening.Height, localHeightMm - bottomElevationMm));
@@ -1871,9 +1901,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 });
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
-                    X1 = left + rectW,
+                    X1 = right,
                     Y1 = dimWidthY,
-                    X2 = left + rectW,
+                    X2 = right,
                     Y2 = top,
                     Stroke = tickBrush,
                     StrokeThickness = 1
@@ -1885,11 +1915,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Foreground = dimBrush,
                     Background = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
                 };
-                Canvas.SetLeft(widthLabel, Math.Max(margin, left + rectW * 0.5 - 16));
+                Canvas.SetLeft(widthLabel, Math.Max(margin, (left + right) * 0.5 - 16));
                 Canvas.SetTop(widthLabel, Math.Max(0, dimWidthY - 13));
                 canvas.Children.Add(widthLabel);
 
-                double dimHeightX = Math.Min(margin + plotW - 4, left + rectW + 12 + (i % 2) * 8);
+                double dimHeightX = Math.Min(margin + plotW - 4, right + 12 + (i % 2) * 8);
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
                     X1 = dimHeightX,
@@ -1901,7 +1931,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 });
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
-                    X1 = left + rectW,
+                    X1 = right,
                     Y1 = top,
                     X2 = dimHeightX,
                     Y2 = top,
@@ -1910,7 +1940,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 });
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
-                    X1 = left + rectW,
+                    X1 = right,
                     Y1 = openingBottomY,
                     X2 = dimHeightX,
                     Y2 = openingBottomY,
@@ -2062,14 +2092,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 using (doc.LockDocument())
                 using (var tr = doc.Database.TransactionManager.StartTransaction())
                 {
+                    var segmentData = new List<(double StartStation, double LengthMm, Autodesk.AutoCAD.Geometry.Point3d StartPoint, Autodesk.AutoCAD.Geometry.Vector3d Vector, double VectorLength)>();
                     double cumulative = 0;
-                    double bestDistance = double.MaxValue;
-                    bool found = false;
 
                     foreach (var seg in segments)
                     {
                         double segLengthMm = Math.Max(0, seg.LengthMm);
-                        bool useCadLength = segLengthMm <= 0;
 
                         if (string.IsNullOrWhiteSpace(seg.CadHandle))
                         {
@@ -2098,9 +2126,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             continue;
                         }
 
-                        var start = line.StartPoint;
-                        var end = line.EndPoint;
-                        var vector = end - start;
+                        var vector = line.EndPoint - line.StartPoint;
                         double vectorLength = vector.Length;
                         if (vectorLength <= 1e-6)
                         {
@@ -2108,34 +2134,56 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             continue;
                         }
 
-                        if (useCadLength)
+                        if (segLengthMm <= 0)
                             segLengthMm = vectorLength;
 
-                        double t1 = (pickPoint1 - start).DotProduct(vector) / (vectorLength * vectorLength);
-                        double t2 = (pickPoint2 - start).DotProduct(vector) / (vectorLength * vectorLength);
-                        t1 = Math.Max(0, Math.Min(1, t1));
-                        t2 = Math.Max(0, Math.Min(1, t2));
-
-                        var projected1 = start + (vector * t1);
-                        var projected2 = start + (vector * t2);
-                        double distance = pickPoint1.DistanceTo(projected1) + pickPoint2.DistanceTo(projected2);
-
-                        double candidateWidth = Math.Abs(t2 - t1) * segLengthMm;
-                        double candidateStation = cumulative + Math.Min(t1, t2) * segLengthMm;
-
-                        if (distance < bestDistance)
-                        {
-                            bestDistance = distance;
-                            stationMm = candidateStation;
-                            projectedWidthMm = candidateWidth;
-                            found = true;
-                        }
-
+                        segmentData.Add((cumulative, segLengthMm, line.StartPoint, vector, vectorLength));
                         cumulative += segLengthMm;
                     }
 
+                    if (segmentData.Count == 0)
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    static bool TryProjectPoint(
+                        Autodesk.AutoCAD.Geometry.Point3d point,
+                        List<(double StartStation, double LengthMm, Autodesk.AutoCAD.Geometry.Point3d StartPoint, Autodesk.AutoCAD.Geometry.Vector3d Vector, double VectorLength)> data,
+                        out double station,
+                        out double distance)
+                    {
+                        station = -1;
+                        distance = double.MaxValue;
+                        bool found = false;
+
+                        foreach (var seg in data)
+                        {
+                            double t = (point - seg.StartPoint).DotProduct(seg.Vector) / (seg.VectorLength * seg.VectorLength);
+                            t = Math.Max(0, Math.Min(1, t));
+                            var projected = seg.StartPoint + (seg.Vector * t);
+                            double d = point.DistanceTo(projected);
+                            if (d < distance)
+                            {
+                                distance = d;
+                                station = seg.StartStation + t * seg.LengthMm;
+                                found = true;
+                            }
+                        }
+
+                        return found;
+                    }
+
+                    bool p1Ok = TryProjectPoint(pickPoint1, segmentData, out var station1, out var dist1);
+                    bool p2Ok = TryProjectPoint(pickPoint2, segmentData, out var station2, out var dist2);
                     tr.Commit();
-                    return found;
+
+                    if (!p1Ok || !p2Ok)
+                        return false;
+
+                    stationMm = Math.Max(0, Math.Min(station1, station2));
+                    projectedWidthMm = Math.Max(0, Math.Abs(station2 - station1));
+                    return dist1 < double.MaxValue && dist2 < double.MaxValue;
                 }
             }
             catch

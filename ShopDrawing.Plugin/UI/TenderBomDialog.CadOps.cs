@@ -293,13 +293,22 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             out var promptedHeight,
                             out var promptedLayoutDirection,
                             out var promptedOpenings))
+                    {
+                        PluginLogger.Warn($"TenderRepick.PopupCancelled | row={targetRow.Name}");
                         return;
+                    }
 
                     height = promptedHeight;
                     heightSegments = promptedSegments;
+                    var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
+                    if (promptedLength > 0.5)
+                        length = promptedLength;
                     targetRow.LayoutDirection = promptedLayoutDirection;
                     targetRow.Openings = promptedOpenings;
                     polygonVertices = null;
+                    PluginLogger.Info(
+                        $"TenderRepick.PopupApplied | row={targetRow.Name} | seg={DescribeSegments(promptedSegments)} | " +
+                        $"openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
 
                 }
 
@@ -366,6 +375,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     targetRow.ColdStorageDivideFromMaxSide = divideFromMaxSide;
 
+                    SyncWallRowSpecData(targetRow);
                     targetRow.Refresh();
                     if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
                     {
@@ -378,6 +388,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     RefreshPanelBreakdown(targetRow);
                     RefreshBomSummary();
+                    _project.Walls = GetWallModels();
+                    PluginLogger.Info(
+                        $"TenderRepick.Synced | row={targetRow.Name} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
+                        $"seg={DescribeSegments(targetRow.HeightSegments)} | walls={_wallRows.Count}");
 
                     _lastCadPreviewKey = null;
 
@@ -474,7 +488,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             out var promptedHeight,
                             out var promptedLayoutDirection,
                             out var promptedOpenings))
+                    {
+                        PluginLogger.Warn("TenderPickLength.PopupCancelled");
                         return;
+                    }
 
                     popupRow.Height = promptedHeight;
                     popupRow.HeightSegments = promptedSegments;
@@ -483,22 +500,34 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     popupRow.Length = Math.Max(0, promptedSegments.Sum(s => Math.Max(0, s.LengthMm)));
                     if (popupRow.Length <= 0)
                         popupRow.Length = Math.Max(0, initialLength);
-                    popupRow.Refresh();
-
-                    _wallRows.Add(popupRow);
-                    if (_wallGrid != null)
+                    PluginLogger.Info(
+                        $"TenderPickLength.PopupApplied | row={popupRow.Name} | category={popupRow.Category} | app={popupRow.Application} | " +
+                        $"spec={popupRow.SpecKey} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)}");
+                    Dispatcher.Invoke(() =>
                     {
-                        _wallGrid.SelectedItem = popupRow;
-                        _wallGrid.ScrollIntoView(popupRow);
-                        _wallGrid.Items.Refresh();
-                    }
-                    SafeRefreshWallGrid();
-                    LoadOpeningsForWall(popupRow);
-                    RefreshFooter();
-                    RefreshPanelBreakdown(popupRow);
-                    RefreshBomSummary();
-                    _lastCadPreviewKey = null;
-                    SetStatus($"Đã thêm {popupRow.Name} bằng popup Pick Nhịp.");
+                        SyncWallRowSpecData(popupRow);
+                        popupRow.Refresh();
+
+                        _wallRows.Add(popupRow);
+                        ReindexWalls();
+                        if (_wallGrid != null)
+                        {
+                            _wallGrid.SelectedItem = popupRow;
+                            _wallGrid.ScrollIntoView(popupRow);
+                            _wallGrid.Items.Refresh();
+                        }
+                        SafeRefreshWallGrid();
+                        LoadOpeningsForWall(popupRow);
+                        RefreshFooter();
+                        RefreshPanelBreakdown(popupRow);
+                        RefreshBomSummary();
+                        _project.Walls = GetWallModels();
+                        PluginLogger.Info(
+                            $"TenderPickLength.Synced | row={popupRow.Name} | length={popupRow.Length:F0} | height={popupRow.Height:F0} | " +
+                            $"seg={DescribeSegments(popupRow.HeightSegments)} | walls={_wallRows.Count}");
+                        _lastCadPreviewKey = null;
+                        SetStatus($"Đã thêm {popupRow.Name} bằng popup Pick Nhịp.");
+                    });
                     return;
                 }
 
@@ -724,12 +753,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             out var promptedHeight,
                             out var promptedLayoutDirection,
                             out var promptedOpenings))
+                    {
+                        PluginLogger.Warn($"TenderPickEntity.PopupCancelled | row={newRow.Name}");
                         return;
+                    }
 
                     newRow.Height = promptedHeight;
                     newRow.HeightSegments = promptedSegments;
+                    var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
+                    if (promptedLength > 0.5)
+                        newRow.Length = promptedLength;
                     newRow.LayoutDirection = promptedLayoutDirection;
                     newRow.Openings = promptedOpenings;
+                    PluginLogger.Info(
+                        $"TenderPickEntity.PopupApplied | row={newRow.Name} | category={newRow.Category} | app={newRow.Application} | " +
+                        $"spec={newRow.SpecKey} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)}");
 
                     polygonTag = string.IsNullOrWhiteSpace(polygonTag) ? " [Đoạn thẳng]" : polygonTag;
 
@@ -761,8 +799,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
                     newRow.Refresh();
+                    SyncWallRowSpecData(newRow);
 
                     _wallRows.Add(newRow);
+                    ReindexWalls();
 
                     _wallGrid.SelectedItem = newRow;
 
@@ -775,6 +815,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     RefreshPanelBreakdown(newRow);
                     RefreshBomSummary();
+                    _project.Walls = GetWallModels();
+                    PluginLogger.Info(
+                        $"TenderPickEntity.Synced | row={newRow.Name} | length={newRow.Length:F0} | height={newRow.Height:F0} | " +
+                        $"seg={DescribeSegments(newRow.HeightSegments)} | walls={_wallRows.Count}");
 
                     _lastCadPreviewKey = null;
 
@@ -1412,6 +1456,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
+                    PluginLogger.Info(
+                        $"TenderPopupApply.Start | lengthTarget={lengthTarget:F0} | defaultHeight={defaultHeight:F0} | " +
+                        $"rows={rows.Count} | panelWidth={panelWidthMm} | layout={currentLayoutDirection} | openingsDraft={draftOpenings.Count}");
+
                     try { rowGrid.CommitEdit(DataGridEditingUnit.Cell, true); } catch (System.Exception ex)
             {
                 ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
@@ -1434,6 +1482,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
                     {
+                        PluginLogger.Warn($"TenderPopupApply.ValidationFailed | note={note}");
                         lblNote.Text = note;
                         lblNote.Foreground = Brushes.Firebrick;
                         return;
@@ -1458,6 +1507,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             Quantity = Math.Max(1, o.Quantity)
                         })
                         .ToList();
+                    PluginLogger.Info(
+                        $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
+                        $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
                     createdSpanEntityIds.Clear();
                     confirmed = true;
                     dlg.Close();
@@ -1549,6 +1601,34 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             note = string.Empty;
 
             return true;
+        }
+
+        private static string DescribeSegments(IEnumerable<TenderHeightSegment>? segments)
+        {
+            var list = (segments ?? Enumerable.Empty<TenderHeightSegment>())
+                .Where(s => s != null)
+                .ToList();
+            if (list.Count == 0)
+                return "count=0,totalL=0,avgH=0";
+
+            double totalLength = list.Sum(s => Math.Max(0, s.LengthMm));
+            double avgHeight = totalLength > 0
+                ? list.Sum(s => Math.Max(0, s.LengthMm) * Math.Max(0, s.HeightMm)) / totalLength
+                : list.Average(s => Math.Max(0, s.HeightMm));
+            return $"count={list.Count},totalL={totalLength:F0},avgH={avgHeight:F0}";
+        }
+
+        private static string DescribeOpenings(IEnumerable<TenderOpening>? openings)
+        {
+            var list = (openings ?? Enumerable.Empty<TenderOpening>())
+                .Where(o => o != null)
+                .ToList();
+            if (list.Count == 0)
+                return "count=0,qty=0,area=0";
+
+            int qty = list.Sum(o => Math.Max(0, o.Quantity));
+            double area = list.Sum(o => Math.Max(0, o.TotalAreaM2));
+            return $"count={list.Count},qty={qty},area={area:F2}";
         }
 
         private static void DrawHeightProfilePreview(

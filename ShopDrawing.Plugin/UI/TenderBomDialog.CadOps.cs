@@ -507,7 +507,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     PluginLogger.Info(
                         $"TenderPickLength.PopupApplied | row={popupRow.Name} | category={popupRow.Category} | app={popupRow.Application} | " +
                         $"spec={popupRow.SpecKey} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)}");
-                    Dispatcher.Invoke(() =>
+                    void applyPopupRow()
                     {
                         SyncWallRowSpecData(popupRow);
                         popupRow.Refresh();
@@ -534,7 +534,16 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             $"seg={DescribeSegments(popupRow.HeightSegments)} | walls={_wallRows.Count}");
                         _lastCadPreviewKey = null;
                         SetStatus($"Đã thêm {popupRow.Name} bằng popup Pick Nhịp.");
-                    });
+                    }
+
+                    if (Dispatcher.CheckAccess())
+                    {
+                        applyPopupRow();
+                    }
+                    else
+                    {
+                        Dispatcher.Invoke(applyPopupRow);
+                    }
                     return;
                 }
 
@@ -1143,14 +1152,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             public event PropertyChangedEventHandler? PropertyChanged;
         }
 
-        private sealed class WallSegmentPromptResult
-        {
-            public List<TenderHeightSegment> Segments { get; init; } = new();
-            public double RepresentativeHeightMm { get; init; }
-            public string LayoutDirection { get; init; } = "Dọc";
-            public List<TenderOpening> Openings { get; init; } = new();
-        }
-
         private bool TryPromptWallSegmentsInput(
             double totalLengthMm,
             double defaultHeightMm,
@@ -1167,7 +1168,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             representativeHeightMm = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
             selectedLayoutDirection = string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dọc";
             selectedOpenings = new List<TenderOpening>();
-            WallSegmentPromptResult? promptResult = null;
+            bool dialogAccepted = false;
             var selectedSegments = new List<TenderHeightSegment>();
             var pickedOpenings = new List<TenderOpening>();
             var createdSpanEntityIds = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
@@ -1471,81 +1472,78 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
-                    dlg.Close();
+                    dlg.DialogResult = false;
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
-                    PluginLogger.Info(
-                        $"TenderPopupApply.Start | lengthTarget={lengthTarget:F0} | defaultHeight={defaultHeight:F0} | " +
-                        $"rows={rows.Count} | panelWidth={panelWidthMm} | layout={currentLayoutDirection} | openingsDraft={draftOpenings.Count}");
-
-                    try { rowGrid.CommitEdit(DataGridEditingUnit.Cell, true); } catch (System.Exception ex)
-            {
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-            }
-                    try { rowGrid.CommitEdit(DataGridEditingUnit.Row, true); } catch (System.Exception ex)
-            {
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-            }
-                    if (CollectionViewSource.GetDefaultView(rowGrid.ItemsSource) is IEditableCollectionView editView)
+                    try
                     {
-                        try { if (editView.IsEditingItem) editView.CommitEdit(); } catch (System.Exception ex)
-            {
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-            }
-                        try { if (editView.IsAddingNew) editView.CommitNew(); } catch (System.Exception ex)
-            {
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-            }
-                    }
+                        PluginLogger.Info(
+                            $"TenderPopupApply.Start | lengthTarget={lengthTarget:F0} | defaultHeight={defaultHeight:F0} | " +
+                            $"rows={rows.Count} | panelWidth={panelWidthMm} | layout={currentLayoutDirection} | openingsDraft={draftOpenings.Count}");
 
-                if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
-                    {
-                        PluginLogger.Warn($"TenderPopupApply.ValidationFailed | note={note}");
-                        lblNote.Text = note;
-                        lblNote.Foreground = Brushes.Firebrick;
-                        return;
-                    }
-
-                    selectedSegments = normalized;
-                    double total = selectedSegments.Sum(s => s.LengthMm);
-                    selectedHeight = total > 0
-                        ? selectedSegments.Sum(s => s.LengthMm * s.HeightMm) / total
-                        : defaultHeight;
-                    selectedDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
-                        ? "Ngang"
-                        : "Dọc";
-                    pickedOpenings = draftOpenings
-                        .Select(o => new TenderOpening
+                        try { rowGrid.CommitEdit(DataGridEditingUnit.Cell, true); } catch (System.Exception ex)
                         {
-                            Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
-                            Width = Math.Max(1, Math.Round(o.Width)),
-                            Height = Math.Max(1, Math.Round(o.Height)),
-                            BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
-                            CenterStationMm = o.CenterStationMm,
-                            Quantity = Math.Max(1, o.Quantity)
-                        })
-                        .ToList();
-                    pickedOpenings = CloneOpenings(pickedOpenings);
-                    PluginLogger.Info(
-                        $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
-                        $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
-                    createdSpanEntityIds.Clear();
-                    promptResult = new WallSegmentPromptResult
-                    {
-                        Segments = selectedSegments
-                            .Select(s => new TenderHeightSegment
+                            ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+                        }
+                        try { rowGrid.CommitEdit(DataGridEditingUnit.Row, true); } catch (System.Exception ex)
+                        {
+                            ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+                        }
+                        if (CollectionViewSource.GetDefaultView(rowGrid.ItemsSource) is IEditableCollectionView editView)
+                        {
+                            try { if (editView.IsEditingItem) editView.CommitEdit(); } catch (System.Exception ex)
                             {
-                                LengthMm = s.LengthMm,
-                                HeightMm = s.HeightMm,
-                                CadHandle = s.CadHandle
+                                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+                            }
+                            try { if (editView.IsAddingNew) editView.CommitNew(); } catch (System.Exception ex)
+                            {
+                                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
+                            }
+                        }
+
+                        if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
+                        {
+                            PluginLogger.Warn($"TenderPopupApply.ValidationFailed | note={note}");
+                            lblNote.Text = note;
+                            lblNote.Foreground = Brushes.Firebrick;
+                            return;
+                        }
+
+                        selectedSegments = normalized;
+                        double total = selectedSegments.Sum(s => s.LengthMm);
+                        selectedHeight = total > 0
+                            ? selectedSegments.Sum(s => s.LengthMm * s.HeightMm) / total
+                            : defaultHeight;
+                        selectedDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
+                            ? "Ngang"
+                            : "Dọc";
+                        pickedOpenings = draftOpenings
+                            .Select(o => new TenderOpening
+                            {
+                                Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
+                                Width = Math.Max(1, Math.Round(o.Width)),
+                                Height = Math.Max(1, Math.Round(o.Height)),
+                                BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
+                                CenterStationMm = o.CenterStationMm,
+                                Quantity = Math.Max(1, o.Quantity)
                             })
-                            .ToList(),
-                        RepresentativeHeightMm = selectedHeight,
-                        LayoutDirection = selectedDirection,
-                        Openings = CloneOpenings(pickedOpenings)
-                    };
-                    dlg.Close();
+                            .ToList();
+                        pickedOpenings = CloneOpenings(pickedOpenings);
+                        dialogAccepted = true;
+                        PluginLogger.Info(
+                            $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
+                            $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
+                        createdSpanEntityIds.Clear();
+                        dlg.DialogResult = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        dialogAccepted = false;
+                        PluginLogger.Error("TenderPopupApply.Failed", ex);
+                        lblNote.Text = $"Lỗi áp dụng dữ liệu: {ex.Message}";
+                        lblNote.Foreground = Brushes.Firebrick;
+                    }
                 }, 120);
 
                 footer.Children.Add(btnCancel);
@@ -1590,9 +1588,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 dlg.ShowDialog();
             });
 
-            if (promptResult != null)
+            if (dialogAccepted)
             {
-                segments = promptResult.Segments
+                segments = selectedSegments
                     .Select(s => new TenderHeightSegment
                     {
                         LengthMm = s.LengthMm,
@@ -1600,9 +1598,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         CadHandle = s.CadHandle
                     })
                     .ToList();
-                representativeHeightMm = promptResult.RepresentativeHeightMm;
-                selectedLayoutDirection = promptResult.LayoutDirection;
-                selectedOpenings = CloneOpenings(promptResult.Openings);
+                representativeHeightMm = selectedHeight;
+                selectedLayoutDirection = selectedDirection;
+                selectedOpenings = CloneOpenings(pickedOpenings);
                 PluginLogger.Warn(
                     $"TenderPopupApply.Return | segments={DescribeSegments(segments)} | openings={DescribeOpenings(selectedOpenings)} | layout={selectedLayoutDirection}");
                 return true;

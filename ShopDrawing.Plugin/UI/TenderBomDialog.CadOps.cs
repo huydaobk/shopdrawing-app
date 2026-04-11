@@ -304,7 +304,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     if (promptedLength > 0.5)
                         length = promptedLength;
                     targetRow.LayoutDirection = promptedLayoutDirection;
-                    targetRow.Openings = promptedOpenings;
+                    targetRow.Openings = CloneOpenings(promptedOpenings);
                     polygonVertices = null;
                     PluginLogger.Info(
                         $"TenderRepick.PopupApplied | row={targetRow.Name} | seg={DescribeSegments(promptedSegments)} | " +
@@ -380,6 +380,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
                     {
                         LoadOpeningsForWall(targetRow);
+                        PluginLogger.Info(
+                            $"TenderRepick.OpeningSync | row={targetRow.Name} | rowOpenings={targetRow.Openings.Count} | gridOpenings={_openingRows.Count}");
                     }
 
                     SafeRefreshWallGrid();
@@ -496,7 +498,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     popupRow.Height = promptedHeight;
                     popupRow.HeightSegments = promptedSegments;
                     popupRow.LayoutDirection = promptedLayoutDirection;
-                    popupRow.Openings = promptedOpenings;
+                    popupRow.Openings = CloneOpenings(promptedOpenings);
                     popupRow.Length = Math.Max(0, promptedSegments.Sum(s => Math.Max(0, s.LengthMm)));
                     if (popupRow.Length <= 0)
                         popupRow.Length = Math.Max(0, initialLength);
@@ -518,6 +520,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         }
                         SafeRefreshWallGrid();
                         LoadOpeningsForWall(popupRow);
+                        popupRow.Refresh();
+                        PluginLogger.Info(
+                            $"TenderPickLength.OpeningSync | row={popupRow.Name} | rowOpenings={popupRow.Openings.Count} | gridOpenings={_openingRows.Count}");
                         RefreshFooter();
                         RefreshPanelBreakdown(popupRow);
                         RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
@@ -764,7 +769,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     if (promptedLength > 0.5)
                         newRow.Length = promptedLength;
                     newRow.LayoutDirection = promptedLayoutDirection;
-                    newRow.Openings = promptedOpenings;
+                    newRow.Openings = CloneOpenings(promptedOpenings);
                     PluginLogger.Info(
                         $"TenderPickEntity.PopupApplied | row={newRow.Name} | category={newRow.Category} | app={newRow.Application} | " +
                         $"spec={newRow.SpecKey} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)}");
@@ -810,6 +815,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     _wallGrid.Items.Refresh();
                     SafeRefreshWallGrid();
                     LoadOpeningsForWall(newRow);
+                    newRow.Refresh();
+                    PluginLogger.Info(
+                        $"TenderPickEntity.OpeningSync | row={newRow.Name} | rowOpenings={newRow.Openings.Count} | gridOpenings={_openingRows.Count}");
 
                     RefreshFooter();
 
@@ -1507,6 +1515,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             Quantity = Math.Max(1, o.Quantity)
                         })
                         .ToList();
+                    pickedOpenings = CloneOpenings(pickedOpenings);
                     PluginLogger.Info(
                         $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
                         $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
@@ -1562,7 +1571,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 segments = selectedSegments;
                 representativeHeightMm = selectedHeight;
                 selectedLayoutDirection = selectedDirection;
-                selectedOpenings = pickedOpenings;
+                selectedOpenings = CloneOpenings(pickedOpenings);
             }
 
             return confirmed;
@@ -1629,6 +1638,22 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             int qty = list.Sum(o => Math.Max(0, o.Quantity));
             double area = list.Sum(o => Math.Max(0, o.TotalAreaM2));
             return $"count={list.Count},qty={qty},area={area:F2}";
+        }
+
+        private static List<TenderOpening> CloneOpenings(IEnumerable<TenderOpening>? openings)
+        {
+            return (openings ?? Enumerable.Empty<TenderOpening>())
+                .Where(o => o != null && o.Width > 0 && o.Height > 0 && o.Quantity > 0)
+                .Select(o => new TenderOpening
+                {
+                    Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
+                    Width = Math.Max(1, Math.Round(o.Width)),
+                    Height = Math.Max(1, Math.Round(o.Height)),
+                    BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
+                    CenterStationMm = o.CenterStationMm,
+                    Quantity = Math.Max(1, o.Quantity)
+                })
+                .ToList();
         }
 
         private static void DrawHeightProfilePreview(

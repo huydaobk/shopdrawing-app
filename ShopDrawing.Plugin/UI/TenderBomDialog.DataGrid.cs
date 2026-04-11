@@ -344,6 +344,7 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(ColTemplateCombo("Loại", "Type", 100, TenderOpening.TypeOptions));
             grid.Columns.Add(Col("Rộng (mm)", "Width", 85, "F0"));
             grid.Columns.Add(Col("Cao (mm)", "Height", 85, "F0"));
+            grid.Columns.Add(Col("Lý trình tâm (mm)", "CenterStationMm", 120, "F0"));
             grid.Columns.Add(Col("Cao độ đáy (mm)", "BottomElevationMm", 115, "F0"));
             grid.Columns.Add(Col("Số lượng", "Quantity", 70));
 

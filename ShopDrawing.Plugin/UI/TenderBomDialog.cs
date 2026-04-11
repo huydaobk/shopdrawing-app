@@ -788,7 +788,15 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 return;
             }
 
-            _openingRows.Add(new TenderOpeningRow { Type = "Cửa đi", Width = 2000, Height = 2500, BottomElevationMm = 0, Quantity = 1 });
+            _openingRows.Add(new TenderOpeningRow
+            {
+                Type = "Cửa đi",
+                Width = 2000,
+                Height = 2500,
+                BottomElevationMm = 0,
+                CenterStationMm = -1,
+                Quantity = 1
+            });
             wallRow.SyncOpenings(_openingRows);
             wallRow.Refresh();
             SafeRefreshWallGrid();
@@ -2066,6 +2074,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     Width = op.Width,
                     Height = op.Height,
                     BottomElevationMm = op.BottomElevationMm,
+                    CenterStationMm = op.CenterStationMm,
                     Quantity = op.Quantity
                 });
         }
@@ -2661,6 +2670,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 Width = r.Width,
                 Height = r.Height,
                 BottomElevationMm = Math.Max(0, r.BottomElevationMm),
+                CenterStationMm = r.CenterStationMm,
                 Quantity = r.Quantity
             }).ToList();
         }
@@ -2754,6 +2764,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public double Width { get; set; }
         public double Height { get; set; }
         public double BottomElevationMm { get; set; }
+        public double CenterStationMm { get; set; } = -1;
         public int Quantity { get; set; } = 1;
 
         public string TotalAreaDisplay => (Width * Height * Quantity / 1_000_000.0).ToString("F2");

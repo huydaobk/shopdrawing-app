@@ -602,11 +602,15 @@ private void SetStatus(string message)
 
             return FgDark;
         }
-        private void RefreshBomSummary(bool allowDeferredRetry = true)
+        private void RefreshBomSummary(bool allowDeferredRetry = true, bool forceWhenPendingEdits = false)
         {
             if (!TryCommitAllTenderEdits())
             {
-                if (allowDeferredRetry)
+                if (forceWhenPendingEdits)
+                {
+                    PluginLogger.Warn("Tender.RefreshBomSummary.ForcedWithoutCommit");
+                }
+                else if (allowDeferredRetry)
                 {
                     Dispatcher.BeginInvoke(
                         DispatcherPriority.ContextIdle,
@@ -615,10 +619,16 @@ private void SetStatus(string message)
                 else
                 {
                     SetStatus("Hãy hoàn tất dữ liệu đang chỉnh sửa trước khi tổng hợp khối lượng.");
+                    PluginLogger.Warn("Tender.RefreshBomSummary.CommitFailed");
+                    return;
                 }
-                return;
             }
 
+            RefreshBomSummaryCore();
+        }
+
+        private void RefreshBomSummaryCore()
+        {
             SyncAllWallRowsSpecData();
             var walls = GetWallModels();
             _project.Accessories = EnsureProjectAccessoriesConfigured();
@@ -640,6 +650,9 @@ private void SetStatus(string message)
                 $"Cơ sở tính: {accessoryReport.BasisRows.Count} dòng | " +
                 $"Tổng hợp phụ kiện: {accessoryReport.SummaryRows.Count} dòng | " +
                 $"Khối lượng chốt: {accessoryReport.SummaryRows.Sum(r => r.FinalQuantity):F2}";
+            PluginLogger.Info(
+                $"Tender.RefreshBomSummary.Done | walls={walls.Count} | panelGroups={panelSummary.Count} | " +
+                $"panelQty={panelSummary.Sum(p => p.EstimatedPanels)} | accessoryRows={accessoryReport.SummaryRows.Count}");
 
             SetStatus(
                 $"Khối lượng: {panelSummary.Count} nhóm panel | " +
@@ -1281,16 +1294,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (row.PanelWidth <= 0)
                 return;
 
-            // Với đa giác xiên/không song song trục X-Y, ưu tiên preview theo chain phát triển
-            // để đường chia bám biên dạng thực tế thay vì dựng theo scan-line world-axis.
-            if (HasNonOrthogonalEdges(vertices)
-                && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr))
-            {
-                return;
-            }
-
-            // Trường hợp còn lại (biên dạng vuông/orthogonal) giữ scan-line world-axis
-            // để bám logic đã chốt cho khối lượng hiện tại.
+            // Preview chia tấm phải bám đúng trục scan-line dùng trong tính khối lượng
+            // (ScanLineAnalyzer) để tránh lệch giữa hình preview và bảng số lượng.
 
             bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
             double min = horizontal ? vertices.Min(v => v[1]) : vertices.Min(v => v[0]);

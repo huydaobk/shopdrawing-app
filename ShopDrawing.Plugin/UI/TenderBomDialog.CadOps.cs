@@ -387,7 +387,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshFooter();
 
                     RefreshPanelBreakdown(targetRow);
-                    RefreshBomSummary();
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
                     PluginLogger.Info(
                         $"TenderRepick.Synced | row={targetRow.Name} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
@@ -520,7 +520,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         LoadOpeningsForWall(popupRow);
                         RefreshFooter();
                         RefreshPanelBreakdown(popupRow);
-                        RefreshBomSummary();
+                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                         _project.Walls = GetWallModels();
                         PluginLogger.Info(
                             $"TenderPickLength.Synced | row={popupRow.Name} | length={popupRow.Length:F0} | height={popupRow.Height:F0} | " +
@@ -814,7 +814,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshFooter();
 
                     RefreshPanelBreakdown(newRow);
-                    RefreshBomSummary();
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
                     PluginLogger.Info(
                         $"TenderPickEntity.Synced | row={newRow.Name} | length={newRow.Length:F0} | height={newRow.Height:F0} | " +

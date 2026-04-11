@@ -1,4 +1,4 @@
-﻿﻿using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
@@ -517,8 +517,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         if (_wallGrid != null)
                         {
                             _wallGrid.SelectedItem = popupRow;
-                            _wallGrid.ScrollIntoView(popupRow);
-                            _wallGrid.Items.Refresh();
+                            Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(popupRow)), System.Windows.Threading.DispatcherPriority.Background);
                         }
                         SafeRefreshWallGrid();
                         LoadOpeningsForWall(popupRow);
@@ -823,9 +822,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     ReindexWalls();
 
                     _wallGrid.SelectedItem = newRow;
-
-                    _wallGrid.ScrollIntoView(newRow);
-                    _wallGrid.Items.Refresh();
+                    Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(newRow)), System.Windows.Threading.DispatcherPriority.Background);
                     SafeRefreshWallGrid();
                     LoadOpeningsForWall(newRow);
                     newRow.Refresh();
@@ -1472,7 +1469,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
-                    dlg.DialogResult = false;
+                    dialogAccepted = false;
+                    dlg.Close();
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
@@ -1535,7 +1533,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
                             $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
                         createdSpanEntityIds.Clear();
-                        dlg.DialogResult = true;
+                        dlg.Close();
                     }
                     catch (Exception ex)
                     {

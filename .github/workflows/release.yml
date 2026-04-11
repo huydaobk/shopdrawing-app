@@ -124,7 +124,7 @@ jobs:
             "artifacts/release/latest.json"
           )
 
-          gh release view $tag --repo $repo *> $null
+          $null = gh release view $tag --repo $repo --json id 1>$null 2>$null
           if ($LASTEXITCODE -ne 0) {
             gh release create $tag --repo $repo --title $tag --generate-notes @files
           } else {

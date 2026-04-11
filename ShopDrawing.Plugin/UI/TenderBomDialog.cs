@@ -1294,6 +1294,15 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (row.PanelWidth <= 0)
                 return;
 
+            // Pick dài tạo hình chữ nhật xoay theo tuyến vách.
+            // Trường hợp này cần preview theo trục local của vách, không theo world-axis.
+            if (row.PolygonVertices == null
+                && HasNonOrthogonalEdges(vertices)
+                && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr))
+            {
+                return;
+            }
+
             // Preview chia tấm phải bám đúng trục scan-line dùng trong tính khối lượng
             // (ScanLineAnalyzer) để tránh lệch giữa hình preview và bảng số lượng.
 
@@ -1357,7 +1366,9 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
             Autodesk.AutoCAD.DatabaseServices.Transaction tr)
         {
-            if (row.PolygonVertices == null || row.PolygonVertices.Count < 3)
+            bool isAreaPolygon = row.PolygonVertices != null && row.PolygonVertices.Count >= 3;
+            bool isRotatedRectanglePreview = row.PolygonVertices == null && vertices.Count == 4;
+            if (!isAreaPolygon && !isRotatedRectanglePreview)
                 return false;
 
             bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);

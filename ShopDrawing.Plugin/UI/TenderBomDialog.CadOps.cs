@@ -494,6 +494,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         PluginLogger.Warn("TenderPickLength.PopupCancelled");
                         return;
                     }
+                    PluginLogger.Warn(
+                        $"TenderPickLength.PopupReturned | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
 
                     popupRow.Height = promptedHeight;
                     popupRow.HeightSegments = promptedSegments;
@@ -762,6 +764,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         PluginLogger.Warn($"TenderPickEntity.PopupCancelled | row={newRow.Name}");
                         return;
                     }
+                    PluginLogger.Warn(
+                        $"TenderPickEntity.PopupReturned | row={newRow.Name} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
 
                     newRow.Height = promptedHeight;
                     newRow.HeightSegments = promptedSegments;
@@ -1139,6 +1143,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             public event PropertyChangedEventHandler? PropertyChanged;
         }
 
+        private sealed class WallSegmentPromptResult
+        {
+            public List<TenderHeightSegment> Segments { get; init; } = new();
+            public double RepresentativeHeightMm { get; init; }
+            public string LayoutDirection { get; init; } = "Dọc";
+            public List<TenderOpening> Openings { get; init; } = new();
+        }
+
         private bool TryPromptWallSegmentsInput(
             double totalLengthMm,
             double defaultHeightMm,
@@ -1155,7 +1167,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             representativeHeightMm = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
             selectedLayoutDirection = string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dọc";
             selectedOpenings = new List<TenderOpening>();
-            bool confirmed = false;
+            WallSegmentPromptResult? promptResult = null;
             var selectedSegments = new List<TenderHeightSegment>();
             var pickedOpenings = new List<TenderOpening>();
             var createdSpanEntityIds = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
@@ -1459,7 +1471,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
-                    confirmed = false;
                     dlg.Close();
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
@@ -1520,7 +1531,20 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
                         $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
                     createdSpanEntityIds.Clear();
-                    confirmed = true;
+                    promptResult = new WallSegmentPromptResult
+                    {
+                        Segments = selectedSegments
+                            .Select(s => new TenderHeightSegment
+                            {
+                                LengthMm = s.LengthMm,
+                                HeightMm = s.HeightMm,
+                                CadHandle = s.CadHandle
+                            })
+                            .ToList(),
+                        RepresentativeHeightMm = selectedHeight,
+                        LayoutDirection = selectedDirection,
+                        Openings = CloneOpenings(pickedOpenings)
+                    };
                     dlg.Close();
                 }, 120);
 
@@ -1566,15 +1590,26 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 dlg.ShowDialog();
             });
 
-            if (confirmed)
+            if (promptResult != null)
             {
-                segments = selectedSegments;
-                representativeHeightMm = selectedHeight;
-                selectedLayoutDirection = selectedDirection;
-                selectedOpenings = CloneOpenings(pickedOpenings);
+                segments = promptResult.Segments
+                    .Select(s => new TenderHeightSegment
+                    {
+                        LengthMm = s.LengthMm,
+                        HeightMm = s.HeightMm,
+                        CadHandle = s.CadHandle
+                    })
+                    .ToList();
+                representativeHeightMm = promptResult.RepresentativeHeightMm;
+                selectedLayoutDirection = promptResult.LayoutDirection;
+                selectedOpenings = CloneOpenings(promptResult.Openings);
+                PluginLogger.Warn(
+                    $"TenderPopupApply.Return | segments={DescribeSegments(segments)} | openings={DescribeOpenings(selectedOpenings)} | layout={selectedLayoutDirection}");
+                return true;
             }
 
-            return confirmed;
+            PluginLogger.Warn("TenderPopupApply.ReturnCancelled");
+            return false;
         }
 
         private static bool BuildNormalizedSegments(

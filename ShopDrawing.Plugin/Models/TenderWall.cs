@@ -516,9 +516,20 @@ namespace ShopDrawing.Plugin.Models
                 else
                     orderedGroups[orderedKey] = 1;
 
-                // Hao hụt giao bậc trong dải (nếu có).
+                // Hao hụt giao bậc trong dải (không tính lỗ mở).
                 double orderedArea = PanelWidth * maxHeight;
-                double openingWasteArea = 0;
+                double stepWasteArea = Math.Max(0, orderedArea - netArea);
+                if (stepWasteArea > 1.0)
+                {
+                    double wasteHeight = stepWasteArea / PanelWidth;
+                    var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
+                    if (wasteGroups.ContainsKey(wasteKey))
+                        wasteGroups[wasteKey]++;
+                    else
+                        wasteGroups[wasteKey] = 1;
+                }
+
+                // Hao hụt do lỗ mở: lưu theo kích thước cắt thực tế trên từng dải tấm.
                 foreach (var opening in openingRanges)
                 {
                     double overlapWidth = Math.Max(0, Math.Min(stripEnd, opening.End) - Math.Max(stripStart, opening.Start));
@@ -529,14 +540,7 @@ namespace ShopDrawing.Plugin.Models
                     if (cutHeight <= 0)
                         continue;
 
-                    openingWasteArea += overlapWidth * cutHeight;
-                }
-
-                double totalWasteArea = Math.Max(0, orderedArea - Math.Max(0, netArea - openingWasteArea));
-                if (totalWasteArea > 1.0)
-                {
-                    double wasteHeight = totalWasteArea / PanelWidth;
-                    var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
+                    var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
                     if (wasteGroups.ContainsKey(wasteKey))
                         wasteGroups[wasteKey]++;
                     else

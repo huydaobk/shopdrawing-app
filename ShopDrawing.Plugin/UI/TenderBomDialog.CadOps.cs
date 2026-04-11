@@ -289,6 +289,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             initialOpenings: targetRow.Openings,
                             panelWidthMm: targetRow.PanelWidth,
                             layoutDirection: targetRow.LayoutDirection,
+                            onApplied: null,
                             out var promptedSegments,
                             out var promptedHeight,
                             out var promptedLayoutDirection,
@@ -478,6 +479,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         Length = initialLength,
                         Height = initialHeight
                     };
+                    bool popupAppliedViaCallback = false;
 
                     if (!TryPromptWallSegmentsInput(
                             totalLengthMm: popupRow.Length,
@@ -486,12 +488,31 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             initialOpenings: popupRow.Openings,
                             panelWidthMm: popupRow.PanelWidth,
                             layoutDirection: popupRow.LayoutDirection,
+                            onApplied: (appliedSegments, appliedHeight, appliedLayoutDirection, appliedOpenings) =>
+                            {
+                                popupRow.Height = appliedHeight;
+                                popupRow.HeightSegments = appliedSegments;
+                                popupRow.LayoutDirection = appliedLayoutDirection;
+                                popupRow.Openings = CloneOpenings(appliedOpenings);
+                                popupRow.Length = Math.Max(0, appliedSegments.Sum(s => Math.Max(0, s.LengthMm)));
+                                if (popupRow.Length <= 0)
+                                    popupRow.Length = Math.Max(0, initialLength);
+                                PluginLogger.Info(
+                                    $"TenderPickLength.PopupImmediateApply | row={popupRow.Name} | seg={DescribeSegments(appliedSegments)} | openings={DescribeOpenings(appliedOpenings)}");
+                                popupAppliedViaCallback = true;
+                                applyPopupRow();
+                            },
                             out var promptedSegments,
                             out var promptedHeight,
                             out var promptedLayoutDirection,
                             out var promptedOpenings))
                     {
                         PluginLogger.Warn("TenderPickLength.PopupCancelled");
+                        return;
+                    }
+                    if (popupAppliedViaCallback)
+                    {
+                        PluginLogger.Info($"TenderPickLength.PopupImmediateSyncDone | row={popupRow.Name}");
                         return;
                     }
                     PluginLogger.Warn(
@@ -764,6 +785,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             initialOpenings: newRow.Openings,
                             panelWidthMm: newRow.PanelWidth,
                             layoutDirection: newRow.LayoutDirection,
+                            onApplied: null,
                             out var promptedSegments,
                             out var promptedHeight,
                             out var promptedLayoutDirection,
@@ -1156,6 +1178,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             IReadOnlyList<TenderOpening>? initialOpenings,
             int panelWidthMm,
             string layoutDirection,
+            Action<List<TenderHeightSegment>, double, string, List<TenderOpening>>? onApplied,
             out List<TenderHeightSegment> segments,
             out double representativeHeightMm,
             out string selectedLayoutDirection,
@@ -1532,6 +1555,23 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         PluginLogger.Info(
                             $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
                             $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
+                        if (onApplied != null)
+                        {
+                            PluginLogger.Info("TenderPopupApply.CallbackStart");
+                            onApplied(
+                                selectedSegments
+                                    .Select(s => new TenderHeightSegment
+                                    {
+                                        LengthMm = s.LengthMm,
+                                        HeightMm = s.HeightMm,
+                                        CadHandle = s.CadHandle
+                                    })
+                                    .ToList(),
+                                selectedHeight,
+                                selectedDirection,
+                                CloneOpenings(pickedOpenings));
+                            PluginLogger.Info("TenderPopupApply.CallbackDone");
+                        }
                         createdSpanEntityIds.Clear();
                         dlg.Close();
                     }

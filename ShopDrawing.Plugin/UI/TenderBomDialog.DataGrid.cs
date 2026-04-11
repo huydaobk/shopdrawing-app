@@ -38,15 +38,14 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(Col("Ký hiệu", "Name", 70));
             grid.Columns.Add(Col("Dài (mm)", "Length", 80, "F0"));
             grid.Columns.Add(Col("Cao (mm)", "Height", 80, "F0"));
-            grid.Columns.Add(Col("Đoạn cao độ (LxH)", "HeightSegmentsInput", 150));
             grid.Columns.Add(Col("Thả cáp (mm)", "CableDropLengthMm", 90, "F0"));
             grid.Columns.Add(ColTemplateCombo("Mã spec", "SpecKey", 100, _project.Specs.Select(s => s.Key).ToArray()));
             grid.Columns.Add(ColTemplateCombo("Khổ tấm", "PanelWidth", 70, new[] { "900", "1000", "1100", "1150", "1200" }));
             grid.Columns.Add(ColTemplateCombo("Hướng", "LayoutDirection", 60, TenderWall.LayoutDirectionOptions));
             grid.Columns.Add(ColSuspensionLayout("Hướng PK", "SuspensionLayoutDirection", 75));
             grid.Columns.Add(ColTemplateCombo("Ứng dụng", "Application", 85, TenderWall.ApplicationOptions));
-            grid.Columns[7] = ColCableDrop("Thả cáp (mm)", "CableDropLengthMm", 90, "F0");
-            grid.Columns[9].IsReadOnly = true;
+            grid.Columns[6] = ColCableDrop("Thả cáp (mm)", "CableDropLengthMm", 90, "F0");
+            grid.Columns[8].IsReadOnly = true;
             grid.Columns.Add(ColTopPanelTreatment("Chi tiết đỉnh vách", "TopPanelTreatment", 130));
             grid.Columns.Add(ColEndPanelTreatment("Chi tiết đầu/cuối vách", "EndPanelTreatment", 130));
             grid.Columns.Add(ColBottomPanelTreatment("Chi tiết chân vách", "BottomPanelTreatment", 135));
@@ -65,7 +64,7 @@ namespace ShopDrawing.Plugin.UI
             cellStyleSpecLocked.Setters.Add(new Setter(DataGridCell.ForegroundProperty, FgDark));
             cellStyleSpecLocked.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.SemiBold));
             cellStyleSpecLocked.Setters.Add(new Setter(DataGridCell.ToolTipProperty, UiText.Normalize("Khổ tấm đang lấy tự động theo mã spec trong quản lý spec.")));
-            grid.Columns[8].CellStyle = cellStyleSpecLocked;
+            grid.Columns[8].CellStyle = cellStyleSpecLocked;
 
             var colArea = Col("DT tường", "WallAreaM2Display", 75); colArea.IsReadOnly = true; colArea.CellStyle = cellStyleBold;
             var colOp = Col("DT lỗ mở", "OpeningAreaM2Display", 75); colOp.IsReadOnly = true; colOp.CellStyle = cellStyleBold;
@@ -344,7 +343,6 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(ColTemplateCombo("Loại", "Type", 100, TenderOpening.TypeOptions));
             grid.Columns.Add(Col("Rộng (mm)", "Width", 85, "F0"));
             grid.Columns.Add(Col("Cao (mm)", "Height", 85, "F0"));
-            grid.Columns.Add(Col("Lý trình tâm (mm)", "CenterStationMm", 120, "F0"));
             grid.Columns.Add(Col("Cao độ đáy (mm)", "BottomElevationMm", 115, "F0"));
             grid.Columns.Add(Col("Số lượng", "Quantity", 70));
 

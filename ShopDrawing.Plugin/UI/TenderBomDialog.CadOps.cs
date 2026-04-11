@@ -377,6 +377,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshFooter();
 
                     RefreshPanelBreakdown(targetRow);
+                    RefreshBomSummary();
 
                     _lastCadPreviewKey = null;
 
@@ -492,6 +493,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     LoadOpeningsForWall(popupRow);
                     RefreshFooter();
                     RefreshPanelBreakdown(popupRow);
+                    RefreshBomSummary();
                     _lastCadPreviewKey = null;
                     SetStatus($"Đã thêm {popupRow.Name} bằng popup Pick Nhịp.");
                     return;
@@ -766,6 +768,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshFooter();
 
                     RefreshPanelBreakdown(newRow);
+                    RefreshBomSummary();
 
                     _lastCadPreviewKey = null;
 
@@ -1483,10 +1486,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 selectedLayoutDirection = selectedDirection;
                 selectedOpenings = pickedOpenings;
             }
-            else if (createdSpanEntityIds.Count > 0)
-            {
-                TryEraseCadEntities(createdSpanEntityIds);
-            }
 
             return confirmed;
         }
@@ -1730,26 +1729,26 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             for (int i = 0; i < count; i++)
             {
                 var opening = valid[i];
-                double stationMm = opening.CenterStationMm;
-                if (stationMm < 0)
+                double stationStartMm = opening.CenterStationMm;
+                if (stationStartMm < 0)
                 {
                     int fallbackIndex = withoutStation.FindIndex(x => ReferenceEquals(x.opening, opening));
                     double ratio = (fallbackIndex + 1.0) / (withoutStation.Count + 1.0);
-                    stationMm = ratio * drawingLength;
+                    stationStartMm = Math.Max(0, ratio * drawingLength - opening.Width * 0.5);
                 }
-                stationMm = Math.Max(0, Math.Min(drawingLength, stationMm));
-
-                double centerX = margin + (stationMm / drawingLength) * plotW;
+                stationStartMm = Math.Max(0, Math.Min(drawingLength, stationStartMm));
+                double stationCenterMm = Math.Max(0, Math.Min(drawingLength, stationStartMm + opening.Width * 0.5));
+                double left = margin + (stationStartMm / drawingLength) * plotW;
+                double centerX = margin + (stationCenterMm / drawingLength) * plotW;
                 double rectW = Math.Max(4, (opening.Width / drawingLength) * plotW);
-                double localHeightMm = Math.Max(1, GetHeightAt(stationMm, segments, drawingLength));
+                rectW = Math.Max(4, Math.Min(rectW, margin + plotW - left));
+                double localHeightMm = Math.Max(1, GetHeightAt(stationCenterMm, segments, drawingLength));
                 double bottomElevationMm = Math.Max(0, opening.BottomElevationMm);
                 double visibleHeightMm = Math.Max(0, Math.Min(opening.Height, localHeightMm - bottomElevationMm));
                 if (visibleHeightMm <= 0.5)
                     continue;
 
                 double rectH = Math.Max(4, (visibleHeightMm / maxHeight) * plotH);
-                double left = centerX - rectW / 2.0;
-                left = Math.Max(margin, Math.Min(margin + plotW - rectW, left));
                 double openingBottomY = bottomY - (bottomElevationMm / maxHeight) * plotH;
                 openingBottomY = Math.Max(margin + rectH, Math.Min(bottomY, openingBottomY));
                 double top = Math.Max(margin, openingBottomY - rectH);
@@ -1769,13 +1768,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var dimBrush = new SolidColorBrush(Color.FromRgb(34, 90, 160));
                 var tickBrush = dimBrush;
 
-                // Dim định vị theo tuyến: từ đầu vách đến tâm lỗ mở.
+                // Dim định vị theo tuyến: từ đầu vách đến mép lỗ mở.
                 double dimY = Math.Min(bottomY + 12 + (i % 3) * 10, bottomY + Math.Max(6, margin - 2));
                 var dimLt = new System.Windows.Shapes.Line
                 {
                     X1 = margin,
                     Y1 = dimY,
-                    X2 = centerX,
+                    X2 = left,
                     Y2 = dimY,
                     Stroke = dimBrush,
                     StrokeThickness = 1
@@ -1792,21 +1791,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 });
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
-                    X1 = centerX,
+                    X1 = left,
                     Y1 = openingBottomY,
-                    X2 = centerX,
+                    X2 = left,
                     Y2 = dimY,
                     Stroke = tickBrush,
                     StrokeThickness = 1
                 });
                 var ltLabel = new TextBlock
                 {
-                    Text = $"LT {stationMm:F0}",
+                    Text = $"LT {stationStartMm:F0}",
                     FontSize = 9,
                     Foreground = dimBrush,
                     Background = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
                 };
-                Canvas.SetLeft(ltLabel, Math.Max(margin, (margin + centerX) * 0.5 - 18));
+                Canvas.SetLeft(ltLabel, Math.Max(margin, (margin + left) * 0.5 - 18));
                 Canvas.SetTop(ltLabel, Math.Max(0, dimY - 14));
                 canvas.Children.Add(ltLabel);
 
@@ -1931,7 +1930,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var lbl = new TextBlock
                 {
-                    Text = $"Lỗ{i + 1}: {opening.Width:F0}x{opening.Height:F0} | LT {stationMm:F0} | Đáy {bottomElevationMm:F0}",
+                    Text = $"Lỗ{i + 1}: {opening.Width:F0}x{opening.Height:F0} | LT {stationStartMm:F0} | Đáy {bottomElevationMm:F0}",
                     FontSize = 10,
                     Foreground = new SolidColorBrush(Color.FromRgb(128, 20, 20)),
                     Background = new SolidColorBrush(Color.FromArgb(210, 255, 255, 255))
@@ -1988,11 +1987,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (widthMm <= 0)
                 return false;
 
-            double centerStationMm = -1;
-            if (TryResolveOpeningCenterStationFromCad(p1Result.Value, p2Result.Value, segments, out var detectedStation))
+            double stationMm = -1;
+            if (TryResolveOpeningStationAndWidthFromCad(
+                p1Result.Value,
+                p2Result.Value,
+                segments,
+                out var detectedStation,
+                out var projectedWidth))
             {
-                centerStationMm = Math.Round(detectedStation);
-                ed.WriteMessage($"\nĐịnh vị tâm lỗ mở: LT={centerStationMm:F0} mm");
+                stationMm = Math.Round(detectedStation);
+                if (projectedWidth > 0)
+                    widthMm = Math.Round(projectedWidth);
+
+                ed.WriteMessage($"\nĐịnh vị lỗ mở: LT={stationMm:F0} mm | Rộng={widthMm:F0} mm");
             }
 
             var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao lỗ mở (mm):")
@@ -2025,19 +2032,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Width = widthMm,
                 Height = heightMm,
                 BottomElevationMm = bottomElevationMm,
-                CenterStationMm = centerStationMm,
+                CenterStationMm = stationMm,
                 Quantity = 1
             };
             return true;
         }
 
-        private bool TryResolveOpeningCenterStationFromCad(
+        private bool TryResolveOpeningStationAndWidthFromCad(
             Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
             Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
             IReadOnlyList<TenderHeightSegment>? segments,
-            out double stationMm)
+            out double stationMm,
+            out double projectedWidthMm)
         {
             stationMm = -1;
+            projectedWidthMm = 0;
             if (segments == null || segments.Count == 0)
                 return false;
 
@@ -2047,11 +2056,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
             if (doc == null)
                 return false;
-
-            var center = new Autodesk.AutoCAD.Geometry.Point3d(
-                (pickPoint1.X + pickPoint2.X) * 0.5,
-                (pickPoint1.Y + pickPoint2.Y) * 0.5,
-                (pickPoint1.Z + pickPoint2.Z) * 0.5);
 
             try
             {
@@ -2107,16 +2111,23 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         if (useCadLength)
                             segLengthMm = vectorLength;
 
-                        double t = (center - start).DotProduct(vector) / (vectorLength * vectorLength);
-                        t = Math.Max(0, Math.Min(1, t));
-                        var projected = start + (vector * t);
-                        double distance = center.DistanceTo(projected);
-                        double candidateStation = cumulative + t * segLengthMm;
+                        double t1 = (pickPoint1 - start).DotProduct(vector) / (vectorLength * vectorLength);
+                        double t2 = (pickPoint2 - start).DotProduct(vector) / (vectorLength * vectorLength);
+                        t1 = Math.Max(0, Math.Min(1, t1));
+                        t2 = Math.Max(0, Math.Min(1, t2));
+
+                        var projected1 = start + (vector * t1);
+                        var projected2 = start + (vector * t2);
+                        double distance = pickPoint1.DistanceTo(projected1) + pickPoint2.DistanceTo(projected2);
+
+                        double candidateWidth = Math.Abs(t2 - t1) * segLengthMm;
+                        double candidateStation = cumulative + Math.Min(t1, t2) * segLengthMm;
 
                         if (distance < bestDistance)
                         {
                             bestDistance = distance;
                             stationMm = candidateStation;
+                            projectedWidthMm = candidateWidth;
                             found = true;
                         }
 
@@ -2131,6 +2142,27 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 return false;
             }
+        }
+
+        private bool TryResolveOpeningCenterStationFromCad(
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
+            IReadOnlyList<TenderHeightSegment>? segments,
+            out double stationMm)
+        {
+            stationMm = -1;
+            if (!TryResolveOpeningStationAndWidthFromCad(
+                pickPoint1,
+                pickPoint2,
+                segments,
+                out var stationStart,
+                out var width))
+            {
+                return false;
+            }
+
+            stationMm = stationStart + width * 0.5;
+            return true;
         }
 
         private bool TryCreatePersistentPickSpanLine(
@@ -2414,10 +2446,18 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double finalH = heightMm;
                 double finalBottom = Math.Max(0, Math.Round(existingRow?.BottomElevationMm ?? 0));
                 double finalStation = Math.Round(existingRow?.CenterStationMm ?? -1);
-                if (TryResolveOpeningCenterStationFromCad(p1, p2, wallRow.HeightSegments, out var detectedStation))
+                if (!isElevation && TryResolveOpeningStationAndWidthFromCad(
+                    p1,
+                    p2,
+                    wallRow.HeightSegments,
+                    out var detectedStation,
+                    out var projectedWidth))
                 {
                     finalStation = Math.Round(detectedStation);
-                    ed.WriteMessage($" | LT={finalStation:F0}mm");
+                    if (projectedWidth > 0)
+                        finalW = Math.Round(projectedWidth);
+
+                    ed.WriteMessage($" | LT={finalStation:F0}mm | Rộng={finalW:F0}mm");
                 }
 
                 var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions(

@@ -14,7 +14,7 @@
         /// <summary>Cao do day opening (mm, tinh tu cot 0 cua vach)</summary>
         public double BottomElevationMm { get; set; }
 
-        /// <summary>Lý trình tâm opening theo tuyến vách (mm, từ đầu tuyến). -1 = chưa xác định.</summary>
+        /// <summary>Lý trình tham chiếu opening theo tuyến vách (mm, từ đầu tuyến). -1 = chưa xác định.</summary>
         public double CenterStationMm { get; set; } = -1;
 
         /// <summary>So luong opening cung kich thuoc</summary>

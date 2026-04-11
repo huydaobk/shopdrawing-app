@@ -377,12 +377,20 @@ namespace ShopDrawing.Plugin.Models
             }
 
             // Vách đa cao độ + lắp dọc: trải tấm liên tục toàn tuyến (không reset theo từng nhịp).
-            // Mỗi dải tấm lấy cao độ cấp theo max(H) trong dải; phần chênh lệch là hao hụt giao bậc.
-            if (LayoutDirection == "Dọc" && Openings.Count == 0)
+            // Mỗi dải tấm lấy cao độ cấp theo max(H) trong dải; phần chênh lệch + phần vướng lỗ mở là hao hụt.
+            if (LayoutDirection == "Dọc")
             {
                 var effectiveSegments = GetEffectiveHeightSegments();
                 if (effectiveSegments.Count > 1)
-                    return BuildContinuousVerticalBreakdown(effectiveSegments);
+                {
+                    bool hasResolvableOpenings = Openings.Count == 0
+                        || Openings.All(o => o != null
+                            && o.Width > 0
+                            && o.Height > 0
+                            && o.CenterStationMm >= 0);
+                    if (hasResolvableOpenings)
+                        return BuildContinuousVerticalBreakdown(effectiveSegments, Openings);
+                }
             }
 
             var entries = new List<TenderPanelEntry>();
@@ -460,7 +468,9 @@ namespace ShopDrawing.Plugin.Models
             return entries;
         }
 
-        private List<TenderPanelEntry> BuildContinuousVerticalBreakdown(IReadOnlyList<TenderHeightSegment> segments)
+        private List<TenderPanelEntry> BuildContinuousVerticalBreakdown(
+            IReadOnlyList<TenderHeightSegment> segments,
+            IReadOnlyList<TenderOpening>? openings)
         {
             var entries = new List<TenderPanelEntry>();
             if (PanelWidth <= 0 || Length <= 0 || segments.Count == 0)
@@ -471,6 +481,7 @@ namespace ShopDrawing.Plugin.Models
                 return entries;
 
             var ranges = BuildSegmentRanges(segments);
+            var openingRanges = BuildOpeningRanges(openings);
             var orderedGroups = new Dictionary<(double Width, double Height), int>();
             var wasteGroups = new Dictionary<(double Width, double WasteHeight), int>();
 
@@ -507,10 +518,24 @@ namespace ShopDrawing.Plugin.Models
 
                 // Hao hụt giao bậc trong dải (nếu có).
                 double orderedArea = PanelWidth * maxHeight;
-                double stepWasteArea = Math.Max(0, orderedArea - netArea);
-                if (stepWasteArea > 1.0)
+                double openingWasteArea = 0;
+                foreach (var opening in openingRanges)
                 {
-                    double wasteHeight = stepWasteArea / PanelWidth;
+                    double overlapWidth = Math.Max(0, Math.Min(stripEnd, opening.End) - Math.Max(stripStart, opening.Start));
+                    if (overlapWidth <= 0)
+                        continue;
+
+                    double cutHeight = Math.Max(0, Math.Min(maxHeight, opening.Top) - Math.Max(0, opening.Bottom));
+                    if (cutHeight <= 0)
+                        continue;
+
+                    openingWasteArea += overlapWidth * cutHeight;
+                }
+
+                double totalWasteArea = Math.Max(0, orderedArea - Math.Max(0, netArea - openingWasteArea));
+                if (totalWasteArea > 1.0)
+                {
+                    double wasteHeight = totalWasteArea / PanelWidth;
                     var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
                     if (wasteGroups.ContainsKey(wasteKey))
                         wasteGroups[wasteKey]++;
@@ -555,6 +580,36 @@ namespace ShopDrawing.Plugin.Models
                 double end = cursor + Math.Max(0, segment.LengthMm);
                 ranges.Add((cursor, end, Math.Max(0, segment.HeightMm)));
                 cursor = end;
+            }
+
+            return ranges;
+        }
+
+        private static IReadOnlyList<(double Start, double End, double Bottom, double Top)> BuildOpeningRanges(
+            IReadOnlyList<TenderOpening>? openings)
+        {
+            var ranges = new List<(double Start, double End, double Bottom, double Top)>();
+            if (openings == null || openings.Count == 0)
+                return ranges;
+
+            foreach (var opening in openings)
+            {
+                if (opening == null
+                    || opening.Width <= 0
+                    || opening.Height <= 0
+                    || opening.CenterStationMm < 0)
+                {
+                    continue;
+                }
+
+                double start = opening.CenterStationMm - opening.Width / 2.0;
+                double end = start + opening.Width;
+                double bottom = Math.Max(0, opening.BottomElevationMm);
+                double top = bottom + Math.Max(0, opening.Height);
+                int qty = Math.Max(1, opening.Quantity);
+
+                for (int i = 0; i < qty; i++)
+                    ranges.Add((start, end, bottom, top));
             }
 
             return ranges;

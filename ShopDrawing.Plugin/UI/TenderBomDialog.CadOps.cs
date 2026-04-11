@@ -1532,9 +1532,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         }
 
                         selectedSegments = normalized;
-                        double total = selectedSegments.Sum(s => s.LengthMm);
-                        selectedHeight = total > 0
-                            ? selectedSegments.Sum(s => s.LengthMm * s.HeightMm) / total
+                        selectedHeight = selectedSegments.Count > 0
+                            ? selectedSegments.Max(s => s.HeightMm)
                             : defaultHeight;
                         selectedDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
                             ? "Ngang"

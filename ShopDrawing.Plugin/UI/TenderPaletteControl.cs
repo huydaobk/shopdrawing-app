@@ -1,7 +1,5 @@
 ﻿﻿using System;
 
-using System.ComponentModel;
-
 using System.IO;
 
 using System.Linq;
@@ -53,9 +51,9 @@ namespace ShopDrawing.Plugin.UI
         private TenderProject? _currentProject;
 
         private readonly TenderProjectManager _projectManager = new();
-        private readonly ProjectProfileManager _projectProfileManager = new();
-
         private TenderBomDialog? _bomDialog;
+        private string _activeDocumentIdentity = string.Empty;
+        private bool _isResettingForDocumentSwitch;
 
 
 
@@ -236,7 +234,6 @@ namespace ShopDrawing.Plugin.UI
             Content = SdPaletteStyles.WrapInScrollViewer(mainStack);
 
             Background = SdPaletteStyles.BgPrimaryBrush;
-            ApplyProjectProfile(_projectProfileManager.LoadOrDefault(), overwriteFields: false);
 
 
 
@@ -261,9 +258,9 @@ namespace ShopDrawing.Plugin.UI
             Dispatcher.UnhandledException -= _dispatcherUnhandledExceptionHandler;
 
             Dispatcher.UnhandledException += _dispatcherUnhandledExceptionHandler;
-            ProjectProfileManager.ProfileUpdated -= HandleProjectProfileUpdated;
-            ProjectProfileManager.ProfileUpdated += HandleProjectProfileUpdated;
-            ApplyProjectProfile(_projectProfileManager.LoadOrDefault(), overwriteFields: true);
+            Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated -= HandleDocumentActivated;
+            Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated += HandleDocumentActivated;
+            EnsureDocumentContext(forceReset: true);
 
         }
 
@@ -274,7 +271,7 @@ namespace ShopDrawing.Plugin.UI
         {
 
             Dispatcher.UnhandledException -= _dispatcherUnhandledExceptionHandler;
-            ProjectProfileManager.ProfileUpdated -= HandleProjectProfileUpdated;
+            Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated -= HandleDocumentActivated;
 
         }
 
@@ -309,16 +306,7 @@ namespace ShopDrawing.Plugin.UI
         private void EnsureProject()
 
         {
-            var profile = _projectProfileManager.LoadOrDefault();
-            if (string.IsNullOrWhiteSpace(_txtProjectName.Text) && !string.IsNullOrWhiteSpace(profile.ProjectName))
-            {
-                _txtProjectName.Text = profile.ProjectName;
-            }
-
-            if (string.IsNullOrWhiteSpace(_txtCustomerName.Text) && !string.IsNullOrWhiteSpace(profile.CustomerName))
-            {
-                _txtCustomerName.Text = profile.CustomerName;
-            }
+            EnsureDocumentContext();
 
             if (_currentProject == null)
 
@@ -326,7 +314,7 @@ namespace ShopDrawing.Plugin.UI
 
                 // Try auto-load from DWG-linked autosave
 
-                string dwgName = GetDwgFileName();
+                string dwgName = GetCurrentAutoSaveDwgKey();
 
                 if (!string.IsNullOrEmpty(dwgName))
 
@@ -376,9 +364,9 @@ namespace ShopDrawing.Plugin.UI
 
 
 
-        /// <summary>Lay ten file DWG hien tai.</summary>
+        /// <summary>Lấy key autosave của DWG hiện tại (chỉ dùng khi file đã được lưu).</summary>
 
-        private static string GetDwgFileName()
+        private static string GetCurrentAutoSaveDwgKey()
 
         {
 
@@ -387,8 +375,13 @@ namespace ShopDrawing.Plugin.UI
             {
 
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                var path = doc?.Database?.Filename;
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    return string.Empty;
+                }
 
-                return doc?.Name ?? "";
+                return Path.IsPathRooted(path) ? path : string.Empty;
 
             }
 
@@ -398,6 +391,66 @@ namespace ShopDrawing.Plugin.UI
 
             }
 
+        }
+
+        private static string GetActiveDocumentIdentity()
+        {
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                return doc?.Name ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
+                return string.Empty;
+            }
+        }
+
+        private void EnsureDocumentContext(bool forceReset = false)
+        {
+            string currentIdentity = GetActiveDocumentIdentity();
+            if (!forceReset &&
+                string.Equals(_activeDocumentIdentity, currentIdentity, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _activeDocumentIdentity = currentIdentity;
+            ResetProjectStateForDocumentSwitch();
+        }
+
+        private void ResetProjectStateForDocumentSwitch()
+        {
+            _currentProject = null;
+            _txtProjectName.Text = string.Empty;
+            _txtCustomerName.Text = string.Empty;
+            UpdateFooter();
+
+            if (_bomDialog != null && _bomDialog.IsLoaded)
+            {
+                _isResettingForDocumentSwitch = true;
+                try
+                {
+                    _bomDialog.Close();
+                }
+                catch (Exception ex)
+                {
+                    PluginLogger.Warn("Suppressed exception: " + ex.Message);
+                }
+                finally
+                {
+                    _isResettingForDocumentSwitch = false;
+                    _bomDialog = null;
+                }
+            }
+        }
+
+        private void HandleDocumentActivated(
+            object? sender,
+            Autodesk.AutoCAD.ApplicationServices.DocumentCollectionEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() => EnsureDocumentContext()));
         }
 
 
@@ -422,7 +475,7 @@ namespace ShopDrawing.Plugin.UI
 
             {
 
-                string dwgName = GetDwgFileName();
+                string dwgName = GetCurrentAutoSaveDwgKey();
 
                 if (!string.IsNullOrEmpty(dwgName))
 
@@ -524,17 +577,7 @@ namespace ShopDrawing.Plugin.UI
 
                 // Khi dialog dong thi sync data ve project
 
-                _bomDialog.Closed += (s, args) =>
-
-                {
-
-                    AutoSaveProject();
-
-                    UpdateFooter();
-
-                    _bomDialog = null;
-
-                };
+                _bomDialog.Closed += HandleBomDialogClosed;
 
 
 
@@ -552,6 +595,22 @@ namespace ShopDrawing.Plugin.UI
 
             }
 
+        }
+
+        private void HandleBomDialogClosed(object? sender, EventArgs e)
+        {
+            if (!_isResettingForDocumentSwitch)
+            {
+                AutoSaveProject();
+                UpdateFooter();
+            }
+
+            if (_bomDialog != null)
+            {
+                _bomDialog.Closed -= HandleBomDialogClosed;
+            }
+
+            _bomDialog = null;
         }
 
 
@@ -839,56 +898,6 @@ namespace ShopDrawing.Plugin.UI
 
 
             return lbl;
-
-        }
-
-
-
-        private void HandleProjectProfileUpdated(ProjectProfile profile)
-
-        {
-
-            Dispatcher.BeginInvoke(new Action(() =>
-
-            {
-
-                ApplyProjectProfile(profile, overwriteFields: true);
-
-            }));
-
-        }
-
-
-
-        private void ApplyProjectProfile(ProjectProfile profile, bool overwriteFields)
-
-        {
-
-            if (overwriteFields || string.IsNullOrWhiteSpace(_txtProjectName.Text))
-
-            {
-
-                _txtProjectName.Text = profile.ProjectName ?? string.Empty;
-
-            }
-
-            if (overwriteFields || string.IsNullOrWhiteSpace(_txtCustomerName.Text))
-
-            {
-
-                _txtCustomerName.Text = profile.CustomerName ?? string.Empty;
-
-            }
-
-            if (_currentProject != null)
-
-            {
-
-                _currentProject.ProjectName = _txtProjectName.Text.Trim();
-
-                _currentProject.CustomerName = _txtCustomerName.Text.Trim();
-
-            }
 
         }
 

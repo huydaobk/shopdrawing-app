@@ -1267,6 +1267,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             var selectedSegments = new List<TenderHeightSegment>();
             var pickedOpenings = new List<TenderOpening>();
             var createdSpanEntityIds = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
+            Autodesk.AutoCAD.DatabaseServices.ObjectId popupSpanSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
             double selectedHeight = representativeHeightMm;
             double seedLength = initialSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
             bool hasLengthReference = totalLengthMm > 0.5 || seedLength > 0.5;
@@ -1294,6 +1295,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 TextBlock lblNote = null!;
                 ComboBox cboLayoutDirection = null!;
                 TextBlock lblOpeningCount = null!;
+                DataGrid rowGrid = null!;
                 var rows = new ObservableCollection<HeightSegmentInputRow>();
                 var seedSegments = WallHeightResolver.Normalize(lengthTarget, defaultHeight, initialSegments);
                 if (seedSegments.Count == 0)
@@ -1314,6 +1316,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             CadHandle = segment.CadHandle
                         });
                     }
+                }
+
+                void RebuildCadSpanSplinePreview()
+                {
+                    TryRebuildPickSpanSplinePreview(rows, popupSpanSplineId, out var rebuiltSplineId);
+                    popupSpanSplineId = rebuiltSplineId;
+                }
+
+                void CleanupCadSpanSplinePreview()
+                {
+                    if (popupSpanSplineId.IsNull)
+                        return;
+
+                    TryEraseCadEntities(new[] { popupSpanSplineId });
+                    popupSpanSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
                 }
 
                 var dlg = new Window
@@ -1445,6 +1462,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     {
                         dlg.Show();
                         dlg.Activate();
+                        RebuildCadSpanSplinePreview();
                         RefreshPreview();
                     }
                 }, 100);
@@ -1475,6 +1493,37 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                 }, 120);
                 topPanel.Children.Add(btnPickOpening);
+                var btnDeleteSpan = Btn("Xóa Nhịp", AccentRed, Brushes.White, (_, _) =>
+                {
+                    var selectedRow = rowGrid?.SelectedItem as HeightSegmentInputRow;
+                    if (selectedRow == null)
+                    {
+                        if (rows.Count == 0)
+                        {
+                            lblNote.Text = "Không còn nhịp để xóa.";
+                            lblNote.Foreground = Brushes.Firebrick;
+                            return;
+                        }
+
+                        selectedRow = rows.LastOrDefault();
+                    }
+
+                    if (selectedRow == null)
+                        return;
+
+                    if (!string.IsNullOrWhiteSpace(selectedRow.CadHandle))
+                        TryEraseCadEntitiesByHandles(new[] { selectedRow.CadHandle! });
+
+                    rows.Remove(selectedRow);
+                    if (rowGrid != null && rows.Count > 0)
+                        rowGrid.SelectedIndex = Math.Max(0, Math.Min(rowGrid.SelectedIndex, rows.Count - 1));
+
+                    PluginLogger.Info(
+                        $"TenderPopup.RemoveSpan | remain={rows.Count} | removedHandle={(selectedRow.CadHandle ?? string.Empty)}");
+                    RebuildCadSpanSplinePreview();
+                    RefreshPreview();
+                }, 100);
+                topPanel.Children.Add(btnDeleteSpan);
                 lblOpeningCount = new TextBlock
                 {
                     Text = $"Lỗ Mở: {draftOpenings.Count}",
@@ -1487,7 +1536,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Grid.SetRow(topPanel, 1);
                 root.Children.Add(topPanel);
 
-                var rowGrid = new DataGrid
+                rowGrid = new DataGrid
                 {
                     AutoGenerateColumns = false,
                     CanUserAddRows = false,
@@ -1568,6 +1617,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
                     dialogAccepted = false;
+                    CleanupCadSpanSplinePreview();
                     dlg.Close();
                 }, 120);
                 var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
@@ -1646,6 +1696,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 CloneOpenings(pickedOpenings));
                             PluginLogger.Info("TenderPopupApply.CallbackDone");
                         }
+                        CleanupCadSpanSplinePreview();
                         createdSpanEntityIds.Clear();
                         dlg.Close();
                     }
@@ -1696,7 +1747,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 }
 
                 dlg.Loaded += (_, _) => RefreshPreview();
+                dlg.Loaded += (_, _) => RebuildCadSpanSplinePreview();
                 dlg.SizeChanged += (_, _) => RefreshPreview();
+                dlg.Closed += (_, _) => CleanupCadSpanSplinePreview();
                 dlg.ShowDialog();
             });
 
@@ -1931,12 +1984,28 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             canvas.Children.Add(baseLine);
 
             double cursorMm = 0;
+            var topCenters = new List<System.Windows.Point>();
+            double topStartX = 0;
+            double topStartY = 0;
+            double topEndX = 0;
+            double topEndY = 0;
             for (int i = 0; i < segments.Count; i++)
             {
                 double x1 = margin + (cursorMm / drawingLength) * plotW;
                 cursorMm += segments[i].LengthMm;
                 double x2 = margin + (cursorMm / drawingLength) * plotW;
                 double yTop = margin + (plotH - (segments[i].HeightMm / maxHeight) * plotH);
+                if (i == 0)
+                {
+                    topStartX = x1;
+                    topStartY = yTop;
+                }
+                if (i == segments.Count - 1)
+                {
+                    topEndX = x2;
+                    topEndY = yTop;
+                }
+                topCenters.Add(new System.Windows.Point((x1 + x2) * 0.5, yTop));
 
                 var topLine = new System.Windows.Shapes.Line
                 {
@@ -1991,6 +2060,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     canvas.Children.Add(rightDown);
                 }
             }
+
+            DrawSmoothTopSplinePreview(canvas, topCenters, topStartX, topStartY, topEndX, topEndY);
 
             if (panelWidthMm <= 0)
             {
@@ -2048,6 +2119,69 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
 
             DrawOpeningPreviewMarkers(canvas, openings, segments, margin, plotW, plotH, bottomY, maxHeight, drawingLength);
+        }
+
+        private static void DrawSmoothTopSplinePreview(
+            Canvas canvas,
+            IReadOnlyList<System.Windows.Point> centers,
+            double startX,
+            double startY,
+            double endX,
+            double endY)
+        {
+            if (centers == null || centers.Count == 0)
+                return;
+
+            var points = new List<System.Windows.Point>(centers.Count + 2)
+            {
+                new System.Windows.Point(startX, startY)
+            };
+            points.AddRange(centers);
+            points.Add(new System.Windows.Point(endX, endY));
+
+            if (points.Count < 3)
+                return;
+
+            var figure = new PathFigure
+            {
+                StartPoint = points[0],
+                IsClosed = false,
+                IsFilled = false
+            };
+
+            var bezier = new PolyBezierSegment();
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                var p0 = i == 0 ? points[i] : points[i - 1];
+                var p1 = points[i];
+                var p2 = points[i + 1];
+                var p3 = i + 2 < points.Count ? points[i + 2] : p2;
+
+                // Catmull-Rom -> cubic Bezier (tension = 1)
+                var c1 = new System.Windows.Point(
+                    p1.X + (p2.X - p0.X) / 6.0,
+                    p1.Y + (p2.Y - p0.Y) / 6.0);
+                var c2 = new System.Windows.Point(
+                    p2.X - (p3.X - p1.X) / 6.0,
+                    p2.Y - (p3.Y - p1.Y) / 6.0);
+
+                bezier.Points.Add(c1);
+                bezier.Points.Add(c2);
+                bezier.Points.Add(p2);
+            }
+
+            figure.Segments.Add(bezier);
+
+            var geometry = new PathGeometry();
+            geometry.Figures.Add(figure);
+            var splinePath = new System.Windows.Shapes.Path
+            {
+                Data = geometry,
+                Stroke = new SolidColorBrush(Color.FromRgb(41, 128, 185)),
+                StrokeThickness = 1.8,
+                Opacity = 0.85
+            };
+            canvas.Children.Add(splinePath);
         }
 
         private static void DrawOpeningPreviewMarkers(
@@ -2576,6 +2710,102 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     tr.AddNewlyCreatedDBObject(line, true);
                     entityId = line.ObjectId;
                     cadHandle = line.Handle.ToString();
+                    tr.Commit();
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool TryRebuildPickSpanSplinePreview(
+            IEnumerable<HeightSegmentInputRow> rows,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId currentSplineId,
+            out Autodesk.AutoCAD.DatabaseServices.ObjectId newSplineId)
+        {
+            newSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return false;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    if (!currentSplineId.IsNull && currentSplineId.IsValid && !currentSplineId.IsErased)
+                    {
+                        var oldSpline = tr.GetObject(currentSplineId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite, false);
+                        oldSpline?.Erase();
+                    }
+
+                    var orderedPoints = new List<Autodesk.AutoCAD.Geometry.Point3d>();
+                    foreach (var row in rows ?? Enumerable.Empty<HeightSegmentInputRow>())
+                    {
+                        if (row == null || string.IsNullOrWhiteSpace(row.CadHandle))
+                            continue;
+
+                        if (!long.TryParse(row.CadHandle, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var rawHandle))
+                            continue;
+
+                        var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                        if (!doc.Database.TryGetObjectId(handle, out var objId))
+                            continue;
+
+                        var line = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false)
+                            as Autodesk.AutoCAD.DatabaseServices.Line;
+                        if (line == null || line.Length <= 1.0)
+                            continue;
+
+                        var start = line.StartPoint;
+                        var end = line.EndPoint;
+
+                        if (orderedPoints.Count > 0)
+                        {
+                            var last = orderedPoints[^1];
+                            if (last.DistanceTo(end) < last.DistanceTo(start))
+                            {
+                                var swap = start;
+                                start = end;
+                                end = swap;
+                            }
+                        }
+
+                        if (orderedPoints.Count == 0 || orderedPoints[^1].DistanceTo(start) > 1.0)
+                            orderedPoints.Add(start);
+
+                        if (orderedPoints.Count == 0 || orderedPoints[^1].DistanceTo(end) > 1.0)
+                            orderedPoints.Add(end);
+                    }
+
+                    if (orderedPoints.Count >= 3)
+                    {
+                        var layerId = EnsureHighlightLayer(doc.Database, tr);
+                        var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(
+                            doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
+                        var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
+                            bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
+                            Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
+
+                        var fitPoints = new Autodesk.AutoCAD.Geometry.Point3dCollection();
+                        foreach (var pt in orderedPoints)
+                            fitPoints.Add(pt);
+
+                        var spline = new Autodesk.AutoCAD.DatabaseServices.Spline(fitPoints, 3, 0.0)
+                        {
+                            LayerId = layerId,
+                            ColorIndex = 5,
+                            LineWeight = Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight015
+                        };
+
+                        btr.AppendEntity(spline);
+                        tr.AddNewlyCreatedDBObject(spline, true);
+                        newSplineId = spline.ObjectId;
+                    }
+
                     tr.Commit();
                 }
 
@@ -4811,4 +5041,3 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
     }
 
 }
-

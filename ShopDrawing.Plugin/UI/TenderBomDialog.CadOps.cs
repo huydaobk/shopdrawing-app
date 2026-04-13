@@ -182,6 +182,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 double height = targetRow.Height;
 
+                string updatedLayoutDirection = targetRow.LayoutDirection;
+
+                List<TenderOpening> updatedOpenings = CloneOpenings(targetRow.Openings);
+
                 List<double[]>? polygonVertices = targetRow.PolygonVertices != null
 
                     ? new List<double[]>(targetRow.PolygonVertices.Select(v => v.ToArray()))
@@ -278,7 +282,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 }
 
-                List<TenderHeightSegment> heightSegments = new();
+                List<TenderHeightSegment> heightSegments = targetRow.HeightSegments
+                    .Select(s => new TenderHeightSegment
+                    {
+                        LengthMm = s.LengthMm,
+                        HeightMm = s.HeightMm,
+                        CadHandle = s.CadHandle
+                    })
+                    .ToList();
                 if (!pickArea)
 
                 {
@@ -304,8 +315,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
                     if (promptedLength > 0.5)
                         length = promptedLength;
-                    targetRow.LayoutDirection = promptedLayoutDirection;
-                    targetRow.Openings = CloneOpenings(promptedOpenings);
+                    updatedLayoutDirection = promptedLayoutDirection;
+                    updatedOpenings = CloneOpenings(promptedOpenings);
                     polygonVertices = null;
                     PluginLogger.Info(
                         $"TenderRepick.PopupApplied | row={targetRow.Name} | seg={DescribeSegments(promptedSegments)} | " +
@@ -363,12 +374,17 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
+                    if (pickArea && heightSegments.Count > 0)
+                        height = heightSegments.Max(s => Math.Max(0, s.HeightMm));
+
                     targetRow.CadHandle = cadHandle;
 
                     targetRow.Length = length;
 
                     targetRow.Height = height;
                     targetRow.HeightSegments = heightSegments;
+                    targetRow.LayoutDirection = updatedLayoutDirection;
+                    targetRow.Openings = updatedOpenings;
 
                     targetRow.PolygonVertices = polygonVertices;
 

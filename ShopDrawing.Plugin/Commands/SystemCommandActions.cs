@@ -3,6 +3,8 @@ using ShopDrawing.Plugin.Models;
 using ShopDrawing.Plugin.Runtime;
 using ShopDrawing.Plugin.UI;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
+using Path = System.IO.Path;
+using File = System.IO.File;
 
 namespace ShopDrawing.Plugin.Commands
 {
@@ -42,8 +44,64 @@ namespace ShopDrawing.Plugin.Commands
                 return true;
             }
 
+            string drawingName = Path.GetFileName(document.Name ?? string.Empty);
+            if (IsAutoCadTemporaryDrawingName(drawingName))
+            {
+                return true;
+            }
+
             string? drawingPath = document.Database?.Filename;
-            return string.IsNullOrWhiteSpace(drawingPath) || !System.IO.Path.IsPathRooted(drawingPath);
+            if (string.IsNullOrWhiteSpace(drawingPath) || !Path.IsPathRooted(drawingPath))
+            {
+                return true;
+            }
+
+            if (!File.Exists(drawingPath))
+            {
+                return true;
+            }
+
+            try
+            {
+                var context = ProjectDataPathResolver.ResolveFromDrawingPath(drawingPath, ensureExists: false);
+                string markerPath = Path.Combine(context.RuntimeRoot, ProjectDataPathResolver.GetProjectMarkerFileName());
+                return !File.Exists(markerPath);
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static bool IsAutoCadTemporaryDrawingName(string drawingName)
+        {
+            if (string.IsNullOrWhiteSpace(drawingName) ||
+                !drawingName.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string stem = Path.GetFileNameWithoutExtension(drawingName);
+            if (!stem.StartsWith("Drawing", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string suffix = stem.Substring("Drawing".Length);
+            if (suffix.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (char c in suffix)
+            {
+                if (!char.IsDigit(c))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

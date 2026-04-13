@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ShopDrawing.Plugin.Core;
@@ -356,13 +356,21 @@ namespace ShopDrawing.Plugin.Models
         /// Ngang: span = chieu dai vach.
         /// </summary>
         public double PanelSpan => LayoutDirection == "Ngang" ? Length : RepresentativeHeightMm;
-
         public int EstimatedPanelCount
         {
             get
             {
                 if (PanelWidth <= 0 || DivisionSpan <= 0)
                     return 0;
+
+                // Polygon rows: dùng ScanLineAnalyzer cho chính xác (đồng bộ với GetPanelBreakdown)
+                if (PolygonVertices != null && PolygonVertices.Count >= 3)
+                {
+                    var breakdown = GetPanelBreakdown();
+                    return breakdown
+                        .Where(e => !string.Equals(e.Label, "Hao hụt", StringComparison.OrdinalIgnoreCase))
+                        .Sum(e => e.Count);
+                }
 
                 return (int)Math.Ceiling(DivisionSpan / PanelWidth);
             }

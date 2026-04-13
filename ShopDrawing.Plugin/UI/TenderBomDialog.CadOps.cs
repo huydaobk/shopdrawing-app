@@ -1267,6 +1267,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             var selectedSegments = new List<TenderHeightSegment>();
             var pickedOpenings = new List<TenderOpening>();
             var createdSpanEntityIds = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
+            bool popupRollbackHandled = false;
             Autodesk.AutoCAD.DatabaseServices.ObjectId popupSpanSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
             double selectedHeight = representativeHeightMm;
             double seedLength = initialSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
@@ -1331,6 +1332,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     TryEraseCadEntities(new[] { popupSpanSplineId });
                     popupSpanSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
+                }
+
+                void RollbackCreatedSpanEntities()
+                {
+                    if (popupRollbackHandled)
+                        return;
+
+                    popupRollbackHandled = true;
+                    if (createdSpanEntityIds.Count == 0)
+                        return;
+
+                    TryEraseCadEntities(createdSpanEntityIds);
+                    createdSpanEntityIds.Clear();
                 }
 
                 var dlg = new Window
@@ -1617,6 +1631,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
                     dialogAccepted = false;
+                    RollbackCreatedSpanEntities();
                     CleanupCadSpanSplinePreview();
                     dlg.Close();
                 }, 120);
@@ -1749,7 +1764,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 dlg.Loaded += (_, _) => RefreshPreview();
                 dlg.Loaded += (_, _) => RebuildCadSpanSplinePreview();
                 dlg.SizeChanged += (_, _) => RefreshPreview();
-                dlg.Closed += (_, _) => CleanupCadSpanSplinePreview();
+                dlg.Closed += (_, _) =>
+                {
+                    if (!dialogAccepted)
+                        RollbackCreatedSpanEntities();
+
+                    CleanupCadSpanSplinePreview();
+                };
                 dlg.ShowDialog();
             });
 
@@ -1984,28 +2005,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             canvas.Children.Add(baseLine);
 
             double cursorMm = 0;
-            var topCenters = new List<System.Windows.Point>();
-            double topStartX = 0;
-            double topStartY = 0;
-            double topEndX = 0;
-            double topEndY = 0;
             for (int i = 0; i < segments.Count; i++)
             {
                 double x1 = margin + (cursorMm / drawingLength) * plotW;
                 cursorMm += segments[i].LengthMm;
                 double x2 = margin + (cursorMm / drawingLength) * plotW;
                 double yTop = margin + (plotH - (segments[i].HeightMm / maxHeight) * plotH);
-                if (i == 0)
-                {
-                    topStartX = x1;
-                    topStartY = yTop;
-                }
-                if (i == segments.Count - 1)
-                {
-                    topEndX = x2;
-                    topEndY = yTop;
-                }
-                topCenters.Add(new System.Windows.Point((x1 + x2) * 0.5, yTop));
 
                 var topLine = new System.Windows.Shapes.Line
                 {
@@ -2060,8 +2065,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     canvas.Children.Add(rightDown);
                 }
             }
-
-            DrawSmoothTopSplinePreview(canvas, topCenters, topStartX, topStartY, topEndX, topEndY);
 
             if (panelWidthMm <= 0)
             {
@@ -2119,69 +2122,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
 
             DrawOpeningPreviewMarkers(canvas, openings, segments, margin, plotW, plotH, bottomY, maxHeight, drawingLength);
-        }
-
-        private static void DrawSmoothTopSplinePreview(
-            Canvas canvas,
-            IReadOnlyList<System.Windows.Point> centers,
-            double startX,
-            double startY,
-            double endX,
-            double endY)
-        {
-            if (centers == null || centers.Count == 0)
-                return;
-
-            var points = new List<System.Windows.Point>(centers.Count + 2)
-            {
-                new System.Windows.Point(startX, startY)
-            };
-            points.AddRange(centers);
-            points.Add(new System.Windows.Point(endX, endY));
-
-            if (points.Count < 3)
-                return;
-
-            var figure = new PathFigure
-            {
-                StartPoint = points[0],
-                IsClosed = false,
-                IsFilled = false
-            };
-
-            var bezier = new PolyBezierSegment();
-            for (int i = 0; i < points.Count - 1; i++)
-            {
-                var p0 = i == 0 ? points[i] : points[i - 1];
-                var p1 = points[i];
-                var p2 = points[i + 1];
-                var p3 = i + 2 < points.Count ? points[i + 2] : p2;
-
-                // Catmull-Rom -> cubic Bezier (tension = 1)
-                var c1 = new System.Windows.Point(
-                    p1.X + (p2.X - p0.X) / 6.0,
-                    p1.Y + (p2.Y - p0.Y) / 6.0);
-                var c2 = new System.Windows.Point(
-                    p2.X - (p3.X - p1.X) / 6.0,
-                    p2.Y - (p3.Y - p1.Y) / 6.0);
-
-                bezier.Points.Add(c1);
-                bezier.Points.Add(c2);
-                bezier.Points.Add(p2);
-            }
-
-            figure.Segments.Add(bezier);
-
-            var geometry = new PathGeometry();
-            geometry.Figures.Add(figure);
-            var splinePath = new System.Windows.Shapes.Path
-            {
-                Data = geometry,
-                Stroke = new SolidColorBrush(Color.FromRgb(41, 128, 185)),
-                StrokeThickness = 1.8,
-                Opacity = 0.85
-            };
-            canvas.Children.Add(splinePath);
         }
 
         private static void DrawOpeningPreviewMarkers(

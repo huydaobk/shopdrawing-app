@@ -3487,9 +3487,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         {
 
             string previewKey = BuildCadPreviewKey(row);
+            bool bypassPreviewCache = row.PolygonVertices != null && row.PolygonVertices.Count >= 3;
 
             if (!force
 
+                && !bypassPreviewCache
                 && (_highlightedSourceEntityIds.Count > 0
 
                     || _previewEntityIds.Count > 0

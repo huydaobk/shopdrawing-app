@@ -1,4 +1,5 @@
 using ShopDrawing.Plugin.Core;
+using ShopDrawing.Plugin.Models;
 using ShopDrawing.Plugin.Runtime;
 using ShopDrawing.Plugin.UI;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
@@ -21,13 +22,28 @@ namespace ShopDrawing.Plugin.Commands
             _ = ProjectDataPathResolver.GetRuntimeRoot();
             ShopDrawingRuntimeServices.RefreshProjectScopedServices();
 
-            var profile = _projectProfileManager.LoadOrDefault();
+            var profile = ShouldUseBlankProfileForCurrentDrawing()
+                ? new ProjectProfile()
+                : _projectProfileManager.LoadOrDefault();
+
             var dialog = new ProjectInputDialog(profile);
             if (Application.ShowModalWindow(dialog) == true)
             {
                 _projectProfileManager.Save(dialog.ProjectProfile);
                 UiFeedback.ShowInfo("Đã lưu INPUT cho dự án hiện tại.", "ShopDrawing");
             }
+        }
+
+        private static bool ShouldUseBlankProfileForCurrentDrawing()
+        {
+            var document = Application.DocumentManager.MdiActiveDocument;
+            if (document == null)
+            {
+                return true;
+            }
+
+            string? drawingPath = document.Database?.Filename;
+            return string.IsNullOrWhiteSpace(drawingPath) || !System.IO.Path.IsPathRooted(drawingPath);
         }
     }
 }

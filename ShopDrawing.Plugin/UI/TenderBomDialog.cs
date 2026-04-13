@@ -1294,12 +1294,31 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (row.PanelWidth <= 0)
                 return;
 
-            // Với biên dạng xiên, preview phải bám theo trục local/developed geometry.
-            // Nếu fallback sang scan-line theo world-axis thì hình highlight sẽ lệch
-            // so với logic chia tấm thực tế dù bảng khối lượng vẫn đúng.
-            if (HasNonOrthogonalEdges(vertices)
-                && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr))
+            bool hasSkewEdges = HasNonOrthogonalEdges(vertices);
+            bool isAreaPolygon = row.PolygonVertices != null && row.PolygonVertices.Count >= 3;
+            bool enableDetailedLog = isAreaPolygon || hasSkewEdges;
+            int previewLineCount = 0;
+
+            if (enableDetailedLog)
             {
+                PluginLogger.Info(
+                    $"TenderPreview.PanelLines.Start | row={row.Name} | category={row.Category} | app={row.Application} | " +
+                    $"layout={row.LayoutDirection} | panelWidth={row.PanelWidth} | isArea={isAreaPolygon} | hasSkew={hasSkewEdges} | " +
+                    $"vertices={FormatPreviewVertices(vertices)} | breakdown={FormatPanelBreakdownSummary(row)}");
+            }
+
+            // Chỉ Pick dài tạo hình chữ nhật xoay theo tuyến vách mới cần preview theo local/developed geometry.
+            // Với Pick diện tích (row.PolygonVertices != null), logic tính tấm đang dùng ScanLineAnalyzer
+            // nên preview cũng phải giữ scan-line theo cùng hệ quy chiếu để không lệch với bảng khối lượng.
+            if (row.PolygonVertices == null
+                && hasSkewEdges
+                && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr, enableDetailedLog, ref previewLineCount))
+            {
+                if (enableDetailedLog)
+                {
+                    PluginLogger.Info(
+                        $"TenderPreview.PanelLines.Done | row={row.Name} | mode=developed | lineCount={previewLineCount}");
+                }
                 return;
             }
 
@@ -1313,6 +1332,12 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             for (double pos = min + row.PanelWidth; pos < max - 1.0; pos += row.PanelWidth)
             {
                 var segments = GetScanSegments(vertices, pos, horizontal);
+                if (enableDetailedLog)
+                {
+                    PluginLogger.Info(
+                        $"TenderPreview.PanelLines.Scan | row={row.Name} | mode=scanline | axis={(horizontal ? "Y" : "X")} | " +
+                        $"pos={pos:F0} | segments={FormatScanSegments(segments)}");
+                }
                 foreach (var segment in segments)
                 {
                     var start = horizontal
@@ -1330,7 +1355,14 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                         layerId,
                         btr,
                         tr);
+                    previewLineCount++;
                 }
+            }
+
+            if (enableDetailedLog)
+            {
+                PluginLogger.Info(
+                    $"TenderPreview.PanelLines.Done | row={row.Name} | mode=scanline | lineCount={previewLineCount}");
             }
         }
 
@@ -1364,7 +1396,9 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             TenderWallRow row,
             Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
             Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
-            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr,
+            bool enableDetailedLog,
+            ref int previewLineCount)
         {
             bool isAreaPolygon = row.PolygonVertices != null && row.PolygonVertices.Count >= 3;
             bool isRotatedRectanglePreview = row.PolygonVertices == null && vertices.Count == 4;
@@ -1373,7 +1407,18 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
             bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
             if (!TryBuildDevelopedChains(vertices, horizontal, out var chainA, out var chainB))
+            {
+                if (enableDetailedLog)
+                    PluginLogger.Warn($"TenderPreview.PanelLines.DevelopedFailed | row={row.Name} | reason=build-chains");
                 return false;
+            }
+
+            if (enableDetailedLog)
+            {
+                PluginLogger.Info(
+                    $"TenderPreview.PanelLines.DevelopedStart | row={row.Name} | horizontal={horizontal} | " +
+                    $"chainA={FormatPreviewVertices(chainA)} | chainB={FormatPreviewVertices(chainB)}");
+            }
 
             if (!horizontal)
             {
@@ -1389,10 +1434,18 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 for (double distance = row.PanelWidth; distance < developedLength - 1.0; distance += row.PanelWidth)
                 {
                     if (!TryGetPointAndDirectionAlongPolyline(referenceChain, distance, out var start, out var direction))
+                    {
+                        if (enableDetailedLog)
+                            PluginLogger.Warn($"TenderPreview.PanelLines.DevelopedSkip | row={row.Name} | distance={distance:F0} | reason=point-direction");
                         continue;
+                    }
 
                     if (!TryIntersectNormalWithPolyline(start, direction, oppositeChain, out var end))
+                    {
+                        if (enableDetailedLog)
+                            PluginLogger.Warn($"TenderPreview.PanelLines.DevelopedSkip | row={row.Name} | distance={distance:F0} | reason=normal-intersection");
                         continue;
+                    }
 
                     AddPreviewLine(
                         new Autodesk.AutoCAD.Geometry.Point3d(start[0], start[1], 0),
@@ -1402,6 +1455,13 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                         layerId,
                         btr,
                         tr);
+                    previewLineCount++;
+                    if (enableDetailedLog)
+                    {
+                        PluginLogger.Info(
+                            $"TenderPreview.PanelLines.DevelopedLine | row={row.Name} | distance={distance:F0} | " +
+                            $"start=({start[0]:F0},{start[1]:F0}) | end=({end[0]:F0},{end[1]:F0})");
+                    }
                     addedAny = true;
                 }
 
@@ -1420,7 +1480,11 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 var start = GetPointAlongPolyline(chainA, ratio);
                 var end = GetPointAlongPolyline(chainB, ratio);
                 if (start == null || end == null)
+                {
+                    if (enableDetailedLog)
+                        PluginLogger.Warn($"TenderPreview.PanelLines.DevelopedSkip | row={row.Name} | distance={distance:F0} | reason=point-along");
                     continue;
+                }
 
                 AddPreviewLine(
                     new Autodesk.AutoCAD.Geometry.Point3d(start[0], start[1], 0),
@@ -1430,9 +1494,55 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     layerId,
                     btr,
                     tr);
+                previewLineCount++;
+                if (enableDetailedLog)
+                {
+                    PluginLogger.Info(
+                        $"TenderPreview.PanelLines.DevelopedLine | row={row.Name} | distance={distance:F0} | " +
+                        $"start=({start[0]:F0},{start[1]:F0}) | end=({end[0]:F0},{end[1]:F0})");
+                }
             }
 
             return true;
+        }
+
+        private static string FormatPreviewVertices(IReadOnlyList<double[]> vertices)
+        {
+            if (vertices == null || vertices.Count == 0)
+                return "[]";
+
+            return "[" + string.Join(";", vertices.Select(v =>
+            {
+                if (v == null || v.Length < 2)
+                    return "(?)";
+                return $"({v[0]:F0},{v[1]:F0})";
+            })) + "]";
+        }
+
+        private static string FormatScanSegments(IReadOnlyList<(double Start, double End)> segments)
+        {
+            if (segments == null || segments.Count == 0)
+                return "[]";
+
+            return "[" + string.Join(";", segments.Select(s => $"({s.Start:F0}->{s.End:F0})")) + "]";
+        }
+
+        private static string FormatPanelBreakdownSummary(TenderWallRow row)
+        {
+            try
+            {
+                var model = row.ToModel();
+                var breakdown = model.GetPanelBreakdown();
+                if (breakdown.Count == 0)
+                    return "[]";
+
+                return "[" + string.Join(";", breakdown.Select(e =>
+                    $"{e.Label}:{e.WidthMm:F0}x{e.LengthMm:F0}x{e.Count}")) + "]";
+            }
+            catch (Exception ex)
+            {
+                return $"[error:{ex.Message}]";
+            }
         }
 
         private static bool TryBuildDevelopedChains(

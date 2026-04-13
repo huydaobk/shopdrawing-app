@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -177,17 +178,102 @@ internal static class Program
             string relative = Path.GetRelativePath(sourcePath, file);
             string targetFile = Path.Combine(destinationPath, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!);
+            CopyFileWithRetry(file, targetFile, ignoreLockedInstaller);
+        }
+    }
+
+    private static void CopyFileWithRetry(string sourceFile, string targetFile, bool ignoreLockedInstaller)
+    {
+        if (FilesEquivalent(sourceFile, targetFile))
+        {
+            return;
+        }
+
+        const int maxAttempts = 5;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
             try
             {
-                File.Copy(file, targetFile, overwrite: true);
+                File.Copy(sourceFile, targetFile, overwrite: true);
+                return;
             }
             catch (UnauthorizedAccessException) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
             {
+                return;
             }
-            catch (IOException) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
+            catch (IOException ex) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
             {
+                _ = ex;
+                return;
+            }
+            catch (IOException ex) when (IsSharingViolation(ex) && attempt < maxAttempts)
+            {
+                Thread.Sleep(250 * attempt);
             }
         }
+
+        try
+        {
+            File.Copy(sourceFile, targetFile, overwrite: true);
+        }
+        catch (UnauthorizedAccessException) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
+        {
+        }
+        catch (IOException ex) when (ignoreLockedInstaller && IsInstallerFile(targetFile))
+        {
+            _ = ex;
+        }
+        catch (IOException ex) when (IsSharingViolation(ex))
+        {
+            throw new IOException(
+                $"File đang bị khóa: {targetFile}. Hãy đóng toàn bộ AutoCAD rồi cập nhật lại.",
+                ex);
+        }
+    }
+
+    private static bool FilesEquivalent(string sourceFile, string targetFile)
+    {
+        if (!File.Exists(targetFile))
+        {
+            return false;
+        }
+
+        try
+        {
+            var sourceInfo = new FileInfo(sourceFile);
+            var targetInfo = new FileInfo(targetFile);
+            if (sourceInfo.Length != targetInfo.Length)
+            {
+                return false;
+            }
+
+            if (sourceInfo.Length == 0)
+            {
+                return true;
+            }
+
+            byte[] sourceHash = ComputeSha256(sourceFile);
+            byte[] targetHash = ComputeSha256(targetFile);
+            return sourceHash.AsSpan().SequenceEqual(targetHash);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static byte[] ComputeSha256(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        return SHA256.HashData(stream);
+    }
+
+    private static bool IsSharingViolation(IOException exception)
+    {
+        const int sharingViolation = 32;
+        const int lockViolation = 33;
+        int code = exception.HResult & 0xFFFF;
+        return code == sharingViolation || code == lockViolation;
     }
 
     private static string InstallBundleSafely(string bundleSource, string installRoot, out string backupPath)

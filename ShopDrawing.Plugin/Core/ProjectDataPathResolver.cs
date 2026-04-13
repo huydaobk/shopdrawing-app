@@ -39,6 +39,36 @@ namespace ShopDrawing.Plugin.Core
             return MarkerFileName;
         }
 
+        public static bool TryResolveExistingProjectContext(out string projectRoot, out string dataDirectory)
+        {
+            projectRoot = string.Empty;
+            dataDirectory = string.Empty;
+
+            string? drawingPath = TryGetActiveDrawingPath();
+            if (string.IsNullOrWhiteSpace(drawingPath))
+            {
+                return false;
+            }
+
+            try
+            {
+                PathContext context = ResolveFromDrawingPath(drawingPath, ensureExists: false);
+                string markerPath = Path.Combine(context.RuntimeRoot, MarkerFileName);
+                if (!File.Exists(markerPath))
+                {
+                    return false;
+                }
+
+                projectRoot = context.RuntimeRoot;
+                dataDirectory = context.DataDirectory;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static string InitializeProjectStructure(string projectRoot)
         {
             if (string.IsNullOrWhiteSpace(projectRoot))

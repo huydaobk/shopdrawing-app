@@ -24,7 +24,11 @@ namespace ShopDrawing.Plugin.Core
 
         public ProjectProfile LoadOrDefault()
         {
-            string path = GetProfilePath();
+            if (!TryGetExistingProfilePath(out string path))
+            {
+                return new ProjectProfile();
+            }
+
             if (!File.Exists(path))
             {
                 return new ProjectProfile();
@@ -41,6 +45,18 @@ namespace ShopDrawing.Plugin.Core
                 PluginLogger.Error("Suppressed exception in ProjectProfileManager.cs", ex);
                 return new ProjectProfile();
             }
+        }
+
+        private static bool TryGetExistingProfilePath(out string path)
+        {
+            path = string.Empty;
+            if (!ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out string dataDirectory))
+            {
+                return false;
+            }
+
+            path = Path.Combine(dataDirectory, ProfileFileName);
+            return true;
         }
 
         public void Save(ProjectProfile profile)

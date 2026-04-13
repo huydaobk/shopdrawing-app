@@ -312,29 +312,37 @@ namespace ShopDrawing.Plugin.UI
 
             {
 
-                // Try auto-load from DWG-linked autosave
+                bool hasExistingProjectContext =
+                    ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out _);
 
-                string dwgName = GetCurrentAutoSaveDwgKey();
-
-                if (!string.IsNullOrEmpty(dwgName))
+                // Try auto-load only when drawing is in an initialized project root.
+                if (hasExistingProjectContext)
 
                 {
 
-                    var loaded = _projectManager.TryAutoLoad(dwgName);
+                    string dwgName = GetCurrentAutoSaveDwgKey();
 
-                    if (loaded != null)
+                    if (!string.IsNullOrEmpty(dwgName))
 
                     {
 
-                        _currentProject = loaded;
+                        var loaded = _projectManager.TryAutoLoad(dwgName);
 
-                        _txtProjectName.Text = loaded.ProjectName;
+                        if (loaded != null)
 
-                        _txtCustomerName.Text = loaded.CustomerName;
+                        {
 
-                        UpdateFooter();
+                            _currentProject = loaded;
 
-                        return;
+                            _txtProjectName.Text = loaded.ProjectName;
+
+                            _txtCustomerName.Text = loaded.CustomerName;
+
+                            UpdateFooter();
+
+                            return;
+
+                        }
 
                     }
 

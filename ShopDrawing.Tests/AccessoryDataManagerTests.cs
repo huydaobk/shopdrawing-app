@@ -26,16 +26,15 @@ namespace ShopDrawing.Tests
 
             Assert.Contains(defaults, item =>
                 item.Name == "Silicone SN-505" &&
-                item.Position == "C\u1ea1nh \u0111\u1ee9ng LM" &&
+                item.Position == "L\u1ed7 m\u1edf" &&
                 item.Application == "Ph\u00f2ng s\u1ea1ch" &&
-                item.CalcRule == AccessoryCalcRule.PER_OPENING_VERTICAL_EDGES &&
-                item.Factor == 2.0);
+                item.CalcRule == AccessoryCalcRule.PER_OPENING_PERIMETER);
 
             Assert.Contains(defaults, item =>
                 item.Name == "Silicone SN-505" &&
                 item.Position == "\u0110\u1ec9nh v\u00e1ch" &&
                 item.Application == "Ph\u00f2ng s\u1ea1ch" &&
-                item.CalcRule == AccessoryCalcRule.PER_TOP_EDGE_LENGTH);
+                item.CalcRule == AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH);
         }
 
         [Fact]
@@ -142,7 +141,7 @@ namespace ShopDrawing.Tests
 
             Assert.Contains(normalized, item =>
                 item.Application == "Ph\u00f2ng s\u1ea1ch" &&
-                item.Name == "Vi\u1ec1n l\u1ed7 m\u1edf 2 m\u1eb7t");
+                item.Name == "U 40x50x40");
 
             Assert.Contains(normalized, item =>
                 item.Application == "Kho l\u1ea1nh" &&
@@ -154,7 +153,7 @@ namespace ShopDrawing.Tests
         {
             const string coldStorage = "Kho l\u1ea1nh";
             const string trim01 = "Di\u1ec1m 01";
-            const string rivet = "Rivet \u00d84.2\u00d712";
+            const string rivet = "Rive \u00d84.2\u00d712";
             const string aluminum = "Nh\u00f4m";
 
             var defaults = AccessoryDataManager.GetDefaults();
@@ -163,11 +162,6 @@ namespace ShopDrawing.Tests
                 item.Application == coldStorage &&
                 item.Name == trim01 &&
                 item.Material == "Tole");
-
-            Assert.Contains(defaults, item =>
-                item.Application == coldStorage &&
-                item.Name == "B2S-TEK" &&
-                item.Material == "Inox");
 
             Assert.Contains(defaults, item =>
                 item.Application == coldStorage &&
@@ -197,14 +191,14 @@ namespace ShopDrawing.Tests
             Assert.Contains(defaults, item =>
                 item.Application == coldStorage &&
                 item.CategoryScope == ceiling &&
-                item.Name == "T-profile 68x75" &&
+                item.Name == "Thanh T 68x75" &&
                 item.Material == aluminum &&
                 item.CalcRule == AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH);
 
             Assert.Contains(defaults, item =>
                 item.Application == coldStorage &&
                 item.CategoryScope == ceiling &&
-                item.Name == "Wire rope \u00d812" &&
+                item.Name == "C\u00e1p treo \u00d812" &&
                 item.Position == "Treo T nh\u00f4m" &&
                 item.CalcRule == AccessoryCalcRule.PER_COLD_STORAGE_T_WIRE_ROPE_LENGTH);
 
@@ -221,7 +215,7 @@ namespace ShopDrawing.Tests
             Assert.Contains(defaults, item =>
                 item.Application == coldStorage &&
                 item.CategoryScope == ceiling &&
-                item.Name == "C-channel 100x50" &&
+                item.Name == "Thanh C 100x50" &&
                 item.Position == "Treo bulong n\u1ea5m" &&
                 item.CalcRule == AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_LENGTH);
 

@@ -547,6 +547,22 @@ namespace ShopDrawing.Plugin.Core
             return new SuspensionMetrics(positions.Count, totalSegmentLengthMm, pointQty);
         }
 
+        private static SuspensionMetrics GetQuantitySuspensionMetrics(TenderWall wall, double spacingMm)
+        {
+            if (!IsSupportedSuspendedCeiling(wall) || spacingMm <= 0)
+                return new SuspensionMetrics(0, 0, 0);
+
+            double runLengthMm = GetSuspensionRunLengthMm(wall);
+            double runWidthMm = GetSuspensionRunWidthMm(wall);
+            if (runLengthMm <= 0 || runWidthMm <= 0)
+                return new SuspensionMetrics(0, 0, 0);
+
+            int lineCount = GetSuspensionLineCount(runWidthMm, spacingMm);
+            double totalSegmentLengthMm = lineCount * runLengthMm;
+            double pointQty = GetSuspensionPointQtyFromMm(totalSegmentLengthMm);
+            return new SuspensionMetrics(lineCount, totalSegmentLengthMm, pointQty);
+        }
+
         private static double GetSuspensionRunLengthMm(TenderWall wall)
             => Math.Max(0, wall.DivisionSpan);
 
@@ -570,7 +586,7 @@ namespace ShopDrawing.Plugin.Core
             if (spec == null)
                 return 0;
 
-            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.TSpacingMm).TotalSegmentLengthMm / 1000.0;
+            return GetQuantitySuspensionMetrics(wall, spec.TSpacingMm).TotalSegmentLengthMm / 1000.0;
         }
 
         private static double GetColdStorageMushroomSuspensionLength(TenderWall wall)
@@ -582,7 +598,7 @@ namespace ShopDrawing.Plugin.Core
             if (spec == null || spec.MushroomOffsetMm <= 0)
                 return 0;
 
-            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.MushroomOffsetMm).TotalSegmentLengthMm / 1000.0;
+            return GetQuantitySuspensionMetrics(wall, spec.MushroomOffsetMm).TotalSegmentLengthMm / 1000.0;
         }
 
         private static int GetColdStorageTSuspensionLineCount(TenderWall wall)
@@ -594,7 +610,7 @@ namespace ShopDrawing.Plugin.Core
             if (spec == null)
                 return 0;
 
-            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.TSpacingMm).LineCount;
+            return GetQuantitySuspensionMetrics(wall, spec.TSpacingMm).LineCount;
         }
 
         private static int GetColdStorageMushroomSuspensionLineCount(TenderWall wall)
@@ -606,12 +622,17 @@ namespace ShopDrawing.Plugin.Core
             if (spec == null || spec.MushroomOffsetMm <= 0)
                 return 0;
 
-            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.MushroomOffsetMm).LineCount;
+            return GetQuantitySuspensionMetrics(wall, spec.MushroomOffsetMm).LineCount;
         }
 
         private static double GetSuspensionPointQty(double totalRunLengthM)
         {
             double totalRunLengthMm = totalRunLengthM * 1000.0;
+            return GetSuspensionPointQtyFromMm(totalRunLengthMm);
+        }
+
+        private static double GetSuspensionPointQtyFromMm(double totalRunLengthMm)
+        {
             if (totalRunLengthMm <= 0)
                 return 0;
 
@@ -624,7 +645,7 @@ namespace ShopDrawing.Plugin.Core
             if (spec == null)
                 return 0;
 
-            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.TSpacingMm).PointQty;
+            return GetQuantitySuspensionMetrics(wall, spec.TSpacingMm).PointQty;
         }
 
         private static double GetColdStorageMushroomSuspensionPointQty(TenderWall wall)
@@ -633,7 +654,7 @@ namespace ShopDrawing.Plugin.Core
             if (spec == null || spec.MushroomOffsetMm <= 0)
                 return 0;
 
-            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.MushroomOffsetMm).PointQty;
+            return GetQuantitySuspensionMetrics(wall, spec.MushroomOffsetMm).PointQty;
         }
 
         private static double GetWireRopeLength(double pointQty, double cableDropLengthMm)
@@ -2276,22 +2297,22 @@ namespace ShopDrawing.Plugin.Core
 
         private static int CompareSummaryRows(AccessorySummaryRow left, AccessorySummaryRow right)
         {
-            int result = string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase);
-            if (result != 0) return result;
-
-            result = string.Compare(left.Material, right.Material, StringComparison.OrdinalIgnoreCase);
-            if (result != 0) return result;
-
-            result = string.Compare(left.Unit, right.Unit, StringComparison.OrdinalIgnoreCase);
-            if (result != 0) return result;
-
-            result = TenderAccessoryRules.CompareApplications(left.Application, right.Application);
+            int result = TenderAccessoryRules.CompareApplications(left.Application, right.Application);
             if (result != 0) return result;
 
             result = TenderAccessoryRules.CompareScopes(left.CategoryScope, right.CategoryScope);
             if (result != 0) return result;
 
             result = TenderAccessoryRules.CompareScopes(left.SpecKey, right.SpecKey);
+            if (result != 0) return result;
+
+            result = string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase);
+            if (result != 0) return result;
+
+            result = string.Compare(left.Material, right.Material, StringComparison.OrdinalIgnoreCase);
+            if (result != 0) return result;
+
+            result = string.Compare(left.Unit, right.Unit, StringComparison.OrdinalIgnoreCase);
             if (result != 0) return result;
 
             result = string.Compare(left.Position, right.Position, StringComparison.OrdinalIgnoreCase);

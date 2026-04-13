@@ -652,26 +652,14 @@ namespace ShopDrawing.Plugin.Core
             if (FindCanonicalDefault(accessory, canonicalDefaults) != null)
                 return false;
 
-            if (IsObsoleteConfiguredAccessory(accessory))
-                return true;
-
-            return IsManagedCanonicalName(accessory, canonicalDefaults);
+            return IsObsoleteConfiguredAccessory(accessory);
         }
 
         private static bool ShouldKeepConfiguredAccessory(
             TenderAccessory accessory,
             IReadOnlyList<TenderAccessory> canonicalDefaults)
         {
-            if (FindCanonicalDefault(accessory, canonicalDefaults) != null)
-                return true;
-
-            if (accessory.IsManualOnly)
-                return true;
-
-            if (string.IsNullOrWhiteSpace(accessory.Note))
-                return false;
-
-            return true;
+            return !IsObsoleteConfiguredAccessory(accessory);
         }
 
         private static bool IsManagedCanonicalName(
@@ -705,10 +693,12 @@ namespace ShopDrawing.Plugin.Core
                 accessory.Position = canonical.Position;
                 accessory.Unit = canonical.Unit;
                 accessory.CalcRule = canonical.CalcRule;
-                accessory.Factor = canonical.Factor;
                 accessory.CategoryScope = canonical.CategoryScope;
                 accessory.SpecKey = canonical.SpecKey;
                 accessory.Application = canonical.Application;
+
+                if (string.IsNullOrWhiteSpace(accessory.Note))
+                    accessory.Note = canonical.Note;
             }
         }
 
@@ -733,7 +723,33 @@ namespace ShopDrawing.Plugin.Core
             if (exactMatch != null)
                 return exactMatch;
 
-            return FindCanonicalTekAccessory(category, application, specKey, name, canonicalDefaults);
+            var tekMatch = FindCanonicalTekAccessory(category, application, specKey, name, canonicalDefaults);
+            if (tekMatch != null)
+                return tekMatch;
+
+            var relaxedMatches = canonicalDefaults
+                .Where(item =>
+                    string.Equals(TenderAccessoryRules.NormalizeScope(item.CategoryScope), category, System.StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.Application), application, System.StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.SpecKey), specKey, System.StringComparison.OrdinalIgnoreCase)
+                    && string.Equals((item.Name ?? string.Empty).Trim(), name, System.StringComparison.OrdinalIgnoreCase)
+                    && item.CalcRule == accessory.CalcRule)
+                .ToList();
+
+            if (relaxedMatches.Count == 1)
+                return relaxedMatches[0];
+
+            if (!string.IsNullOrWhiteSpace(position))
+            {
+                var positionMatches = relaxedMatches
+                    .Where(item => string.Equals((item.Position ?? string.Empty).Trim(), position, System.StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (positionMatches.Count == 1)
+                    return positionMatches[0];
+            }
+
+            return null;
         }
 
         private static TenderAccessory? FindCanonicalTekAccessory(

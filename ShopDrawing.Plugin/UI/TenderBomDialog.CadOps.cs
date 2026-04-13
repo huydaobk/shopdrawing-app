@@ -152,6 +152,101 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var ed = doc.Editor;
 
+                if (!pickArea)
+
+                {
+                    var oldSegmentHandles = (targetRow.HeightSegments ?? new List<TenderHeightSegment>())
+                        .Where(s => s != null && !string.IsNullOrWhiteSpace(s.CadHandle))
+                        .Select(s => s.CadHandle!)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                    string? repickCadHandle = null;
+                    double repickLength = targetRow.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
+                    if (repickLength <= 0.5)
+                        repickLength = Math.Max(0, targetRow.Length);
+                    double repickHeight = targetRow.Height;
+                    string repickLayoutDirection = targetRow.LayoutDirection;
+                    List<TenderOpening> repickOpenings = CloneOpenings(targetRow.Openings);
+                    List<double[]>? repickPolygonVertices = null;
+                    List<TenderHeightSegment> repickHeightSegments = (targetRow.HeightSegments ?? new List<TenderHeightSegment>())
+                        .Select(s => new TenderHeightSegment
+                        {
+                            LengthMm = s.LengthMm,
+                            HeightMm = s.HeightMm,
+                            CadHandle = s.CadHandle
+                        })
+                        .ToList();
+
+                    double existingSegmentLength = targetRow.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
+                    double existingReferenceLength = existingSegmentLength > 0.5
+                        ? existingSegmentLength
+                        : Math.Max(0, targetRow.Length);
+                    var repickSeedSegments = BuildRepickSeedSegments(targetRow.HeightSegments, existingReferenceLength, repickLength);
+                    var repickSeedOpenings = BuildRepickSeedOpenings(targetRow.Openings, existingReferenceLength, repickLength);
+                    if (!TryPromptWallSegmentsInput(
+                            totalLengthMm: repickLength,
+                            defaultHeightMm: repickHeight,
+                            initialSegments: repickSeedSegments,
+                            initialOpenings: repickSeedOpenings,
+                            panelWidthMm: targetRow.PanelWidth,
+                            layoutDirection: targetRow.LayoutDirection,
+                            onApplied: null,
+                            out var promptedSegments,
+                            out var promptedHeight,
+                            out var promptedLayoutDirection,
+                            out var promptedOpenings))
+                    {
+                        PluginLogger.Warn($"TenderRepick.PopupCancelled | row={targetRow.Name}");
+                        return;
+                    }
+
+                    repickHeight = promptedHeight;
+                    repickHeightSegments = promptedSegments;
+                    var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
+                    if (promptedLength > 0.5)
+                        repickLength = promptedLength;
+                    repickLayoutDirection = promptedLayoutDirection;
+                    repickOpenings = CloneOpenings(promptedOpenings);
+                    PluginLogger.Info(
+                        $"TenderRepick.PopupApplied | row={targetRow.Name} | seg={DescribeSegments(promptedSegments)} | " +
+                        $"openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
+
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        TryEraseCadEntitiesByHandles(oldSegmentHandles);
+                        targetRow.CadHandle = repickCadHandle;
+                        targetRow.Length = repickLength;
+                        targetRow.Height = repickHeight;
+                        targetRow.HeightSegments = repickHeightSegments;
+                        targetRow.LayoutDirection = repickLayoutDirection;
+                        targetRow.Openings = repickOpenings;
+                        targetRow.PolygonVertices = repickPolygonVertices;
+
+                        SyncWallRowSpecData(targetRow);
+                        targetRow.Refresh();
+                        if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
+                        {
+                            LoadOpeningsForWall(targetRow);
+                            PluginLogger.Info(
+                                $"TenderRepick.OpeningSync | row={targetRow.Name} | rowOpenings={targetRow.Openings.Count} | gridOpenings={_openingRows.Count}");
+                        }
+
+                        SafeRefreshWallGrid();
+                        RefreshFooter();
+                        RefreshPanelBreakdown(targetRow);
+                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                        _project.Walls = GetWallModels();
+                        PluginLogger.Info(
+                            $"TenderRepick.Synced | row={targetRow.Name} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
+                            $"seg={DescribeSegments(targetRow.HeightSegments)} | walls={_wallRows.Count}");
+
+                        _lastCadPreviewKey = null;
+                        SetStatus($"Đã cập nhật vách {targetRow.Name}");
+                    }));
+
+                    return;
+                }
+
                 string prompt = pickArea
 
                     ? "\nChọn polyline kín để lấy Dài x Cao:"
@@ -290,42 +385,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         CadHandle = s.CadHandle
                     })
                     .ToList();
-                if (!pickArea)
-
-                {
-                    if (!TryPromptWallSegmentsInput(
-                            totalLengthMm: length,
-                            defaultHeightMm: height,
-                            initialSegments: targetRow.HeightSegments,
-                            initialOpenings: targetRow.Openings,
-                            panelWidthMm: targetRow.PanelWidth,
-                            layoutDirection: targetRow.LayoutDirection,
-                            onApplied: null,
-                            out var promptedSegments,
-                            out var promptedHeight,
-                            out var promptedLayoutDirection,
-                            out var promptedOpenings))
-                    {
-                        PluginLogger.Warn($"TenderRepick.PopupCancelled | row={targetRow.Name}");
-                        return;
-                    }
-
-                    height = promptedHeight;
-                    heightSegments = promptedSegments;
-                    var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
-                    if (promptedLength > 0.5)
-                        length = promptedLength;
-                    updatedLayoutDirection = promptedLayoutDirection;
-                    updatedOpenings = CloneOpenings(promptedOpenings);
-                    polygonVertices = null;
-                    PluginLogger.Info(
-                        $"TenderRepick.PopupApplied | row={targetRow.Name} | seg={DescribeSegments(promptedSegments)} | " +
-                        $"openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
-
-                }
-
-
-
                 string suspensionLayoutDirection = targetRow.SuspensionLayoutDirection;
 
                 bool divideFromMaxSide = targetRow.ColdStorageDivideFromMaxSide;
@@ -1726,6 +1785,81 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             return $"count={list.Count},qty={qty},area={area:F2}";
         }
 
+        private static List<TenderHeightSegment> BuildRepickSeedSegments(
+            IReadOnlyList<TenderHeightSegment>? sourceSegments,
+            double currentLengthMm,
+            double repickedLengthMm)
+        {
+            var cloned = (sourceSegments ?? Array.Empty<TenderHeightSegment>())
+                .Where(s => s != null && s.LengthMm > 0 && s.HeightMm > 0)
+                .Select(s => new TenderHeightSegment
+                {
+                    LengthMm = s.LengthMm,
+                    HeightMm = s.HeightMm,
+                    // Repick sang tuyến mới phải cắt liên kết CAD cũ của từng nhịp,
+                    // nếu không timer sync sẽ kéo chiều dài về line cũ.
+                    CadHandle = null
+                })
+                .ToList();
+
+            if (cloned.Count == 0)
+                return cloned;
+
+            double sourceLength = cloned.Sum(s => Math.Max(0, s.LengthMm));
+            if (sourceLength <= 0 && currentLengthMm > 0)
+                sourceLength = currentLengthMm;
+            if (sourceLength <= 0 || repickedLengthMm <= 0)
+                return cloned;
+
+            if (Math.Abs(sourceLength - repickedLengthMm) < 1.0)
+                return cloned;
+
+            double ratio = repickedLengthMm / sourceLength;
+            double accumulated = 0;
+            for (int i = 0; i < cloned.Count; i++)
+            {
+                if (i == cloned.Count - 1)
+                {
+                    cloned[i].LengthMm = Math.Max(1, Math.Round(repickedLengthMm - accumulated));
+                }
+                else
+                {
+                    cloned[i].LengthMm = Math.Max(1, Math.Round(cloned[i].LengthMm * ratio));
+                    accumulated += cloned[i].LengthMm;
+                }
+            }
+
+            return cloned;
+        }
+
+        private static List<TenderOpening> BuildRepickSeedOpenings(
+            IReadOnlyList<TenderOpening>? sourceOpenings,
+            double currentLengthMm,
+            double repickedLengthMm)
+        {
+            var cloned = CloneOpenings(sourceOpenings);
+            if (cloned.Count == 0 || currentLengthMm <= 0 || repickedLengthMm <= 0)
+                return cloned;
+
+            if (Math.Abs(currentLengthMm - repickedLengthMm) < 1.0)
+                return cloned;
+
+            double ratio = repickedLengthMm / currentLengthMm;
+            foreach (var opening in cloned)
+            {
+                if (opening.CenterStationMm >= 0)
+                {
+                    opening.CenterStationMm = Math.Max(
+                        0,
+                        Math.Min(
+                            Math.Round(opening.CenterStationMm * ratio),
+                            Math.Round(repickedLengthMm)));
+                }
+            }
+
+            return cloned;
+        }
+
         private static List<TenderOpening> CloneOpenings(IEnumerable<TenderOpening>? openings)
         {
             return (openings ?? Enumerable.Empty<TenderOpening>())
@@ -2485,6 +2619,40 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             catch
             {
                 // Không chặn luồng popup khi xóa line tạm lỗi.
+            }
+        }
+
+        private void TryEraseCadEntitiesByHandles(IEnumerable<string> cadHandles)
+        {
+            var handles = (cadHandles ?? Enumerable.Empty<string>())
+                .Where(h => !string.IsNullOrWhiteSpace(h))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (handles.Count == 0)
+                return;
+
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return;
+
+                var ids = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
+                foreach (string cadHandle in handles)
+                {
+                    if (!long.TryParse(cadHandle, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var rawHandle))
+                        continue;
+
+                    var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                    if (doc.Database.TryGetObjectId(handle, out var objId))
+                        ids.Add(objId);
+                }
+
+                TryEraseCadEntities(ids);
+            }
+            catch
+            {
+                // Không chặn luồng repick nếu xóa line cũ thất bại.
             }
         }
 

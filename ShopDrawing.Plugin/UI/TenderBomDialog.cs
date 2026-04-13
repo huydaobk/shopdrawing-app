@@ -1294,10 +1294,10 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (row.PanelWidth <= 0)
                 return;
 
-            // Pick dài tạo hình chữ nhật xoay theo tuyến vách.
-            // Trường hợp này cần preview theo trục local của vách, không theo world-axis.
-            if (row.PolygonVertices == null
-                && HasNonOrthogonalEdges(vertices)
+            // Với biên dạng xiên, preview phải bám theo trục local/developed geometry.
+            // Nếu fallback sang scan-line theo world-axis thì hình highlight sẽ lệch
+            // so với logic chia tấm thực tế dù bảng khối lượng vẫn đúng.
+            if (HasNonOrthogonalEdges(vertices)
                 && TryAddDevelopedPanelPreviewLines(vertices, row, layerId, btr, tr))
             {
                 return;

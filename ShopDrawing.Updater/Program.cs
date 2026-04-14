@@ -22,10 +22,10 @@ internal static class Program
             string tempRoot = Path.Combine(Path.GetTempPath(), "ShopDrawingUpdater", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempRoot);
 
-            Console.WriteLine("ShopDrawing Updater");
-            Console.WriteLine($"Target version: {options.Version}");
-            Console.WriteLine($"Install dir: {options.InstallDirectory}");
-            Console.WriteLine("Hay dong AutoCAD de bat dau cap nhat.");
+            Console.WriteLine("Trình cập nhật ShopDrawing");
+            Console.WriteLine($"Phiên bản đích: {options.Version}");
+            Console.WriteLine($"Thư mục cài đặt: {options.InstallDirectory}");
+            Console.WriteLine("Hãy đóng AutoCAD để bắt đầu cập nhật.");
 
             await WaitForTargetProcessExitAsync(options.TargetProcessId).ConfigureAwait(false);
 
@@ -33,10 +33,10 @@ internal static class Program
             string extractPath = Path.Combine(tempRoot, "extract");
             Directory.CreateDirectory(extractPath);
 
-            Console.WriteLine("Dang tai goi cap nhat...");
+            Console.WriteLine("Đang tải gói cập nhật...");
             await DownloadFileAsync(options.PackageUrl, packagePath).ConfigureAwait(false);
 
-            Console.WriteLine("Dang giai nen...");
+            Console.WriteLine("Đang giải nén...");
             ZipFile.ExtractToDirectory(packagePath, extractPath, overwriteFiles: true);
 
             string backupRoot = Path.Combine(options.InstallDirectory, "_backup");
@@ -44,20 +44,20 @@ internal static class Program
             string backupPath = Path.Combine(backupRoot, $"backup_{DateTime.Now:yyyyMMdd_HHmmss}");
             Directory.CreateDirectory(backupPath);
 
-            Console.WriteLine("Dang backup ban hien tai...");
+            Console.WriteLine("Đang sao lưu bản hiện tại...");
             CopyDirectory(options.InstallDirectory, backupPath, file => !file.EndsWith("ShopDrawing.Updater.exe", StringComparison.OrdinalIgnoreCase));
 
-            Console.WriteLine("Dang cap nhat file plugin...");
+            Console.WriteLine("Đang cập nhật file plugin...");
             CopyDirectory(extractPath, options.InstallDirectory, file => !file.EndsWith("ShopDrawing.Updater.exe", StringComparison.OrdinalIgnoreCase));
 
             WriteUpdateLog(options, backupPath);
 
-            Console.WriteLine("Cap nhat thanh cong.");
+            Console.WriteLine("Cập nhật thành công.");
             return 0;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine("Cap nhat that bai: " + ex.Message);
+            Console.Error.WriteLine("Cập nhật thất bại: " + ex.Message);
             Console.Error.WriteLine(ex);
             return 1;
         }

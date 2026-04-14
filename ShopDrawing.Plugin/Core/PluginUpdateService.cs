@@ -109,7 +109,7 @@ namespace ShopDrawing.Plugin.Core
                 {
                     CurrentVersion = currentVersion,
                     ChannelName = options.ChannelName,
-                    ErrorMessage = "Chua cau hinh manifest update.",
+                    ErrorMessage = "Chưa cấu hình nguồn cập nhật.",
                     IsConfigured = false
                 };
             }
@@ -123,7 +123,7 @@ namespace ShopDrawing.Plugin.Core
                     {
                         CurrentVersion = currentVersion,
                         ChannelName = options.ChannelName,
-                        ErrorMessage = "Khong doc duoc manifest update.",
+                        ErrorMessage = "Không đọc được thông tin bản cập nhật.",
                         IsConfigured = true
                     };
                 }
@@ -168,7 +168,7 @@ namespace ShopDrawing.Plugin.Core
                 {
                     if (!TryDownloadInstaller(result.InstallerUrl, installerPath))
                     {
-                        UiFeedback.ShowWarning("Khong tim thay ShopDrawing.Installer.exe trong thu muc cai dat.");
+                        UiFeedback.ShowWarning("Không tìm thấy trình cài đặt ShopDrawing trong thư mục cài đặt.");
                         return false;
                     }
                 }
@@ -179,7 +179,7 @@ namespace ShopDrawing.Plugin.Core
 
                 if (string.IsNullOrWhiteSpace(result.PackageUrl))
                 {
-                    UiFeedback.ShowWarning("Manifest khong co packageUrl hop le.");
+                    UiFeedback.ShowWarning("Thông tin cập nhật không có gói cài đặt hợp lệ.");
                     return false;
                 }
 
@@ -197,7 +197,7 @@ namespace ShopDrawing.Plugin.Core
             }
             catch (Exception ex)
             {
-                UiFeedback.ShowError("Khong the mo updater: " + ex.Message);
+                UiFeedback.ShowError("Không thể mở trình cập nhật: " + ex.Message);
                 return false;
             }
         }
@@ -319,53 +319,53 @@ namespace ShopDrawing.Plugin.Core
             if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
             {
                 UiFeedback.ShowWarning(
-                    $"Khong kiem tra duoc cap nhat.\nPhien ban hien tai: {FormatVersionForDisplay(result.CurrentVersion)}\nChi tiet: {result.ErrorMessage}",
-                    "ShopDrawing Update");
+                    $"Không kiểm tra được cập nhật.\nPhiên bản hiện tại: {FormatVersionForDisplay(result.CurrentVersion)}\nChi tiết: {result.ErrorMessage}",
+                    "Cập nhật ShopDrawing");
                 return;
             }
 
             if (!result.IsConfigured)
             {
-                UiFeedback.ShowInfo("Chua cau hinh kenh cap nhat cho plugin.", "ShopDrawing Update");
+                UiFeedback.ShowInfo("Chưa cấu hình kênh cập nhật cho plugin.", "Cập nhật ShopDrawing");
                 return;
             }
 
             if (!result.IsUpdateAvailable)
             {
                 UiFeedback.ShowInfo(
-                    $"Dang o ban moi nhat.\nPhien ban hien tai: {FormatVersionForDisplay(result.CurrentVersion)}",
-                    "ShopDrawing Update");
+                    $"Đang ở phiên bản mới nhất.\nPhiên bản hiện tại: {FormatVersionForDisplay(result.CurrentVersion)}",
+                    "Cập nhật ShopDrawing");
                 return;
             }
 
             string message = BuildUpdateMessage(result);
-            if (UiFeedback.AskYesNo(message, "ShopDrawing Update") != System.Windows.MessageBoxResult.Yes)
+            if (UiFeedback.AskYesNo(message, "Cập nhật ShopDrawing") != System.Windows.MessageBoxResult.Yes)
             {
                 return;
             }
 
             if (TryLaunchUpdater(result))
             {
-                UiFeedback.ShowInfo("Installer da mo. Hay dong AutoCAD de cap nhat.");
+                UiFeedback.ShowInfo("Trình cài đặt đã mở. Hãy đóng AutoCAD để cập nhật.");
             }
         }
 
         private static string BuildUpdateMessage(UpdateCheckResult result)
         {
             StringBuilder builder = new();
-            builder.AppendLine("Co ban cap nhat moi cho ShopDrawing.");
-            builder.AppendLine($"Hien tai: {FormatVersionForDisplay(result.CurrentVersion)}");
-            builder.AppendLine($"Moi nhat: {FormatVersionForDisplay(result.LatestVersion)}");
+            builder.AppendLine("Có bản cập nhật mới cho ShopDrawing.");
+            builder.AppendLine($"Hiện tại: {FormatVersionForDisplay(result.CurrentVersion)}");
+            builder.AppendLine($"Mới nhất: {FormatVersionForDisplay(result.LatestVersion)}");
 
             if (!string.IsNullOrWhiteSpace(result.Notes))
             {
                 builder.AppendLine();
-                builder.AppendLine("Noi dung:");
+                builder.AppendLine("Nội dung:");
                 builder.AppendLine(result.Notes);
             }
 
             builder.AppendLine();
-            builder.AppendLine("Mo updater ngay bay gio?");
+            builder.AppendLine("Mở trình cập nhật ngay bây giờ?");
             return builder.ToString();
         }
 
@@ -412,18 +412,18 @@ namespace ShopDrawing.Plugin.Core
                 if (marker.Success)
                 {
                     UiFeedback.ShowInfo(
-                        $"Cap nhat ShopDrawing thanh cong.\nVersion: {FormatVersionForDisplay(marker.Version)}",
-                        "ShopDrawing Update");
+                        $"Cập nhật ShopDrawing thành công.\nPhiên bản: {FormatVersionForDisplay(marker.Version)}",
+                        "Cập nhật ShopDrawing");
                 }
                 else
                 {
                     string detail = string.IsNullOrWhiteSpace(marker.Message)
-                        ? "Khong ro nguyen nhan."
+                        ? "Không rõ nguyên nhân."
                         : marker.Message.Trim();
 
                     UiFeedback.ShowWarning(
-                        $"Cap nhat ShopDrawing that bai.\nChi tiet: {detail}",
-                        "ShopDrawing Update");
+                        $"Cập nhật ShopDrawing thất bại.\nChi tiết: {detail}",
+                        "Cập nhật ShopDrawing");
                 }
             }
             catch (Exception ex)

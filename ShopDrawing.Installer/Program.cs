@@ -55,16 +55,16 @@ internal static class Program
 
             string destinationBundle = InstallBundleSafely(bundleSource, options.InstallDirectory, out string backupPath);
             WriteInstallLog(options, destinationBundle, backupPath);
-            WriteUpdateResult(options.InstallDirectory, true, options.Version, "Installed successfully.");
+            WriteUpdateResult(options.InstallDirectory, true, options.Version, "Cài đặt thành công.");
             ShowDesktopNotification(
                 options.Notify,
                 success: true,
                 version: options.Version,
-                message: "Cap nhat ShopDrawing thanh cong.\nBan co the mo lai AutoCAD.");
+                message: "Cập nhật ShopDrawing thành công.\nBạn có thể mở lại AutoCAD.");
 
             if (!options.Silent)
             {
-                Console.WriteLine("Cai dat hoan tat.");
+                Console.WriteLine("Cài đặt hoàn tất.");
             }
 
             return 0;
@@ -83,8 +83,8 @@ internal static class Program
                 options?.Notify == true,
                 success: false,
                 version: options?.Version ?? string.Empty,
-                message: $"Cap nhat ShopDrawing that bai.\nChi tiet: {ex.Message}");
-            Console.Error.WriteLine("Cai dat that bai: " + ex.Message);
+                message: $"Cập nhật ShopDrawing thất bại.\nChi tiết: {ex.Message}");
+            Console.Error.WriteLine("Cài đặt thất bại: " + ex.Message);
             Console.Error.WriteLine(ex);
             return 1;
         }
@@ -450,10 +450,10 @@ internal static class Program
         {
             string normalizedVersion = NormalizeVersion(version);
             string title = success
-                ? "ShopDrawing Update"
-                : "ShopDrawing Update Error";
+                ? "Cập nhật ShopDrawing"
+                : "Lỗi cập nhật ShopDrawing";
             string body = success
-                ? $"{message}\nVersion: {normalizedVersion}"
+                ? $"{message}\nPhiên bản: {normalizedVersion}"
                 : message;
             uint type = success ? 0x00000040u : 0x00000010u; // MB_ICONINFORMATION / MB_ICONERROR
             _ = MessageBoxW(IntPtr.Zero, body, title, type);

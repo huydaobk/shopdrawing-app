@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using Autodesk.AutoCAD.ApplicationServices;
 using ShopDrawing.Plugin.Models;
 
 namespace ShopDrawing.Plugin.Core
@@ -24,14 +26,14 @@ namespace ShopDrawing.Plugin.Core
 
         public ProjectProfile LoadOrDefault()
         {
-            if (!TryGetExistingProfilePath(out string path))
+            if (!TryGetExistingProfilePath(out string path, out string dataDirectory))
             {
                 return new ProjectProfile();
             }
 
             if (!File.Exists(path))
             {
-                return new ProjectProfile();
+                return BuildFallbackProfile(dataDirectory);
             }
 
             try
@@ -47,16 +49,68 @@ namespace ShopDrawing.Plugin.Core
             }
         }
 
-        private static bool TryGetExistingProfilePath(out string path)
+        private static bool TryGetExistingProfilePath(out string path, out string dataDirectory)
         {
             path = string.Empty;
-            if (!ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out string dataDirectory))
+            dataDirectory = string.Empty;
+            if (!ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out dataDirectory))
             {
                 return false;
             }
 
             path = Path.Combine(dataDirectory, ProfileFileName);
             return true;
+        }
+
+        private static ProjectProfile BuildFallbackProfile(string dataDirectory)
+        {
+            var profile = new ProjectProfile();
+
+            try
+            {
+                Document? document = Application.DocumentManager.MdiActiveDocument;
+                if (document != null)
+                {
+                    profile.ProjectName = DrawingListManager.GetDocumentProjectName(document)?.Trim() ?? string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
+            }
+
+            try
+            {
+                string tenderProjectsDirectory = Path.Combine(dataDirectory, "tender_projects");
+                if (Directory.Exists(tenderProjectsDirectory))
+                {
+                    string? latestTenderFile = Directory
+                        .GetFiles(tenderProjectsDirectory, "*.json", SearchOption.TopDirectoryOnly)
+                        .OrderByDescending(File.GetLastWriteTimeUtc)
+                        .FirstOrDefault();
+
+                    if (!string.IsNullOrWhiteSpace(latestTenderFile))
+                    {
+                        string json = File.ReadAllText(latestTenderFile);
+                        TenderProject? tenderProject = JsonSerializer.Deserialize<TenderProject>(json, JsonOptions);
+                        if (tenderProject != null)
+                        {
+                            if (string.IsNullOrWhiteSpace(profile.ProjectName))
+                            {
+                                profile.ProjectName = tenderProject.ProjectName?.Trim() ?? string.Empty;
+                            }
+
+                            profile.CustomerName = tenderProject.CustomerName?.Trim() ?? string.Empty;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn("Suppressed exception: " + ex.Message);
+            }
+
+            return profile;
         }
 
         public void Save(ProjectProfile profile)

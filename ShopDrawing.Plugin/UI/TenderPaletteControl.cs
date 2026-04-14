@@ -318,7 +318,7 @@ namespace ShopDrawing.Plugin.UI
             {
 
                 bool hasExistingProjectContext =
-                    ProjectDataPathResolver.TryResolveExistingOrLegacyProjectContext(out _, out _);
+                    ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out _);
 
                 // Try auto-load only when drawing is in an initialized project root.
                 if (hasExistingProjectContext)

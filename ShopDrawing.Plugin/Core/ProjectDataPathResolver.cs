@@ -69,41 +69,6 @@ namespace ShopDrawing.Plugin.Core
             }
         }
 
-        /// <summary>
-        /// Resolve current drawing context for read scenarios.
-        /// Returns true when either marker exists, or legacy data folder already has known project data.
-        /// This method never creates files/folders.
-        /// </summary>
-        public static bool TryResolveExistingOrLegacyProjectContext(out string projectRoot, out string dataDirectory)
-        {
-            projectRoot = string.Empty;
-            dataDirectory = string.Empty;
-
-            if (TryResolveExistingProjectContext(out projectRoot, out dataDirectory))
-            {
-                return true;
-            }
-
-            if (!TryResolveActiveDrawingContext(out PathContext context))
-            {
-                return false;
-            }
-
-            if (!Directory.Exists(context.DataDirectory))
-            {
-                return false;
-            }
-
-            if (!HasLegacyProjectData(context.DataDirectory))
-            {
-                return false;
-            }
-
-            projectRoot = context.RuntimeRoot;
-            dataDirectory = context.DataDirectory;
-            return true;
-        }
-
         public static string InitializeProjectStructure(string projectRoot)
         {
             if (string.IsNullOrWhiteSpace(projectRoot))
@@ -170,25 +135,6 @@ namespace ShopDrawing.Plugin.Core
             return new PathContext(projectRoot, dataDirectory, logPath);
         }
 
-        private static bool TryResolveActiveDrawingContext(out PathContext context)
-        {
-            context = default;
-            string? drawingPath = TryGetActiveDrawingPath();
-            if (string.IsNullOrWhiteSpace(drawingPath))
-            {
-                return false;
-            }
-
-            try
-            {
-                context = ResolveFromDrawingPath(drawingPath, ensureExists: false);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
 
         private static PathContext BuildAppDataContext(bool ensureExists)
         {
@@ -276,35 +222,6 @@ namespace ShopDrawing.Plugin.Core
 
             string json = JsonSerializer.Serialize(marker, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(markerPath, json);
-        }
-
-        private static bool HasLegacyProjectData(string dataDirectory)
-        {
-            try
-            {
-                if (File.Exists(Path.Combine(dataDirectory, "project_profile.json")) ||
-                    File.Exists(Path.Combine(dataDirectory, "panel_specs.json")) ||
-                    File.Exists(Path.Combine(dataDirectory, "shopdrawing_waste.db")))
-                {
-                    return true;
-                }
-
-                string tenderProjectsDir = Path.Combine(dataDirectory, "tender_projects");
-                if (Directory.Exists(tenderProjectsDir))
-                {
-                    string[] tenderFiles = Directory.GetFiles(tenderProjectsDir, "*.json");
-                    if (tenderFiles.Length > 0)
-                    {
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-                return false;
-            }
-
-            return false;
         }
 
         internal readonly record struct PathContext(string RuntimeRoot, string DataDirectory, string LogPath);

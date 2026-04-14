@@ -51,6 +51,7 @@ namespace ShopDrawing.Plugin.UI
         private TenderProject? _currentProject;
 
         private readonly TenderProjectManager _projectManager = new();
+        private readonly ProjectProfileManager _projectProfileManager = new();
         private TenderBomDialog? _bomDialog;
         private string _activeDocumentIdentity = string.Empty;
         private bool _isResettingForDocumentSwitch;
@@ -258,9 +259,12 @@ namespace ShopDrawing.Plugin.UI
             Dispatcher.UnhandledException -= _dispatcherUnhandledExceptionHandler;
 
             Dispatcher.UnhandledException += _dispatcherUnhandledExceptionHandler;
+            ProjectProfileManager.ProfileUpdated -= HandleProjectProfileUpdated;
+            ProjectProfileManager.ProfileUpdated += HandleProjectProfileUpdated;
             Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated -= HandleDocumentActivated;
             Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated += HandleDocumentActivated;
             EnsureDocumentContext(forceReset: true);
+            ApplyProjectProfile(_projectProfileManager.LoadOrDefault(), overwriteProjectFields: true);
 
         }
 
@@ -271,6 +275,7 @@ namespace ShopDrawing.Plugin.UI
         {
 
             Dispatcher.UnhandledException -= _dispatcherUnhandledExceptionHandler;
+            ProjectProfileManager.ProfileUpdated -= HandleProjectProfileUpdated;
             Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated -= HandleDocumentActivated;
 
         }
@@ -313,7 +318,7 @@ namespace ShopDrawing.Plugin.UI
             {
 
                 bool hasExistingProjectContext =
-                    ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out _);
+                    ProjectDataPathResolver.TryResolveExistingOrLegacyProjectContext(out _, out _);
 
                 // Try auto-load only when drawing is in an initialized project root.
                 if (hasExistingProjectContext)
@@ -433,6 +438,7 @@ namespace ShopDrawing.Plugin.UI
             _currentProject = null;
             _txtProjectName.Text = string.Empty;
             _txtCustomerName.Text = string.Empty;
+            ApplyProjectProfile(_projectProfileManager.LoadOrDefault(), overwriteProjectFields: true);
             UpdateFooter();
 
             if (_bomDialog != null && _bomDialog.IsLoaded)
@@ -459,6 +465,33 @@ namespace ShopDrawing.Plugin.UI
             Autodesk.AutoCAD.ApplicationServices.DocumentCollectionEventArgs e)
         {
             Dispatcher.BeginInvoke(new Action(() => EnsureDocumentContext()));
+        }
+
+        private void HandleProjectProfileUpdated(ProjectProfile profile)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ApplyProjectProfile(profile, overwriteProjectFields: true);
+            }));
+        }
+
+        private void ApplyProjectProfile(ProjectProfile profile, bool overwriteProjectFields)
+        {
+            if (overwriteProjectFields || string.IsNullOrWhiteSpace(_txtProjectName.Text))
+            {
+                _txtProjectName.Text = profile.ProjectName ?? string.Empty;
+            }
+
+            if (overwriteProjectFields || string.IsNullOrWhiteSpace(_txtCustomerName.Text))
+            {
+                _txtCustomerName.Text = profile.CustomerName ?? string.Empty;
+            }
+
+            if (_currentProject != null)
+            {
+                _currentProject.ProjectName = _txtProjectName.Text.Trim();
+                _currentProject.CustomerName = _txtCustomerName.Text.Trim();
+            }
         }
 
 

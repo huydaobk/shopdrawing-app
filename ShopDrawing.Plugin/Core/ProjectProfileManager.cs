@@ -50,7 +50,7 @@ namespace ShopDrawing.Plugin.Core
         private static bool TryGetExistingProfilePath(out string path)
         {
             path = string.Empty;
-            if (!ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out string dataDirectory))
+            if (!ProjectDataPathResolver.TryResolveExistingOrLegacyProjectContext(out _, out string dataDirectory))
             {
                 return false;
             }

@@ -7,7 +7,7 @@ namespace ShopDrawing.Plugin.Core
     internal static class UpdateChannelOptionsProvider
     {
         private const string SettingsFileName = "update-settings.json";
-        private const string DefaultManifestUrl = "https://github.com/huydaobk/shopdrawing-app/releases/latest/download/latest.json";
+        private const string DefaultManifestUrl = "https://api.github.com/repos/huydaobk/shopdrawing-app/releases/latest";
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {

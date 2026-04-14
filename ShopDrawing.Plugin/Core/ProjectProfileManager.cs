@@ -62,6 +62,7 @@ namespace ShopDrawing.Plugin.Core
         public void Save(ProjectProfile profile)
         {
             profile.UpdatedAt = DateTime.Now;
+            ProjectDataPathResolver.EnsureProjectMarkerForActiveDrawing();
             string path = GetProfilePath();
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             string json = JsonSerializer.Serialize(profile, JsonOptions);

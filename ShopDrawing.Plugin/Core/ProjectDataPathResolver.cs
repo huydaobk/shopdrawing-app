@@ -39,6 +39,33 @@ namespace ShopDrawing.Plugin.Core
             return MarkerFileName;
         }
 
+        public static void EnsureProjectMarkerForActiveDrawing()
+        {
+            string? drawingPath = TryGetActiveDrawingPath();
+            if (string.IsNullOrWhiteSpace(drawingPath))
+            {
+                return;
+            }
+
+            try
+            {
+                PathContext context = ResolveFromDrawingPath(drawingPath, ensureExists: false);
+                Directory.CreateDirectory(context.RuntimeRoot);
+                Directory.CreateDirectory(context.DataDirectory);
+                string? logDirectory = Path.GetDirectoryName(context.LogPath);
+                if (!string.IsNullOrWhiteSpace(logDirectory))
+                {
+                    Directory.CreateDirectory(logDirectory);
+                }
+
+                EnsureMarkerFile(context.RuntimeRoot);
+            }
+            catch
+            {
+                // Best-effort only; never break caller flow.
+            }
+        }
+
         public static bool TryResolveExistingProjectContext(out string projectRoot, out string dataDirectory)
         {
             projectRoot = string.Empty;
@@ -129,7 +156,6 @@ namespace ShopDrawing.Plugin.Core
                 Directory.CreateDirectory(projectRoot);
                 Directory.CreateDirectory(dataDirectory);
                 Directory.CreateDirectory(logsDirectory);
-                EnsureMarkerFile(projectRoot);
             }
 
             return new PathContext(projectRoot, dataDirectory, logPath);

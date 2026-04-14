@@ -21,9 +21,16 @@ namespace ShopDrawing.Plugin.Commands
             var dialog = new ProjectInputDialog(profile);
             if (Application.ShowModalWindow(dialog) == true)
             {
-                _projectProfileManager.Save(dialog.ProjectProfile);
-                ShopDrawingRuntimeServices.RefreshProjectScopedServices();
-                UiFeedback.ShowInfo("Da luu INPUT cho du an hien tai.", "ShopDrawing");
+                try
+                {
+                    _projectProfileManager.Save(dialog.ProjectProfile);
+                    ShopDrawingRuntimeServices.RefreshProjectScopedServices();
+                    UiFeedback.ShowInfo("Da luu INPUT cho du an hien tai.", "ShopDrawing");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    UiFeedback.ShowWarning(ex.Message, "ShopDrawing");
+                }
             }
         }
     }

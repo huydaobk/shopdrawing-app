@@ -39,26 +39,49 @@ namespace ShopDrawing.Plugin.Core
             return MarkerFileName;
         }
 
-        public static void EnsureProjectMarkerForActiveDrawing()
+        public static bool TryResolveActiveDrawingContext(out string projectRoot, out string dataDirectory)
         {
+            projectRoot = string.Empty;
+            dataDirectory = string.Empty;
+
             string? drawingPath = TryGetActiveDrawingPath();
             if (string.IsNullOrWhiteSpace(drawingPath))
+            {
+                return false;
+            }
+
+            try
+            {
+                PathContext context = ResolveFromDrawingPath(drawingPath, ensureExists: false);
+                projectRoot = context.RuntimeRoot;
+                dataDirectory = context.DataDirectory;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void EnsureProjectMarkerForActiveDrawing()
+        {
+            if (!TryResolveActiveDrawingContext(out string projectRoot, out string dataDirectory))
             {
                 return;
             }
 
             try
             {
-                PathContext context = ResolveFromDrawingPath(drawingPath, ensureExists: false);
-                Directory.CreateDirectory(context.RuntimeRoot);
-                Directory.CreateDirectory(context.DataDirectory);
-                string? logDirectory = Path.GetDirectoryName(context.LogPath);
+                Directory.CreateDirectory(projectRoot);
+                Directory.CreateDirectory(dataDirectory);
+                string logPath = Path.Combine(dataDirectory, LogsFolderName, LogFileName);
+                string? logDirectory = Path.GetDirectoryName(logPath);
                 if (!string.IsNullOrWhiteSpace(logDirectory))
                 {
                     Directory.CreateDirectory(logDirectory);
                 }
 
-                EnsureMarkerFile(context.RuntimeRoot);
+                EnsureMarkerFile(projectRoot);
             }
             catch
             {
@@ -183,22 +206,41 @@ namespace ShopDrawing.Plugin.Core
                     return null;
                 }
 
-                string? drawingPath = document.Database?.Filename;
-                if (string.IsNullOrWhiteSpace(drawingPath))
+                // DWGTITLED = 0 means the drawing is still Drawing1/Drawing2... and has not been saved yet.
+                if (!IsCurrentDrawingNamed())
                 {
-                    drawingPath = document.Name;
+                    return null;
                 }
 
+                string? drawingPath = document.Database?.Filename;
                 if (string.IsNullOrWhiteSpace(drawingPath) || !Path.IsPathRooted(drawingPath))
                 {
                     return null;
                 }
 
-                return drawingPath;
+                return Path.GetFullPath(drawingPath);
             }
             catch
             {
                 return null;
+            }
+        }
+
+        private static bool IsCurrentDrawingNamed()
+        {
+            try
+            {
+                object value = Application.GetSystemVariable("DWGTITLED");
+                return value switch
+                {
+                    short shortValue => shortValue != 0,
+                    int intValue => intValue != 0,
+                    _ => true
+                };
+            }
+            catch
+            {
+                return true;
             }
         }
 

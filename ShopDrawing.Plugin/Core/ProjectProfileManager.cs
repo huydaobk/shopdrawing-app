@@ -62,8 +62,13 @@ namespace ShopDrawing.Plugin.Core
         public void Save(ProjectProfile profile)
         {
             profile.UpdatedAt = DateTime.Now;
+            if (!ProjectDataPathResolver.TryResolveActiveDrawingContext(out _, out string dataDirectory))
+            {
+                throw new InvalidOperationException("Ban ve chua duoc luu. Hay SaveAs vao thu muc du an truoc khi luu INPUT.");
+            }
+
             ProjectDataPathResolver.EnsureProjectMarkerForActiveDrawing();
-            string path = GetProfilePath();
+            string path = Path.Combine(dataDirectory, ProfileFileName);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             string json = JsonSerializer.Serialize(profile, JsonOptions);
             File.WriteAllText(path, json);

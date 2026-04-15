@@ -51,6 +51,7 @@ namespace ShopDrawing.Plugin.UI
                 }
             }
 
+            EnforceLockedWasteFactor();
             SortRowsByApplication();
             ReindexRows();
 
@@ -89,7 +90,8 @@ namespace ShopDrawing.Plugin.UI
             var info = new TextBlock
             {
                 Text = "Danh mục này dùng để tính bảng phụ kiện cho giai đoạn đấu thầu. " +
-                       "Khối lượng chốt = tự động x (1 + hao hụt %) + điều chỉnh.",
+                       "Khối lượng chốt = tự động x (1 + hao hụt %) + điều chỉnh. " +
+                       "Hao hụt khóa cố định 3% cho toàn bộ phụ kiện Tender.",
                 Foreground = Brushes.DimGray,
                 Margin = new Thickness(0, 0, 0, 8)
             };
@@ -140,7 +142,7 @@ namespace ShopDrawing.Plugin.UI
             _grid.Columns.Add(CreateRuleComboColumn("Mã quy tắc", "CalcRule", _ruleOptions, 240));
             _grid.Columns.Add(CreateReadOnlyColumn("Diễn giải", "RuleDescription", 220));
             _grid.Columns.Add(CreateTextColumn("Hệ số", "Factor", 65, "F2"));
-            _grid.Columns.Add(CreateTextColumn("Hao hụt (%)", "WasteFactor", 80, "F1"));
+            _grid.Columns.Add(CreateTextColumn("Hao hụt (%)", "WasteFactor", 80, "F1", true));
             _grid.Columns.Add(CreateTextColumn("Điều chỉnh", "Adjustment", 80, "F2"));
             _grid.Columns.Add(CreateCheckColumn("Nhập tay", "IsManualOnly", 65));
             _grid.Columns.Add(CreateTextColumn("Ghi chú", "Note", 340));
@@ -189,9 +191,11 @@ namespace ShopDrawing.Plugin.UI
                 Unit = "md",
                 CalcRule = AccessoryCalcRule.PER_WALL_LENGTH,
                 Factor = 1,
+                WasteFactor = AccessoryDataManager.LockedTenderWastePercent,
                 Note = string.Empty
             });
 
+            EnforceLockedWasteFactor();
             SortRowsByApplication();
             ReindexRows();
         }
@@ -228,6 +232,7 @@ namespace ShopDrawing.Plugin.UI
                 _rows.Add(TenderAccessoryRow.FromModel(item));
             }
 
+            EnforceLockedWasteFactor();
             SortRowsByApplication();
             ReindexRows();
         }
@@ -236,6 +241,7 @@ namespace ShopDrawing.Plugin.UI
         {
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
             {
+                EnforceLockedWasteFactor();
                 SortRowsByApplication();
                 foreach (var row in _rows)
                 {
@@ -249,9 +255,18 @@ namespace ShopDrawing.Plugin.UI
 
         private void SaveAndClose()
         {
+            EnforceLockedWasteFactor();
             SortRowsByApplication();
             ReindexRows();
             DialogResult = true;
+        }
+
+        private void EnforceLockedWasteFactor()
+        {
+            foreach (var row in _rows)
+            {
+                row.WasteFactor = AccessoryDataManager.LockedTenderWastePercent;
+            }
         }
 
         private void SortRowsByApplication()
@@ -347,13 +362,14 @@ namespace ShopDrawing.Plugin.UI
             return button;
         }
 
-        private static DataGridTextColumn CreateTextColumn(string header, string binding, double width, string? format = null)
+        private static DataGridTextColumn CreateTextColumn(string header, string binding, double width, string? format = null, bool isReadOnly = false)
         {
             return new DataGridTextColumn
             {
                 Header = header,
                 Binding = new Binding(binding) { StringFormat = format, UpdateSourceTrigger = UpdateSourceTrigger.LostFocus },
-                Width = new DataGridLength(width)
+                Width = new DataGridLength(width),
+                IsReadOnly = isReadOnly
             };
         }
 
@@ -426,7 +442,7 @@ namespace ShopDrawing.Plugin.UI
         public string Unit { get; set; } = "md";
         public AccessoryCalcRule CalcRule { get; set; }
         public double Factor { get; set; } = 1.0;
-        public double WasteFactor { get; set; }
+        public double WasteFactor { get; set; } = AccessoryDataManager.LockedTenderWastePercent;
         public double Adjustment { get; set; }
         public bool IsManualOnly { get; set; }
         public string Note { get; set; } = string.Empty;
@@ -446,7 +462,7 @@ namespace ShopDrawing.Plugin.UI
                 Unit = accessory.Unit,
                 CalcRule = accessory.CalcRule,
                 Factor = accessory.Factor,
-                WasteFactor = accessory.WasteFactor,
+                WasteFactor = AccessoryDataManager.LockedTenderWastePercent,
                 Adjustment = accessory.Adjustment,
                 IsManualOnly = accessory.IsManualOnly,
                 Note = accessory.Note
@@ -466,7 +482,7 @@ namespace ShopDrawing.Plugin.UI
                 Unit = string.IsNullOrWhiteSpace(Unit) ? "md" : Unit.Trim(),
                 CalcRule = CalcRule,
                 Factor = Factor,
-                WasteFactor = WasteFactor,
+                WasteFactor = AccessoryDataManager.LockedTenderWastePercent,
                 Adjustment = Adjustment,
                 IsManualOnly = IsManualOnly,
                 Note = Note?.Trim() ?? string.Empty

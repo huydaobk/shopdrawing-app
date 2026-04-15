@@ -8,6 +8,7 @@ namespace ShopDrawing.Plugin.Core
     {
         public const string DefaultCategoryScope = "Vách";
         public const string DefaultApplication = "Ngoài nhà";
+        public const double LockedTenderWastePercent = 3.0;
 
         private const string ScopeAll = "Tất cả";
         private const string AppExterior = "Ngoài nhà";
@@ -225,7 +226,9 @@ namespace ShopDrawing.Plugin.Core
             list.AddRange(GetCleanroomDefaults());
             list.AddRange(GetCleanroomCeilingDefaults());
             list.AddRange(GetColdStorageDefaults());
-            return DeduplicateAndSort(ExpandLineBasedRiveAccessories(list));
+            var defaults = DeduplicateAndSort(ExpandLineBasedRiveAccessories(list));
+            EnforceLockedTenderWaste(defaults);
+            return defaults;
         }
 
         public static List<TenderAccessory> NormalizeConfiguredAccessories(IEnumerable<TenderAccessory>? accessories)
@@ -280,7 +283,9 @@ namespace ShopDrawing.Plugin.Core
                 .ToList();
             SynchronizeConfiguredAccessories(normalized, canonicalDefaults);
             MergeMissingDefaults(normalized, canonicalDefaults);
-            return DeduplicateAndSort(normalized);
+            var result = DeduplicateAndSort(normalized);
+            EnforceLockedTenderWaste(result);
+            return result;
         }
 
 #pragma warning disable CS8602
@@ -583,7 +588,7 @@ namespace ShopDrawing.Plugin.Core
                 CategoryScope = seed.CategoryScope,
                 SpecKey = seed.SpecKey,
                 Application = seed.Application,
-                WasteFactor = latest.WasteFactor,
+                WasteFactor = LockedTenderWastePercent,
                 Adjustment = latest.Adjustment,
                 IsManualOnly = latest.IsManualOnly,
                 Note = note
@@ -843,7 +848,7 @@ namespace ShopDrawing.Plugin.Core
                 CategoryScope = categoryScope,
                 SpecKey = TenderAccessoryRules.NormalizeScope(source.SpecKey),
                 Application = application,
-                WasteFactor = source.WasteFactor,
+                WasteFactor = LockedTenderWastePercent,
                 Adjustment = source.Adjustment,
                 IsManualOnly = source.IsManualOnly,
                 Note = source.Note
@@ -942,11 +947,22 @@ namespace ShopDrawing.Plugin.Core
                 CategoryScope = source.CategoryScope,
                 SpecKey = source.SpecKey,
                 Application = source.Application,
-                WasteFactor = source.WasteFactor,
+                WasteFactor = LockedTenderWastePercent,
                 Adjustment = source.Adjustment,
                 IsManualOnly = source.IsManualOnly,
                 Note = note
             };
+        }
+
+        private static void EnforceLockedTenderWaste(IEnumerable<TenderAccessory> accessories)
+        {
+            foreach (var accessory in accessories)
+            {
+                if (accessory == null)
+                    continue;
+
+                accessory.WasteFactor = LockedTenderWastePercent;
+            }
         }
 
         private static int CompareAccessories(TenderAccessory left, TenderAccessory right)

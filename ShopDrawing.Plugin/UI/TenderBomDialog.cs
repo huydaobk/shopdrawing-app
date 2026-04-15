@@ -436,6 +436,8 @@ namespace ShopDrawing.Plugin.UI
             var colOrdered = Col("DT đặt hàng (m2)", "OrderedAreaM2", 100, "F2");
             var colWaste = Col("Hao hụt (m2)", "WasteAreaM2", 90, "F2");
             var colPct = Col("Hao hụt (%)", "WastePercent", 80, "F1");
+            colPct.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+            colPct.MinWidth = 95;
             colWaste.CellStyle = wasteStyle;
             colPct.CellStyle = wasteStyle;
             _panelSummaryGrid.Columns.Add(colOrdered);
@@ -476,7 +478,7 @@ namespace ShopDrawing.Plugin.UI
             _accessoryBasisGrid.Columns.Add(Col("Quy tắc", "RuleLabel", 120));
             _accessoryBasisGrid.Columns.Add(Col("Cơ sở tính", "BasisLabel", 110));
             _accessoryBasisGrid.Columns.Add(Col("Giá trị", "BasisValue", 75, "F2"));
-            _accessoryBasisGrid.Columns.Add(Col("Hệ số", "Factor", 60, "F2"));
+            _accessoryBasisGrid.Columns.Add(Col("Hệ số", "FactorDisplay", 60));
             _accessoryBasisGrid.Columns.Add(Col("KL tự động", "AutoQuantity", 85, "F2"));
             _accessoryBasisGrid.Columns.Add(ColStar("Ghi chú", "Note"));
             Grid.SetRow(_accessoryBasisGrid, 4);
@@ -513,7 +515,7 @@ namespace ShopDrawing.Plugin.UI
             _accessorySummaryGrid.Columns.Add(Col("Quy tắc", "RuleLabel", 120));
             _accessorySummaryGrid.Columns.Add(Col("Cơ sở tính", "BasisLabel", 110));
             _accessorySummaryGrid.Columns.Add(Col("Giá trị", "BasisValue", 75, "F2"));
-            _accessorySummaryGrid.Columns.Add(Col("Hệ số", "Factor", 60, "F2"));
+            _accessorySummaryGrid.Columns.Add(Col("Hệ số", "FactorDisplay", 60));
             _accessorySummaryGrid.Columns.Add(Col("Hao hụt (%)", "WastePercent", 85, "F1"));
             _accessorySummaryGrid.Columns.Add(Col("KL tự động", "AutoQuantity", 85, "F2"));
             _accessorySummaryGrid.Columns.Add(Col("Điều chỉnh", "Adjustment", 80, "F2"));
@@ -2486,7 +2488,12 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         }
 
         private static DataGridTextColumn ColStar(string header, string binding)
-            => ColNote(header, binding, 320);
+        {
+            var col = ColNote(header, binding, 320);
+            col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+            col.MinWidth = 220;
+            return col;
+        }
 
 
 
@@ -2912,6 +2919,67 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public string AreaM2Display => (WidthMm * LengthMm * Count / 1_000_000.0).ToString("F2");
     }
 
+    internal static class TenderFractionFormatter
+    {
+        public static string ToDisplay(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+                return "0";
+
+            if (Math.Abs(value) < 1e-9)
+                return "0";
+
+            double abs = Math.Abs(value);
+            const int maxDenominator = 1000;
+            int bestNumerator = 0;
+            int bestDenominator = 1;
+            double bestError = double.MaxValue;
+
+            for (int denominator = 1; denominator <= maxDenominator; denominator++)
+            {
+                int numerator = (int)Math.Round(abs * denominator);
+                double approx = (double)numerator / denominator;
+                double error = Math.Abs(abs - approx);
+
+                if (error < bestError)
+                {
+                    bestError = error;
+                    bestNumerator = numerator;
+                    bestDenominator = denominator;
+                    if (error <= 1e-7)
+                        break;
+                }
+            }
+
+            if (bestError > 1e-4 || bestNumerator == 0)
+                return value.ToString("0.###", CultureInfo.InvariantCulture);
+
+            int gcd = GreatestCommonDivisor(bestNumerator, bestDenominator);
+            bestNumerator /= gcd;
+            bestDenominator /= gcd;
+
+            string sign = value < 0 ? "-" : string.Empty;
+            if (bestDenominator == 1)
+                return $"{sign}{bestNumerator}";
+
+            return $"{sign}{bestNumerator}/{bestDenominator}";
+        }
+
+        private static int GreatestCommonDivisor(int left, int right)
+        {
+            left = Math.Abs(left);
+            right = Math.Abs(right);
+            while (right != 0)
+            {
+                int temp = left % right;
+                left = right;
+                right = temp;
+            }
+
+            return left == 0 ? 1 : left;
+        }
+    }
+
     public class TenderAccessoryBasisViewRow
     {
         public int Index { get; set; }
@@ -2927,6 +2995,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public string BasisLabel { get; set; } = "";
         public double BasisValue { get; set; }
         public double Factor { get; set; }
+        public string FactorDisplay => TenderFractionFormatter.ToDisplay(Factor);
         public double AutoQuantity { get; set; }
         public string Note { get; set; } = "";
 
@@ -2968,6 +3037,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public string BasisLabel { get; set; } = "";
         public double BasisValue { get; set; }
         public double Factor { get; set; }
+        public string FactorDisplay => TenderFractionFormatter.ToDisplay(Factor);
         public double WastePercent { get; set; }
         public double AutoQuantity { get; set; }
         public double Adjustment { get; set; }
@@ -3000,7 +3070,3 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         }
     }
 }
-
-
-
-

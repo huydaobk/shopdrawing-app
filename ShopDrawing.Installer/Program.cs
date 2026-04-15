@@ -16,6 +16,11 @@ internal static class Program
     };
 
     private const string UpdateResultFileName = "shopdrawing_update_result.json";
+    private const string NotificationTitleSuccess = "C\u1EADp nh\u1EADt ShopDrawing";
+    private const string NotificationTitleError = "L\u1ED7i c\u1EADp nh\u1EADt ShopDrawing";
+    private const string NotificationMessageSuccess = "C\u1EADp nh\u1EADt ShopDrawing th\u00E0nh c\u00F4ng.\nB\u1EA1n c\u00F3 th\u1EC3 m\u1EDF l\u1EA1i AutoCAD.";
+    private const string NotificationMessageFailureFormat = "C\u1EADp nh\u1EADt ShopDrawing th\u1EA5t b\u1EA1i.\nChi ti\u1EBFt: {0}";
+    private const string NotificationVersionLabel = "Phi\u00EAn b\u1EA3n";
 
     [STAThread]
     private static async Task<int> Main(string[] args)
@@ -60,7 +65,7 @@ internal static class Program
                 options.Notify,
                 success: true,
                 version: options.Version,
-                message: "Cập nhật ShopDrawing thành công.\nBạn có thể mở lại AutoCAD.");
+                message: NotificationMessageSuccess);
 
             if (!options.Silent)
             {
@@ -83,7 +88,7 @@ internal static class Program
                 options?.Notify == true,
                 success: false,
                 version: options?.Version ?? string.Empty,
-                message: $"Cập nhật ShopDrawing thất bại.\nChi tiết: {ex.Message}");
+                message: string.Format(NotificationMessageFailureFormat, ex.Message));
             Console.Error.WriteLine("Cài đặt thất bại: " + ex.Message);
             Console.Error.WriteLine(ex);
             return 1;
@@ -450,10 +455,10 @@ internal static class Program
         {
             string normalizedVersion = NormalizeVersion(version);
             string title = success
-                ? "Cập nhật ShopDrawing"
-                : "Lỗi cập nhật ShopDrawing";
+                ? NotificationTitleSuccess
+                : NotificationTitleError;
             string body = success
-                ? $"{message}\nPhiên bản: {normalizedVersion}"
+                ? $"{NotificationMessageSuccess}\n{NotificationVersionLabel}: {normalizedVersion}"
                 : message;
             uint type = success ? 0x00000040u : 0x00000010u; // MB_ICONINFORMATION / MB_ICONERROR
             _ = MessageBoxW(IntPtr.Zero, body, title, type);

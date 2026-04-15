@@ -663,7 +663,26 @@ namespace ShopDrawing.Plugin.Core
                 return false;
             }
 
+            if (IsExteriorWallWithoutEndDetail(wall) && IsEndDetailRule(accessory.CalcRule))
+            {
+                return false;
+            }
+
             return true;
+        }
+
+        private static bool IsExteriorWallWithoutEndDetail(TenderWall wall)
+        {
+            return string.Equals(wall.Application, "Ngoài nhà", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(wall.Category, "Vách", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsEndDetailRule(AccessoryCalcRule rule)
+        {
+            return rule == AccessoryCalcRule.PER_EXPOSED_END_LENGTH
+                || rule == AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH
+                || rule == AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH
+                || rule == AccessoryCalcRule.PER_END_PANEL_FREE_LENGTH;
         }
 
         private static double CalculateFinalQuantity(TenderAccessory accessory, double totalAuto)

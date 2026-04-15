@@ -22,6 +22,7 @@ namespace ShopDrawing.Plugin.UI
         {
             var workbook = new XSSFWorkbook();
             var sheet = workbook.CreateSheet("Khối lượng đấu thầu");
+            var basisSheet = workbook.CreateSheet("Cơ sở tính phụ kiện riêng");
             var specSheet = workbook.CreateSheet("Quản lý Spec");
 
             var headerStyle = CreateHeaderStyle(workbook);
@@ -30,7 +31,6 @@ namespace ShopDrawing.Plugin.UI
             var totalStyle = CreateTotalStyle(workbook);
             var panelSectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.DarkBlue.Index);
             var accessorySummarySectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.DarkGreen.Index);
-            var wallSectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.Teal.Index);
             var accessoryBasisSectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.Brown.Index);
             var specSectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.Grey50Percent.Index);
 
@@ -49,19 +49,31 @@ namespace ShopDrawing.Plugin.UI
 
             rowIdx = WritePanelSummarySection(project, sheet, rowIdx, headerStyle, dataStyle, computedStyle, totalStyle, panelSectionStyle);
             rowIdx += 2;
-            rowIdx = WriteAccessorySummarySection(project, sheet, rowIdx, headerStyle, dataStyle, computedStyle, totalStyle, accessorySummarySectionStyle);
-            rowIdx += 2;
-            rowIdx = WriteWallSection(project, sheet, rowIdx, headerStyle, dataStyle, computedStyle, totalStyle, wallSectionStyle);
-            rowIdx += 2;
-            rowIdx = WriteAccessoryBasisSection(project, sheet, rowIdx, headerStyle, dataStyle, computedStyle, accessoryBasisSectionStyle);
+            WriteAccessorySummarySection(project, sheet, rowIdx, headerStyle, dataStyle, computedStyle, totalStyle, accessorySummarySectionStyle);
+            int basisRowIdx = 0;
+            var basisTitleRow = basisSheet.CreateRow(basisRowIdx++);
+            var basisTitleCell = basisTitleRow.CreateCell(0);
+            basisTitleCell.SetCellValue($"CƠ SỞ TÍNH PHỤ KIỆN - {project.ProjectName}");
+            basisTitleCell.CellStyle = CreateTitleStyle(workbook);
+            MergeRowAcross(basisSheet, basisTitleRow.RowNum, TenderSheetMaxColumnIndex);
+
+            var basisInfoRow = basisSheet.CreateRow(basisRowIdx++);
+            basisInfoRow.CreateCell(0).SetCellValue($"Khách hàng: {project.CustomerName}");
+            basisInfoRow.CreateCell(5).SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy}");
+            basisRowIdx++;
+            WriteAccessoryBasisSection(project, basisSheet, basisRowIdx, headerStyle, dataStyle, computedStyle, accessoryBasisSectionStyle);
             WriteSpecSheet(project, specSheet, headerStyle, dataStyle, computedStyle, totalStyle, specSectionStyle, workbook);
 
             AutoSizeSheet(sheet, TenderSheetMaxColumnIndex);
+            AutoSizeSheet(basisSheet, TenderSheetMaxColumnIndex);
             AutoSizeSheet(specSheet, SpecSheetMaxColumnIndex);
             ApplyTenderSheetColumnWidths(sheet);
+            ApplyTenderSheetColumnWidths(basisSheet);
             ApplySpecSheetColumnWidths(specSheet);
             sheet.CreateFreezePane(0, 3);
+            basisSheet.CreateFreezePane(0, 5);
             sheet.SetZoom(90);
+            basisSheet.SetZoom(90);
             specSheet.SetZoom(90);
             for (int i = 0; i <= 23; i++)
             {
@@ -75,6 +87,7 @@ namespace ShopDrawing.Plugin.UI
             }
 
             ApplyTenderSheetColumnWidths(sheet);
+            ApplyTenderSheetColumnWidths(basisSheet);
             ApplySpecSheetColumnWidths(specSheet);
 
             using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write);
@@ -99,7 +112,7 @@ namespace ShopDrawing.Plugin.UI
             {
                 "STT", "Hạng mục", "Tầng", "Ký hiệu vách", "Dài (mm)", "Cao (mm)",
                 "Mã spec", "Ứng dụng", "Chi tiết đỉnh vách", "Chi tiết đầu/cuối vách", "Chi tiết chân vách", "Xử lý mép trái", "Xử lý mép phải",
-                "Góc ngoài", "Góc trong", "Khổ tấm (mm)", "DT vách (m²)",
+                "Liên kết góc", "Khổ tấm (mm)", "DT vách (m²)",
                 "Rộng lỗ mở (mm)", "Cao lỗ mở (mm)", "SL lỗ mở", "DT lỗ mở (m²)",
                 "DT net (m²)", "Số tấm"
             };
@@ -140,7 +153,6 @@ namespace ShopDrawing.Plugin.UI
                     SetCell(row, col++, wall.StartEdgeExposed ? "Có" : "Không", dataStyle);
                     SetCell(row, col++, wall.EndEdgeExposed ? "Có" : "Không", dataStyle);
                     SetCell(row, col++, wall.OutsideCornerCount, dataStyle);
-                    SetCell(row, col++, wall.InsideCornerCount, dataStyle);
                     SetCell(row, col++, wall.PanelWidth, dataStyle);
                     SetCell(row, col++, wall.WallAreaM2, computedStyle);
 
@@ -231,7 +243,7 @@ namespace ShopDrawing.Plugin.UI
             string[] headers =
             {
                 "STT", "Tầng", "Hạng mục", "Mã spec", "Số vùng", "Tổng dài (m)", "Cao TB (mm)",
-                "DT vách (m²)", "DT lỗ mở (m²)", "DT net (m²)", "Khối lượng thực tế cần cấp (tấm)",
+                "DT vách (m²)", "DT lỗ mở (m²)", "DT net (m²)",
                 "DT dự kiến cấp (m²)", "Khối lượng hao hụt tổng (m²)", "Hao hụt (%)"
             };
 
@@ -258,7 +270,6 @@ namespace ShopDrawing.Plugin.UI
                 SetCell(excelRow, col++, row.WallAreaM2, computedStyle);
                 SetCell(excelRow, col++, row.OpeningAreaM2, computedStyle);
                 SetCell(excelRow, col++, row.NetAreaM2, computedStyle);
-                SetCell(excelRow, col++, row.EstimatedPanels, computedStyle);
                 SetCell(excelRow, col++, row.OrderedAreaM2, computedStyle);
                 SetCell(excelRow, col++, row.WasteAreaM2, computedStyle);
                 SetCell(excelRow, col++, row.WastePercent, computedStyle);
@@ -271,19 +282,18 @@ namespace ShopDrawing.Plugin.UI
             SetCell(totalRow, 7, rows.Sum(x => x.WallAreaM2), totalStyle);
             SetCell(totalRow, 8, rows.Sum(x => x.OpeningAreaM2), totalStyle);
             SetCell(totalRow, 9, rows.Sum(x => x.NetAreaM2), totalStyle);
-            SetCell(totalRow, 10, rows.Sum(x => x.EstimatedPanels), totalStyle);
-            SetCell(totalRow, 11, rows.Sum(x => x.OrderedAreaM2), totalStyle);
-            SetCell(totalRow, 12, rows.Sum(x => x.WasteAreaM2), totalStyle);
+            SetCell(totalRow, 10, rows.Sum(x => x.OrderedAreaM2), totalStyle);
+            SetCell(totalRow, 11, rows.Sum(x => x.WasteAreaM2), totalStyle);
 
             double totalOrderedArea = rows.Sum(x => x.OrderedAreaM2);
             double totalWasteArea = rows.Sum(x => x.WasteAreaM2);
             double totalWastePercent = totalOrderedArea > 0 ? totalWasteArea / totalOrderedArea * 100.0 : 0.0;
-            SetCell(totalRow, 13, totalWastePercent, totalStyle);
+            SetCell(totalRow, 12, totalWastePercent, totalStyle);
 
             rowIdx++;
 
             var supplyTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(supplyTitleRow, 0, "TỔNG CẤP DỰ KIẾN", sectionStyle);
+            SetCell(supplyTitleRow, 0, "TỔNG KHỐI LƯỢNG PANEL CẤP DỰ KIẾN", sectionStyle);
             MergeRowAcross(sheet, supplyTitleRow.RowNum, TenderSheetMaxColumnIndex);
 
             var supplyHeaderRow = sheet.CreateRow(rowIdx++);
@@ -293,9 +303,8 @@ namespace ShopDrawing.Plugin.UI
 
             var supplyRows = new (string Label, double Value, string Note)[]
             {
-                ("Khối lượng thực tế cần cấp (tấm)", rows.Sum(x => x.EstimatedPanels), "Tổng số tấm nguyên cần cấp để triển khai sản xuất/cắt lắp."),
-                ("Khối lượng hao hụt tổng (m²)", totalWasteArea, "Bao gồm phần cắt bỏ tấm cuối và phần diện tích panel bị vướng vào lỗ mở."),
                 ("Tổng diện tích dự kiến phải cấp (m²)", totalOrderedArea, "Diện tích panel quy đổi theo tổng số tấm nguyên cần cấp."),
+                ("Khối lượng hao hụt tổng (m²)", totalWasteArea, "Bao gồm phần cắt bỏ tấm cuối và phần diện tích panel bị vướng vào lỗ mở."),
                 ("Tỷ lệ hao hụt tổng (%)", totalWastePercent, "Tỷ lệ hao hụt = Khối lượng hao hụt tổng / Tổng diện tích dự kiến phải cấp.")
             };
 

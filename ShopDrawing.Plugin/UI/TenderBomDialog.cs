@@ -228,7 +228,7 @@ namespace ShopDrawing.Plugin.UI
 
             var edgeGuide = new TextBlock
             {
-                Text = "Quy tắc nhập nhanh: mỗi đầu vách chỉ chọn 1 trạng thái. Nếu đã là góc ngoài/góc trong thì không tick đầu lộ/cuối lộ cùng vị trí.",
+                Text = "Quy tắc nhập nhanh: nếu đã có liên kết góc thì không tick xử lý mép trái/phải tại cùng vị trí.",
                 Foreground = AccentOrange,
                 FontSize = 11,
                 Margin = new Thickness(0, 18, 0, 0)
@@ -915,6 +915,10 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
         private static bool IsBottomPanelTreatmentColumn(DataGridColumn column)
             => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi tiết chân vách", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsCornerLinkColumn(DataGridColumn column)
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Liên kết góc", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(UiText.Normalize(column.Header?.ToString()), "Góc ngoài", StringComparison.OrdinalIgnoreCase);
 
 
 
@@ -2951,6 +2955,54 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             return col;
         }
 
+        private static DataGridTextColumn ColCornerLink(string header, string binding, double width,
+            string? format = null)
+        {
+            var col = Col(header, binding, width, format);
+            var editableBrush = new SolidColorBrush(Color.FromRgb(255, 249, 219));
+            var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
+            var tooltip = UiText.Normalize("Chỉ nhập cho Vách + Ngoài nhà khi có phụ kiện liên kết góc.");
+
+            var cellStyle = new Style(typeof(DataGridCell));
+            cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, editableBrush));
+            cellStyle.Setters.Add(new Setter(Control.ForegroundProperty, FgDark));
+            cellStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
+            cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
+            cellStyle.Triggers.Add(new DataTrigger
+            {
+                Binding = new Binding(nameof(TenderWallRow.IsCornerLinkEditable)),
+                Value = false,
+                Setters =
+                {
+                    new Setter(UIElement.IsEnabledProperty, false),
+                    new Setter(Control.BackgroundProperty, disabledBrush),
+                    new Setter(Control.ForegroundProperty, Brushes.DimGray),
+                    new Setter(Control.FontWeightProperty, FontWeights.Normal)
+                }
+            });
+            col.CellStyle = cellStyle;
+
+            var editingStyle = new Style(typeof(TextBox));
+            editingStyle.Setters.Add(new Setter(Control.BackgroundProperty, editableBrush));
+            editingStyle.Setters.Add(new Setter(Control.ForegroundProperty, FgDark));
+            editingStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
+            editingStyle.Triggers.Add(new DataTrigger
+            {
+                Binding = new Binding(nameof(TenderWallRow.IsCornerLinkEditable)),
+                Value = false,
+                Setters =
+                {
+                    new Setter(TextBox.IsReadOnlyProperty, true),
+                    new Setter(UIElement.IsEnabledProperty, false),
+                    new Setter(Control.BackgroundProperty, disabledBrush),
+                    new Setter(Control.ForegroundProperty, Brushes.DimGray)
+                }
+            });
+            col.EditingElementStyle = editingStyle;
+
+            return col;
+        }
+
         /// <summary>
         /// Safe ComboBox column using DataGridTemplateColumn.
         /// Display = TextBlock, Edit = ComboBox. No IEditableObject needed.
@@ -3012,7 +3064,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         {
             var col = ColTemplateCombo(header, binding, width, TenderWall.TopPanelTreatmentOptions);
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chỉ nhập cho hạng mục Vách.");
+            var tooltip = UiText.Normalize("Vách + Ngoài nhà sẽ tự động khóa và dùng Diềm 01 theo đỉnh vách.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3027,6 +3079,18 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     new Setter(Control.ForegroundProperty, Brushes.DimGray)
                 }
             });
+            cellStyle.Triggers.Add(new DataTrigger
+            {
+                Binding = new Binding(nameof(TenderWallRow.IsTopPanelTreatmentFixed)),
+                Value = true,
+                Setters =
+                {
+                    new Setter(UIElement.IsEnabledProperty, false),
+                    new Setter(Control.BackgroundProperty, disabledBrush),
+                    new Setter(Control.ForegroundProperty, Brushes.Black),
+                    new Setter(Control.FontWeightProperty, FontWeights.SemiBold)
+                }
+            });
             col.CellStyle = cellStyle;
 
             return col;
@@ -3036,7 +3100,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         {
             var col = ColTemplateCombo(header, binding, width, TenderWall.EndPanelTreatmentOptions);
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chỉ nhập cho hạng mục Vách.");
+            var tooltip = UiText.Normalize("Chỉ nhập cho hạng mục Vách, không áp dụng cho Vách + Ngoài nhà.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3102,11 +3166,35 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             return col;
         }
 
+        private static DataGridCheckBoxColumn ColEndEdgeCheck(string header, string binding, double width)
+        {
+            var col = ColCheck(header, binding, width);
+            var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
+            var tooltip = UiText.Normalize("Chỉ áp dụng khi Chi tiết đầu/cuối vách khác 'Không áp dụng' (không dùng cho Vách + Ngoài nhà).");
+
+            var cellStyle = new Style(typeof(DataGridCell));
+            cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
+            cellStyle.Triggers.Add(new DataTrigger
+            {
+                Binding = new Binding(nameof(TenderWallRow.IsEndEdgeEditable)),
+                Value = false,
+                Setters =
+                {
+                    new Setter(UIElement.IsEnabledProperty, false),
+                    new Setter(Control.BackgroundProperty, disabledBrush),
+                    new Setter(Control.ForegroundProperty, Brushes.DimGray)
+                }
+            });
+            col.CellStyle = cellStyle;
+
+            return col;
+        }
+
         private static DataGridTextColumn ColStar(string header, string binding)
         {
-            var col = ColNote(header, binding, 320);
-            col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-            col.MinWidth = 220;
+            var col = ColNote(header, binding, 900);
+            col.Width = new DataGridLength(900);
+            col.MinWidth = 500;
             return col;
         }
 
@@ -3145,15 +3233,32 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public double CableDropLengthMm { get; set; }
         private string NormalizedCategory => UiText.Normalize(Category);
         private string NormalizedApplication => UiText.Normalize(Application);
+        private bool IsExteriorWall =>
+            string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(NormalizedApplication, "Ngo\u00e0i nh\u00e0", StringComparison.OrdinalIgnoreCase);
         public bool IsCableDropEditable => string.Equals(NormalizedCategory, "Tr\u1ea7n", StringComparison.OrdinalIgnoreCase);
         public bool IsSuspensionLayoutEditable => string.Equals(NormalizedCategory, "Tr\u1ea7n", StringComparison.OrdinalIgnoreCase);
-        public bool IsTopPanelTreatmentEditable => string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase);
-        public bool IsEndPanelTreatmentEditable => string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase);
+        public bool IsTopPanelTreatmentFixed => IsExteriorWall;
+        public bool IsTopPanelTreatmentEditable =>
+            string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
+            && !IsTopPanelTreatmentFixed;
+        public bool IsEndPanelTreatmentEditable =>
+            string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
+            && !IsExteriorWall;
+        public bool IsEndEdgeEditable =>
+            IsEndPanelTreatmentEditable
+            && !string.Equals(
+                TenderWall.NormalizeEndPanelTreatment(EndPanelTreatment),
+                TenderWall.EndPanelTreatmentNone,
+                StringComparison.OrdinalIgnoreCase);
         public bool IsBottomPanelTreatmentFixed =>
             string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
             && string.Equals(NormalizedApplication, "Kho l\u1ea1nh", StringComparison.OrdinalIgnoreCase);
         public bool IsBottomPanelTreatmentEditable => false;
         public bool IsVerticalJointEditable =>
+            string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(NormalizedApplication, "Ngo\u00e0i nh\u00e0", StringComparison.OrdinalIgnoreCase);
+        public bool IsCornerLinkEditable =>
             string.Equals(NormalizedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase)
             && string.Equals(NormalizedApplication, "Ngo\u00e0i nh\u00e0", StringComparison.OrdinalIgnoreCase);
         public bool ColdStorageDivideFromMaxSide { get; set; }
@@ -3262,11 +3367,14 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CableDropLengthMm)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCableDropEditable)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSuspensionLayoutEditable)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsTopPanelTreatmentFixed)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsTopPanelTreatmentEditable)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEndPanelTreatmentEditable)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEndEdgeEditable)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsBottomPanelTreatmentFixed)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsBottomPanelTreatmentEditable)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVerticalJointEditable)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCornerLinkEditable)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ColdStorageDivideFromMaxSide)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SuspensionLayoutDirection)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TopPanelTreatment)));
@@ -3276,6 +3384,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BottomEdgeExposed)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StartEdgeExposed)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EndEdgeExposed)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OutsideCornerCount)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InsideCornerCount)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(WallAreaM2Display)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpeningAreaM2Display)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NetAreaM2Display)));
@@ -3302,6 +3412,13 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
         public void NormalizeTopPanelTreatment()
         {
+            if (IsTopPanelTreatmentFixed)
+            {
+                TopPanelTreatment = TenderWall.TopPanelTreatmentFree;
+                TopEdgeExposed = true;
+                return;
+            }
+
             if (!IsTopPanelTreatmentEditable)
             {
                 TopPanelTreatment = TenderWall.TopPanelTreatmentNone;
@@ -3326,6 +3443,12 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             EndPanelTreatment = TenderWall.NormalizeEndPanelTreatment(
                 EndPanelTreatment,
                 StartEdgeExposed || EndEdgeExposed);
+
+            if (string.Equals(EndPanelTreatment, TenderWall.EndPanelTreatmentNone, StringComparison.OrdinalIgnoreCase))
+            {
+                StartEdgeExposed = false;
+                EndEdgeExposed = false;
+            }
         }
 
         public void NormalizeBottomPanelTreatment()
@@ -3346,6 +3469,14 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
             BottomPanelTreatment = TenderWall.NormalizeBottomPanelTreatment(BottomPanelTreatment, BottomEdgeExposed);
             BottomEdgeExposed = !string.Equals(BottomPanelTreatment, TenderWall.BottomPanelTreatmentNone, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void NormalizeCornerLink()
+        {
+            if (!IsCornerLinkEditable)
+                OutsideCornerCount = 0;
+
+            InsideCornerCount = 0;
         }
 
         private static string FormatHeightSegments(IReadOnlyList<TenderHeightSegment>? segments)
@@ -3430,6 +3561,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             NormalizeTopPanelTreatment();
             NormalizeEndPanelTreatment();
             NormalizeBottomPanelTreatment();
+            NormalizeCornerLink();
             return new TenderWall
             {
                 Category = UiText.Normalize(Category), Floor = Floor, Name = Name,
@@ -3500,6 +3632,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             row.NormalizeTopPanelTreatment();
             row.NormalizeEndPanelTreatment();
             row.NormalizeBottomPanelTreatment();
+            row.NormalizeCornerLink();
             return row;
         }
 

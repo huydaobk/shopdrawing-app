@@ -23,38 +23,39 @@ namespace ShopDrawing.Plugin.UI
                 AutoGenerateColumns = false,
                 CanUserAddRows = false,
                 CanUserDeleteRows = false,
-                CanUserSortColumns = true,
+                CanUserSortColumns = true,
+                EnableColumnVirtualization = false,
                 SelectionMode = DataGridSelectionMode.Extended,
                 SelectionUnit = DataGridSelectionUnit.FullRow,
                 HeadersVisibility = DataGridHeadersVisibility.Column,
                 AlternatingRowBackground = AltRow,
                 ItemsSource = _wallRows
             };
-            ConfigureGridScrolling(grid);
+            ConfigureGridScrolling(grid);
+            ScrollViewer.SetCanContentScroll(grid, false);
 
             grid.Columns.Add(Col("STT", "Index", 40));
-            grid.Columns.Add(ColTemplateCombo("Hạng mục", "Category", 75, TenderWall.CategoryOptions));
-            grid.Columns.Add(Col("Tầng", "Floor", 50));
-            grid.Columns.Add(Col("Ký hiệu", "Name", 70));
-            grid.Columns.Add(Col("Dài (mm)", "Length", 80, "F0"));
-            grid.Columns.Add(Col("Cao (mm)", "Height", 80, "F0"));
-            grid.Columns.Add(Col("Thả cáp (mm)", "CableDropLengthMm", 90, "F0"));
-            grid.Columns.Add(ColTemplateCombo("Mã spec", "SpecKey", 100, _project.Specs.Select(s => s.Key).ToArray()));
-            grid.Columns.Add(ColTemplateCombo("Khổ tấm", "PanelWidth", 70, new[] { "900", "1000", "1100", "1150", "1200" }));
-            grid.Columns.Add(ColTemplateCombo("Hướng", "LayoutDirection", 60, TenderWall.LayoutDirectionOptions));
-            grid.Columns.Add(ColSuspensionLayout("Hướng PK", "SuspensionLayoutDirection", 75));
-            grid.Columns.Add(ColTemplateCombo("Ứng dụng", "Application", 85, TenderWall.ApplicationOptions));
-            grid.Columns[6] = ColCableDrop("Thả cáp (mm)", "CableDropLengthMm", 90, "F0");
+            grid.Columns.Add(ColTemplateCombo("Hạng mục", "Category", 82, TenderWall.CategoryOptions));
+            grid.Columns.Add(Col("Tầng", "Floor", 58));
+            grid.Columns.Add(Col("Ký hiệu", "Name", 78));
+            grid.Columns.Add(Col("Dài (mm)", "Length", 82, "F0"));
+            grid.Columns.Add(Col("Cao (mm)", "Height", 82, "F0"));
+            grid.Columns.Add(Col("Thả cáp (mm)", "CableDropLengthMm", 102, "F0"));
+            grid.Columns.Add(ColTemplateCombo("Mã spec", "SpecKey", 108, _project.Specs.Select(s => s.Key).ToArray()));
+            grid.Columns.Add(ColTemplateCombo("Khổ tấm", "PanelWidth", 78, new[] { "900", "1000", "1100", "1150", "1200" }));
+            grid.Columns.Add(ColTemplateCombo("Hướng", "LayoutDirection", 64, TenderWall.LayoutDirectionOptions));
+            grid.Columns.Add(ColSuspensionLayout("Hướng PK", "SuspensionLayoutDirection", 82));
+            grid.Columns.Add(ColTemplateCombo("Ứng dụng", "Application", 95, TenderWall.ApplicationOptions));
+            grid.Columns[6] = ColCableDrop("Thả cáp (mm)", "CableDropLengthMm", 102, "F0");
             grid.Columns[8].IsReadOnly = true;
-            grid.Columns.Add(ColTopPanelTreatment("Chi tiết đỉnh vách", "TopPanelTreatment", 130));
-            grid.Columns.Add(ColEndPanelTreatment("Chi tiết đầu/cuối vách", "EndPanelTreatment", 130));
-            grid.Columns.Add(ColBottomPanelTreatment("Chi tiết chân vách", "BottomPanelTreatment", 135));
-            grid.Columns.Add(ColBottomEdgeToggle("Xử lý chân vách", "BottomEdgeExposed", 95));
-            grid.Columns.Add(ColCheck("Xử lý mép trái", "StartEdgeExposed", 85));
-            grid.Columns.Add(ColCheck("Xử lý mép phải", "EndEdgeExposed", 88));
-            grid.Columns.Add(Col("Góc ngoài", "OutsideCornerCount", 65));
-            grid.Columns.Add(Col("Góc trong", "InsideCornerCount", 65));
-            grid.Columns.Add(ColVerticalJoint("Khe đứng", "VerticalJointCount", 72));
+            grid.Columns.Add(ColTopPanelTreatment("Chi tiết đỉnh vách", "TopPanelTreatment", 150));
+            grid.Columns.Add(ColEndPanelTreatment("Chi tiết đầu/cuối vách", "EndPanelTreatment", 162));
+            grid.Columns.Add(ColBottomPanelTreatment("Chi tiết chân vách", "BottomPanelTreatment", 150));
+            grid.Columns.Add(ColBottomEdgeToggle("Xử lý chân vách", "BottomEdgeExposed", 108));
+            grid.Columns.Add(ColEndEdgeCheck("Xử lý mép trái", "StartEdgeExposed", 102));
+            grid.Columns.Add(ColEndEdgeCheck("Xử lý mép phải", "EndEdgeExposed", 104));
+            grid.Columns.Add(ColCornerLink("Liên kết góc", "OutsideCornerCount", 88));
+            grid.Columns.Add(ColVerticalJoint("Khe đứng", "VerticalJointCount", 78));
 
             // Computed columns (read-only, blue text)
             var cellStyleBold = new Style(typeof(DataGridCell));
@@ -66,10 +67,10 @@ namespace ShopDrawing.Plugin.UI
             cellStyleSpecLocked.Setters.Add(new Setter(DataGridCell.ToolTipProperty, UiText.Normalize("Khổ tấm đang lấy tự động theo mã spec trong quản lý spec.")));
             grid.Columns[8].CellStyle = cellStyleSpecLocked;
 
-            var colArea = Col("DT tường", "WallAreaM2Display", 75); colArea.IsReadOnly = true; colArea.CellStyle = cellStyleBold;
-            var colOp = Col("DT lỗ mở", "OpeningAreaM2Display", 75); colOp.IsReadOnly = true; colOp.CellStyle = cellStyleBold;
-            var colNet = Col("DT Net", "NetAreaM2Display", 65); colNet.IsReadOnly = true; colNet.CellStyle = cellStyleBold;
-            var colPanels = Col("Số tấm", "EstimatedPanelCountDisplay", 55); colPanels.IsReadOnly = true; colPanels.CellStyle = cellStyleBold;
+            var colArea = Col("DT tường", "WallAreaM2Display", 82); colArea.IsReadOnly = true; colArea.CellStyle = cellStyleBold;
+            var colOp = Col("DT lỗ mở", "OpeningAreaM2Display", 82); colOp.IsReadOnly = true; colOp.CellStyle = cellStyleBold;
+            var colNet = Col("DT Net", "NetAreaM2Display", 70); colNet.IsReadOnly = true; colNet.CellStyle = cellStyleBold;
+            var colPanels = Col("Số tấm", "EstimatedPanelCountDisplay", 68); colPanels.IsReadOnly = true; colPanels.CellStyle = cellStyleBold;
 
             grid.Columns.Add(colArea);
             grid.Columns.Add(colOp);
@@ -111,6 +112,22 @@ namespace ShopDrawing.Plugin.UI
 
             }
 
+            if (e.Row.Item is TenderWallRow cornerRow
+
+                && IsCornerLinkColumn(e.Column)
+
+                && !cornerRow.IsCornerLinkEditable)
+
+            {
+
+                e.Cancel = true;
+
+                SetStatus("Liên kết góc chỉ nhập cho Vách + Ngoài nhà.");
+
+                return;
+
+            }
+
             if (e.Row.Item is TenderWallRow topTreatmentRow
 
                 && IsTopPanelTreatmentColumn(e.Column)
@@ -121,7 +138,9 @@ namespace ShopDrawing.Plugin.UI
 
                 e.Cancel = true;
 
-                SetStatus("Chi tiết đỉnh vách chỉ nhập cho hạng mục Vách.");
+                SetStatus(topTreatmentRow.IsTopPanelTreatmentFixed
+                    ? "Vách + Ngoài nhà: đỉnh vách đang tự động (Diềm 01 và phụ kiện đi kèm)."
+                    : "Chi tiết đỉnh vách chỉ nhập cho hạng mục Vách.");
 
                 return;
 
@@ -137,7 +156,7 @@ namespace ShopDrawing.Plugin.UI
 
                 e.Cancel = true;
 
-                SetStatus("Chi tiết đầu/cuối vách chỉ nhập cho hạng mục Vách.");
+                SetStatus("Chi tiết đầu/cuối vách không áp dụng cho Vách + Ngoài nhà.");
 
                 return;
 
@@ -278,6 +297,7 @@ namespace ShopDrawing.Plugin.UI
                         editedRow.NormalizeTopPanelTreatment();
                         editedRow.NormalizeEndPanelTreatment();
                         editedRow.NormalizeBottomPanelTreatment();
+                        editedRow.NormalizeCornerLink();
 
                         if (!IsSuspendedCeilingRow(editedRow))
 
@@ -385,7 +405,8 @@ namespace ShopDrawing.Plugin.UI
             var col = Col(header, binding, width);
 
             var noteStyle = new Style(typeof(TextBlock), col.ElementStyle);
-            noteStyle.Setters.Add(new Setter(TextBlock.TextWrappingProperty, TextWrapping.NoWrap));
+            noteStyle.Setters.Add(new Setter(TextBlock.TextTrimmingProperty, TextTrimming.None));
+            noteStyle.Setters.Add(new Setter(TextBlock.TextWrappingProperty, TextWrapping.NoWrap));
             col.ElementStyle = noteStyle;
 
             return col;
@@ -468,6 +489,7 @@ namespace ShopDrawing.Plugin.UI
             row.NormalizeTopPanelTreatment();
             row.NormalizeEndPanelTreatment();
             row.NormalizeBottomPanelTreatment();
+            row.NormalizeCornerLink();
             return row;
         }
 

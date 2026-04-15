@@ -131,10 +131,7 @@ namespace ShopDrawing.Plugin.UI
             int rowIdx = 0;
 
             var titleRow = sheet.CreateRow(rowIdx++);
-            var titleCell = titleRow.CreateCell(0);
-            titleCell.SetCellValue(title);
-            titleCell.CellStyle = titleStyle;
-            MergeRowAcross(sheet, titleRow.RowNum, maxColumnIndex);
+            SetMergedTextCell(sheet, titleRow, 0, maxColumnIndex, title, titleStyle);
 
             var infoRow = sheet.CreateRow(rowIdx++);
             SetCell(infoRow, 0, $"Khách hàng: {customerName}", infoStyle);
@@ -160,7 +157,13 @@ namespace ShopDrawing.Plugin.UI
 
             var sectionRow = sheet.CreateRow(rowIdx++);
             SetCell(sectionRow, 0, "TỔNG HỢP KHỐI LƯỢNG TẤM THEO TẦNG + SPEC", sectionStyle);
-            MergeRowAcross(sheet, sectionRow.RowNum, TenderSheetMaxColumnIndex);
+            SetMergedTextCell(
+                sheet,
+                sectionRow,
+                0,
+                TenderSheetMaxColumnIndex,
+                sectionRow.GetCell(0)?.StringCellValue ?? string.Empty,
+                sectionStyle);
 
             string[] headers =
             {
@@ -214,7 +217,13 @@ namespace ShopDrawing.Plugin.UI
 
             var supplyTitleRow = sheet.CreateRow(rowIdx++);
             SetCell(supplyTitleRow, 0, "TỔNG KHỐI LƯỢNG PANEL CẤP DỰ KIẾN", sectionStyle);
-            sheet.AddMergedRegion(new CellRangeAddress(supplyTitleRow.RowNum, supplyTitleRow.RowNum, 0, 8));
+            SetMergedTextCell(
+                sheet,
+                supplyTitleRow,
+                0,
+                8,
+                supplyTitleRow.GetCell(0)?.StringCellValue ?? string.Empty,
+                sectionStyle);
 
             var supplyHeaderRow = sheet.CreateRow(rowIdx++);
             SetCell(supplyHeaderRow, 0, "STT", headerStyle);
@@ -258,7 +267,13 @@ namespace ShopDrawing.Plugin.UI
 
             var titleRow = sheet.CreateRow(rowIdx++);
             SetCell(titleRow, 0, "CƠ SỞ TÍNH PHỤ KIỆN", sectionStyle);
-            MergeRowAcross(sheet, titleRow.RowNum, BasisSheetMaxColumnIndex);
+            SetMergedTextCell(
+                sheet,
+                titleRow,
+                0,
+                BasisSheetMaxColumnIndex,
+                titleRow.GetCell(0)?.StringCellValue ?? string.Empty,
+                sectionStyle);
 
             string[] headers =
             {
@@ -316,7 +331,13 @@ namespace ShopDrawing.Plugin.UI
 
             var titleRow = sheet.CreateRow(rowIdx++);
             SetCell(titleRow, 0, "TỔNG HỢP PHỤ KIỆN ĐẤU THẦU", sectionStyle);
-            MergeRowAcross(sheet, titleRow.RowNum, TenderSheetMaxColumnIndex);
+            SetMergedTextCell(
+                sheet,
+                titleRow,
+                0,
+                TenderSheetMaxColumnIndex,
+                titleRow.GetCell(0)?.StringCellValue ?? string.Empty,
+                sectionStyle);
 
             string[] headers =
             {
@@ -357,10 +378,6 @@ namespace ShopDrawing.Plugin.UI
                 ApplyWrapRowHeight(excelRow, $"{noteParts.Scope} {noteParts.Detail}", 90);
             }
 
-            var totalRow = sheet.CreateRow(rowIdx++);
-            SetCell(totalRow, 3, "TỔNG CHỐT:", totalStyle);
-            SetCell(totalRow, 15, summary.Sum(item => item.FinalQuantity), totalStyle);
-
             return rowIdx;
         }
 
@@ -392,15 +409,21 @@ namespace ShopDrawing.Plugin.UI
 
             var sectionRow = sheet.CreateRow(rowIdx++);
             SetCell(sectionRow, 0, "DANH SÁCH SPEC DỰ ÁN", sectionStyle);
-            MergeRowAcross(sheet, sectionRow.RowNum, SpecSheetMaxColumnIndex);
+            SetMergedTextCell(
+                sheet,
+                sectionRow,
+                0,
+                SpecSheetMaxColumnIndex,
+                sectionRow.GetCell(0)?.StringCellValue ?? string.Empty,
+                sectionStyle);
 
             var groupRow = sheet.CreateRow(rowIdx++);
             SetCell(groupRow, 0, "THÔNG TIN CHUNG", specGroupStyle);
             SetCell(groupRow, 9, "MẶT TRÊN", topGroupStyle);
             SetCell(groupRow, 14, "MẶT DƯỚI", bottomGroupStyle);
-            sheet.AddMergedRegion(new CellRangeAddress(groupRow.RowNum, groupRow.RowNum, 0, 8));
-            sheet.AddMergedRegion(new CellRangeAddress(groupRow.RowNum, groupRow.RowNum, 9, 13));
-            sheet.AddMergedRegion(new CellRangeAddress(groupRow.RowNum, groupRow.RowNum, 14, 18));
+            SetMergedTextCell(sheet, groupRow, 0, 8, groupRow.GetCell(0)?.StringCellValue ?? string.Empty, specGroupStyle);
+            SetMergedTextCell(sheet, groupRow, 9, 13, groupRow.GetCell(9)?.StringCellValue ?? string.Empty, topGroupStyle);
+            SetMergedTextCell(sheet, groupRow, 14, 18, groupRow.GetCell(14)?.StringCellValue ?? string.Empty, bottomGroupStyle);
 
             string[] headers =
             {
@@ -507,11 +530,6 @@ namespace ShopDrawing.Plugin.UI
                 if (sheet.GetColumnWidth(i) < targetWidth)
                     sheet.SetColumnWidth(i, targetWidth);
             }
-        }
-
-        private static void MergeRowAcross(ISheet sheet, int rowIndex, int lastColumnIndex)
-        {
-            sheet.AddMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, lastColumnIndex));
         }
 
         private static void SetMergedTextCell(

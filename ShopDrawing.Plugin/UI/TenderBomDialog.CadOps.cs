@@ -12,6 +12,8 @@ using System.Windows.Controls;
 
 using System.Windows.Data;
 
+using System.Windows.Input;
+
 using System.Windows.Media;
 
 using System.Windows.Threading;
@@ -367,7 +369,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                             height = maxVy - minVy;
 
-                            polygonVertices = IsRectangleByVertices(vertices) ? null : vertices;
+                            // Với Pick diện tích: luôn giữ polygon để preview chia tấm
+                            // bám theo scan-line giống logic tính khối lượng, kể cả hình chữ nhật.
+                            polygonVertices = pickArea ? vertices : (IsRectangleByVertices(vertices) ? null : vertices);
 
                         }
 
@@ -816,13 +820,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                            // ChÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â° lÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°u vertices nÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿u KHÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂNG phÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â£i chÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¯ nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¹ng scan-line
-
-                            bool isRectangle = IsRectangleByVertices(vertices);
-
-                            if (!isRectangle)
-
-                                newRow.PolygonVertices = vertices;
+                            // Với Pick diện tích: luôn lưu polygon để preview/tính tấm đi chung 1 nhánh scan-line.
+                            // Tránh lệch giữa hình preview và bảng số lượng ở các hình chữ nhật quay.
+                            newRow.PolygonVertices = vertices;
 
                         }
 
@@ -1297,6 +1297,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 ComboBox cboLayoutDirection = null!;
                 TextBlock lblOpeningCount = null!;
                 DataGrid rowGrid = null!;
+                Button btnPickSpan = null!;
+                Button btnPickOpening = null!;
+                Button btnDeleteSpan = null!;
+                Button btnApply = null!;
+                Button btnCancel = null!;
                 var rows = new ObservableCollection<HeightSegmentInputRow>();
                 var seedSegments = WallHeightResolver.Normalize(lengthTarget, defaultHeight, initialSegments);
                 if (seedSegments.Count == 0)
@@ -1318,6 +1323,35 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         });
                     }
                 }
+
+                void OnSegmentInputRowChanged(object? sender, PropertyChangedEventArgs args)
+                {
+                    if (args.PropertyName == nameof(HeightSegmentInputRow.LengthMm) ||
+                        args.PropertyName == nameof(HeightSegmentInputRow.HeightMm))
+                    {
+                        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
+                    }
+                }
+
+                rows.CollectionChanged += (_, args) =>
+                {
+                    if (args.NewItems != null)
+                    {
+                        foreach (var item in args.NewItems.OfType<HeightSegmentInputRow>())
+                            item.PropertyChanged += OnSegmentInputRowChanged;
+                    }
+
+                    if (args.OldItems != null)
+                    {
+                        foreach (var item in args.OldItems.OfType<HeightSegmentInputRow>())
+                            item.PropertyChanged -= OnSegmentInputRowChanged;
+                    }
+
+                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
+                };
+
+                foreach (var rowItem in rows)
+                    rowItem.PropertyChanged += OnSegmentInputRowChanged;
 
                 void RebuildCadSpanSplinePreview()
                 {
@@ -1411,7 +1445,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 };
                 directionPanel.Children.Add(cboLayoutDirection);
                 topPanel.Children.Add(directionPanel);
-                var btnPickSpan = Btn("Pick Nhịp", AccentBlue, Brushes.White, (_, _) =>
+                btnPickSpan = Btn("Pick Nhịp", AccentBlue, Brushes.White, (_, _) =>
                 {
                     dlg.Hide();
                     try
@@ -1476,12 +1510,18 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     {
                         dlg.Show();
                         dlg.Activate();
+                        if (rowGrid != null && rows.Count > 0)
+                        {
+                            rowGrid.SelectedIndex = rows.Count - 1;
+                            rowGrid.ScrollIntoView(rows[^1]);
+                            rowGrid.Focus();
+                        }
                         RebuildCadSpanSplinePreview();
                         RefreshPreview();
                     }
                 }, 100);
                 topPanel.Children.Add(btnPickSpan);
-                var btnPickOpening = Btn("Pick Lỗ Mở", AccentOrange, Brushes.White, (_, _) =>
+                btnPickOpening = Btn("Pick Lỗ Mở", AccentOrange, Brushes.White, (_, _) =>
                 {
                     dlg.Hide();
                     try
@@ -1507,7 +1547,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                 }, 120);
                 topPanel.Children.Add(btnPickOpening);
-                var btnDeleteSpan = Btn("Xóa Nhịp", AccentRed, Brushes.White, (_, _) =>
+                btnDeleteSpan = Btn("Xóa Nhịp", AccentRed, Brushes.White, (_, _) =>
                 {
                     var selectedRow = rowGrid?.SelectedItem as HeightSegmentInputRow;
                     if (selectedRow == null)
@@ -1566,7 +1606,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Binding = new Binding(nameof(HeightSegmentInputRow.LengthMm))
                     {
                         StringFormat = "F0",
-                        UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
+                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
                     },
                     Width = new DataGridLength(1, DataGridLengthUnitType.Star)
                 });
@@ -1576,11 +1616,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Binding = new Binding(nameof(HeightSegmentInputRow.HeightMm))
                     {
                         StringFormat = "F0",
-                        UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
+                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
                     },
                     Width = new DataGridLength(1, DataGridLengthUnitType.Star)
                 });
                 rowGrid.CellEditEnding += (_, _) =>
+                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
+                rowGrid.CurrentCellChanged += (_, _) =>
                     Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
                 Grid.SetRow(rowGrid, 2);
                 root.Children.Add(rowGrid);
@@ -1628,14 +1670,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Grid.SetRow(footer, 4);
                 root.Children.Add(footer);
 
-                var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
+                btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
                 {
                     dialogAccepted = false;
                     RollbackCreatedSpanEntities();
                     CleanupCadSpanSplinePreview();
                     dlg.Close();
                 }, 120);
-                var btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
+                btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
                 {
                     try
                     {
@@ -1727,6 +1769,44 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 footer.Children.Add(btnCancel);
                 footer.Children.Add(btnApply);
 
+                dlg.PreviewKeyDown += (_, e) =>
+                {
+                    bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+                    if (ctrl && e.Key == Key.P)
+                    {
+                        btnPickSpan.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (ctrl && e.Key == Key.O)
+                    {
+                        btnPickOpening.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.Delete && rowGrid != null && rowGrid.IsKeyboardFocusWithin)
+                    {
+                        btnDeleteSpan.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.Enter && !ctrl)
+                    {
+                        btnApply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.Escape)
+                    {
+                        btnCancel.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        e.Handled = true;
+                    }
+                };
+
                 void RefreshPreview()
                 {
                     BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: false);
@@ -1763,6 +1843,15 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 dlg.Loaded += (_, _) => RefreshPreview();
                 dlg.Loaded += (_, _) => RebuildCadSpanSplinePreview();
+                dlg.Loaded += (_, _) =>
+                {
+                    if (rowGrid != null)
+                    {
+                        if (rows.Count > 0)
+                            rowGrid.SelectedIndex = 0;
+                        rowGrid.Focus();
+                    }
+                };
                 dlg.SizeChanged += (_, _) => RefreshPreview();
                 dlg.Closed += (_, _) =>
                 {
@@ -2591,6 +2680,251 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
         }
 
+        private bool TryResolveOpeningStationAndWidthFromWallGeometry(
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
+            TenderWallRow wallRow,
+            out double stationMm,
+            out double projectedWidthMm)
+        {
+            stationMm = -1;
+            projectedWidthMm = 0;
+            if (wallRow == null)
+                return false;
+
+            if (TryResolveOpeningStationAndWidthFromCad(
+                pickPoint1,
+                pickPoint2,
+                wallRow.HeightSegments,
+                out stationMm,
+                out projectedWidthMm))
+            {
+                return true;
+            }
+
+            if (wallRow.PolygonVertices != null
+                && wallRow.PolygonVertices.Count >= 3
+                && TryResolveOpeningStationAndWidthFromPolygon(
+                    pickPoint1,
+                    pickPoint2,
+                    wallRow.PolygonVertices,
+                    Math.Max(1.0, wallRow.Length),
+                    out stationMm,
+                    out projectedWidthMm))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(wallRow.CadHandle))
+                return false;
+
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            try
+            {
+                if (!long.TryParse(
+                        wallRow.CadHandle,
+                        System.Globalization.NumberStyles.HexNumber,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out var rawHandle))
+                {
+                    return false;
+                }
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                    if (!doc.Database.TryGetObjectId(handle, out var objId))
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    var ent = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false)
+                        as Autodesk.AutoCAD.DatabaseServices.Entity;
+                    if (ent == null)
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    bool resolved = false;
+                    if (ent is Autodesk.AutoCAD.DatabaseServices.Line line)
+                    {
+                        resolved = TryResolveOpeningStationAndWidthFromLine(
+                            pickPoint1,
+                            pickPoint2,
+                            line.StartPoint,
+                            line.EndPoint,
+                            Math.Max(1.0, line.Length),
+                            out stationMm,
+                            out projectedWidthMm);
+                    }
+                    else if (ent is Autodesk.AutoCAD.DatabaseServices.Polyline polyline)
+                    {
+                        var vertices = GetPolylineVertices(polyline);
+                        if (polyline.Closed && vertices.Count >= 3)
+                        {
+                            resolved = TryResolveOpeningStationAndWidthFromPolygon(
+                                pickPoint1,
+                                pickPoint2,
+                                vertices,
+                                Math.Max(1.0, wallRow.Length),
+                                out stationMm,
+                                out projectedWidthMm);
+                        }
+                        else if (vertices.Count >= 2)
+                        {
+                            resolved = TryResolveOpeningStationAndWidthFromPolylineChain(
+                                pickPoint1,
+                                pickPoint2,
+                                vertices,
+                                out stationMm,
+                                out projectedWidthMm);
+                        }
+                    }
+
+                    tr.Commit();
+                    return resolved;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool TryResolveOpeningStationAndWidthFromLine(
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
+            Autodesk.AutoCAD.Geometry.Point3d lineStart,
+            Autodesk.AutoCAD.Geometry.Point3d lineEnd,
+            double referenceLengthMm,
+            out double stationMm,
+            out double projectedWidthMm)
+        {
+            stationMm = -1;
+            projectedWidthMm = 0;
+
+            var vector = lineEnd - lineStart;
+            double len = vector.Length;
+            if (len <= 1e-6)
+                return false;
+
+            double Project(Autodesk.AutoCAD.Geometry.Point3d point)
+            {
+                double t = (point - lineStart).DotProduct(vector) / (len * len);
+                t = Math.Max(0, Math.Min(1, t));
+                return t * Math.Max(1.0, referenceLengthMm);
+            }
+
+            double s1 = Project(pickPoint1);
+            double s2 = Project(pickPoint2);
+            stationMm = Math.Max(0, Math.Min(s1, s2));
+            projectedWidthMm = Math.Max(0, Math.Abs(s2 - s1));
+            return projectedWidthMm > 0.5;
+        }
+
+        private static bool TryResolveOpeningStationAndWidthFromPolylineChain(
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
+            List<double[]> chainVertices,
+            out double stationMm,
+            out double projectedWidthMm)
+        {
+            stationMm = -1;
+            projectedWidthMm = 0;
+            if (chainVertices == null || chainVertices.Count < 2)
+                return false;
+
+            static bool TryProject(
+                Autodesk.AutoCAD.Geometry.Point3d point,
+                List<double[]> vertices,
+                out double station,
+                out double distance)
+            {
+                station = -1;
+                distance = double.MaxValue;
+                bool found = false;
+                double walked = 0;
+
+                for (int i = 0; i + 1 < vertices.Count; i++)
+                {
+                    var p0 = new Autodesk.AutoCAD.Geometry.Point3d(vertices[i][0], vertices[i][1], 0);
+                    var p1 = new Autodesk.AutoCAD.Geometry.Point3d(vertices[i + 1][0], vertices[i + 1][1], 0);
+                    var vector = p1 - p0;
+                    double segLen = vector.Length;
+                    if (segLen <= 1e-6)
+                        continue;
+
+                    double t = (point - p0).DotProduct(vector) / (segLen * segLen);
+                    t = Math.Max(0, Math.Min(1, t));
+                    var projected = p0 + (vector * t);
+                    double d = point.DistanceTo(projected);
+                    if (d < distance)
+                    {
+                        distance = d;
+                        station = walked + t * segLen;
+                        found = true;
+                    }
+
+                    walked += segLen;
+                }
+
+                return found;
+            }
+
+            bool p1Ok = TryProject(pickPoint1, chainVertices, out var s1, out var d1);
+            bool p2Ok = TryProject(pickPoint2, chainVertices, out var s2, out var d2);
+            if (!p1Ok || !p2Ok || d1 == double.MaxValue || d2 == double.MaxValue)
+                return false;
+
+            stationMm = Math.Max(0, Math.Min(s1, s2));
+            projectedWidthMm = Math.Max(0, Math.Abs(s2 - s1));
+            return projectedWidthMm > 0.5;
+        }
+
+        private static bool TryResolveOpeningStationAndWidthFromPolygon(
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
+            Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
+            IReadOnlyList<double[]> polygonVertices,
+            double referenceLengthMm,
+            out double stationMm,
+            out double projectedWidthMm)
+        {
+            stationMm = -1;
+            projectedWidthMm = 0;
+            if (polygonVertices == null || polygonVertices.Count < 3)
+                return false;
+
+            double minX = polygonVertices.Min(v => v[0]);
+            double maxX = polygonVertices.Max(v => v[0]);
+            double minY = polygonVertices.Min(v => v[1]);
+            double maxY = polygonVertices.Max(v => v[1]);
+            double spanX = Math.Max(1.0, maxX - minX);
+            double spanY = Math.Max(1.0, maxY - minY);
+            bool stationAlongX = spanX >= spanY;
+            double axisMin = stationAlongX ? minX : minY;
+            double axisMax = stationAlongX ? maxX : maxY;
+            double axisSpan = Math.Max(1.0, axisMax - axisMin);
+
+            double axis1 = stationAlongX ? pickPoint1.X : pickPoint1.Y;
+            double axis2 = stationAlongX ? pickPoint2.X : pickPoint2.Y;
+            double axisStart = Math.Max(axisMin, Math.Min(axisMax, Math.Min(axis1, axis2)));
+            double axisEnd = Math.Max(axisMin, Math.Min(axisMax, Math.Max(axis1, axis2)));
+            double axisWidth = Math.Max(0, axisEnd - axisStart);
+            if (axisWidth <= 0.5)
+                return false;
+
+            double lengthRef = Math.Max(1.0, referenceLengthMm);
+            stationMm = ((axisStart - axisMin) / axisSpan) * lengthRef;
+            projectedWidthMm = (axisWidth / axisSpan) * lengthRef;
+            return projectedWidthMm > 0.5;
+        }
+
         private bool TryResolveOpeningCenterStationFromCad(
             Autodesk.AutoCAD.Geometry.Point3d pickPoint1,
             Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
@@ -3023,10 +3357,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double finalH = heightMm;
                 double finalBottom = Math.Max(0, Math.Round(existingRow?.BottomElevationMm ?? 0));
                 double finalStation = Math.Round(existingRow?.CenterStationMm ?? -1);
-                if (!isElevation && TryResolveOpeningStationAndWidthFromCad(
+                if (!isElevation && TryResolveOpeningStationAndWidthFromWallGeometry(
                     p1,
                     p2,
-                    wallRow.HeightSegments,
+                    wallRow,
                     out var detectedStation,
                     out var projectedWidth))
                 {

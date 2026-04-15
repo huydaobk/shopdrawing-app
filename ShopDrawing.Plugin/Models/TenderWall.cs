@@ -38,6 +38,16 @@ namespace ShopDrawing.Plugin.Models
 
     public class TenderWall
     {
+        private const string WasteLabelPrefix = "Hao hụt";
+        private const string WasteLabelOpening = "Hao hụt (Lỗ mở)";
+
+        private static bool IsWasteLabel(string? label)
+        {
+            if (string.IsNullOrWhiteSpace(label))
+                return false;
+
+            return label.Trim().StartsWith(WasteLabelPrefix, StringComparison.OrdinalIgnoreCase);
+        }
         /// <summary>Hang muc: Vach / Tran / Nen / Op cot</summary>
         public string Category { get; set; } = "Vách";
 
@@ -363,12 +373,11 @@ namespace ShopDrawing.Plugin.Models
                 if (PanelWidth <= 0 || DivisionSpan <= 0)
                     return 0;
 
-                // Polygon rows: dùng ScanLineAnalyzer cho chính xác (đồng bộ với GetPanelBreakdown)
                 if (PolygonVertices != null && PolygonVertices.Count >= 3)
                 {
                     var breakdown = GetPanelBreakdown();
                     return breakdown
-                        .Where(e => !string.Equals(e.Label, "Hao hụt", StringComparison.OrdinalIgnoreCase))
+                        .Where(e => !IsWasteLabel(e.Label))
                         .Sum(e => e.Count);
                 }
 
@@ -419,6 +428,7 @@ namespace ShopDrawing.Plugin.Models
             int totalReducedPanels = 0;
             int remainingReduciblePanels = totalPanels;
             var reducedGroups = new Dictionary<double, int>();
+            var openingWasteGroups = new Dictionary<(double Width, double Length), int>();
 
             foreach (var op in Openings)
             {
@@ -445,6 +455,15 @@ namespace ShopDrawing.Plugin.Models
 
                         totalReducedPanels += cappedForThisOp;
                         remainingReduciblePanels -= cappedForThisOp;
+
+                        if (opSpanDim > 1)
+                        {
+                            var wasteKey = (Width: Math.Round((double)PanelWidth), Length: Math.Round(opSpanDim));
+                            if (openingWasteGroups.ContainsKey(wasteKey))
+                                openingWasteGroups[wasteKey] += cappedForThisOp;
+                            else
+                                openingWasteGroups[wasteKey] = cappedForThisOp;
+                        }
                     }
                 }
             }
@@ -489,6 +508,17 @@ namespace ShopDrawing.Plugin.Models
                 });
             }
 
+            foreach (var kv in openingWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = kv.Key.Width,
+                    LengthMm = kv.Key.Length,
+                    Count = kv.Value,
+                    Label = WasteLabelOpening
+                });
+            }
+
             return entries;
         }
 
@@ -505,6 +535,7 @@ namespace ShopDrawing.Plugin.Models
 
             var reducedGroups = new Dictionary<double, int>();
             var wasteGroups = new Dictionary<(double Width, double Length), int>();
+            var openingWasteGroups = new Dictionary<(double Width, double Length), int>();
             int normalPanels = 0;
 
             var openingRanges = BuildOpeningRanges(openings)
@@ -546,7 +577,7 @@ namespace ShopDrawing.Plugin.Models
                         continue;
 
                     removedArea += overlapDiv * overlapSpan;
-                    AddWaste(overlapDiv, overlapSpan, wasteGroups);
+                    AddWaste(overlapDiv, overlapSpan, openingWasteGroups);
                 }
 
                 double nominalArea = PanelWidth * PanelSpan;
@@ -587,6 +618,17 @@ namespace ShopDrawing.Plugin.Models
                     LengthMm = kv.Key,
                     Count = kv.Value,
                     Label = "Giảm (lỗ mở)"
+                });
+            }
+
+            foreach (var kv in openingWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = kv.Key.Width,
+                    LengthMm = kv.Key.Length,
+                    Count = kv.Value,
+                    Label = WasteLabelOpening
                 });
             }
 
@@ -637,6 +679,7 @@ namespace ShopDrawing.Plugin.Models
             var openingRanges = BuildOpeningRanges(openings);
             var orderedGroups = new Dictionary<(double Width, double Height), int>();
             var wasteGroups = new Dictionary<(double Width, double WasteHeight), int>();
+            var openingWasteGroups = new Dictionary<(double Width, double WasteHeight), int>();
 
             for (int strip = 0; strip < stripCount; strip++)
             {
@@ -694,10 +737,10 @@ namespace ShopDrawing.Plugin.Models
                         continue;
 
                     var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
-                    if (wasteGroups.ContainsKey(wasteKey))
-                        wasteGroups[wasteKey]++;
+                    if (openingWasteGroups.ContainsKey(wasteKey))
+                        openingWasteGroups[wasteKey]++;
                     else
-                        wasteGroups[wasteKey] = 1;
+                        openingWasteGroups[wasteKey] = 1;
                 }
 
             }
@@ -710,6 +753,17 @@ namespace ShopDrawing.Plugin.Models
                     LengthMm = pair.Key.Height,
                     Count = pair.Value,
                     Label = "Nguyên"
+                });
+            }
+
+            foreach (var pair in openingWasteGroups.OrderByDescending(p => p.Key.WasteHeight).ThenByDescending(p => p.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.WasteHeight,
+                    Count = pair.Value,
+                    Label = WasteLabelOpening
                 });
             }
 

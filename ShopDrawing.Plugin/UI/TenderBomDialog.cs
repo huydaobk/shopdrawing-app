@@ -2780,7 +2780,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             }).ToList();
             _panelBreakdownGrid.ItemsSource = viewRows;
             int breakdownPanelCount = breakdown
-                .Where(e => !string.Equals(e.Label, "Hao hụt", StringComparison.OrdinalIgnoreCase))
+                .Where(e => string.IsNullOrWhiteSpace(e.Label)
+                    || !e.Label.Trim().StartsWith("Hao hụt", StringComparison.OrdinalIgnoreCase))
                 .Sum(e => Math.Max(0, e.Count));
             SetStatus($"Vùng tính khối lượng: {wallRow.Name} | Tấm bảng chính: {model.EstimatedPanelCount} | Tấm thống kê: {breakdownPanelCount}");
         }

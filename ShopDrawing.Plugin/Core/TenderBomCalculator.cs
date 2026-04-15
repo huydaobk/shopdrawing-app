@@ -110,7 +110,8 @@ namespace ShopDrawing.Plugin.Core
                         .Sum(entry => entry.Count));
                     int wastePieces = g.Sum(w => w
                         .GetPanelBreakdown()
-                        .Where(entry => string.Equals(entry.Label, "Hao hụt", StringComparison.OrdinalIgnoreCase))
+                        .Where(entry => !string.IsNullOrWhiteSpace(entry.Label)
+                            && entry.Label.Trim().StartsWith("Hao hụt", StringComparison.OrdinalIgnoreCase))
                         .Sum(entry => entry.Count));
 
                     return new PanelSummaryRow

@@ -547,34 +547,28 @@ namespace ShopDrawing.Plugin.Core
             return new SuspensionMetrics(positions.Count, totalSegmentLengthMm, pointQty);
         }
 
-        private static SuspensionMetrics GetQuantitySuspensionMetrics(TenderWall wall, double spacingMm)
+        private static SuspensionMetrics GetTSuspensionMetrics(TenderWall wall)
         {
-            if (!IsSupportedSuspendedCeiling(wall) || spacingMm <= 0)
+            if (!IsSupportedSuspendedCeiling(wall))
                 return new SuspensionMetrics(0, 0, 0);
 
-            double runLengthMm = GetSuspensionRunLengthMm(wall);
-            double runWidthMm = GetSuspensionRunWidthMm(wall);
-            if (runLengthMm <= 0 || runWidthMm <= 0)
+            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
+            if (spec == null)
                 return new SuspensionMetrics(0, 0, 0);
 
-            int lineCount = GetSuspensionLineCount(runWidthMm, spacingMm);
-            double totalSegmentLengthMm = lineCount * runLengthMm;
-            double pointQty = GetSuspensionPointQtyFromMm(totalSegmentLengthMm);
-            return new SuspensionMetrics(lineCount, totalSegmentLengthMm, pointQty);
+            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.TSpacingMm);
         }
 
-        private static double GetSuspensionRunLengthMm(TenderWall wall)
-            => Math.Max(0, wall.DivisionSpan);
-
-        private static double GetSuspensionRunWidthMm(TenderWall wall)
-            => Math.Max(0, wall.PanelSpan);
-
-        private static int GetSuspensionLineCount(double runWidthMm, double spacingMm)
+        private static SuspensionMetrics GetMushroomSuspensionMetrics(TenderWall wall)
         {
-            if (runWidthMm <= 0 || spacingMm <= 0)
-                return 0;
+            if (!IsSupportedSuspendedCeiling(wall))
+                return new SuspensionMetrics(0, 0, 0);
 
-            return (int)Math.Ceiling(runWidthMm / spacingMm);
+            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
+            if (spec == null || spec.MushroomOffsetMm <= 0)
+                return new SuspensionMetrics(0, 0, 0);
+
+            return GetSuspensionMetrics(wall, spec.TSpacingMm, spec.MushroomOffsetMm);
         }
 
         private static double GetColdStorageTSuspensionLength(TenderWall wall)
@@ -582,11 +576,7 @@ namespace ShopDrawing.Plugin.Core
             if (!IsSupportedSuspendedCeiling(wall))
                 return 0;
 
-            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
-            if (spec == null)
-                return 0;
-
-            return GetQuantitySuspensionMetrics(wall, spec.TSpacingMm).TotalSegmentLengthMm / 1000.0;
+            return GetTSuspensionMetrics(wall).TotalSegmentLengthMm / 1000.0;
         }
 
         private static double GetColdStorageMushroomSuspensionLength(TenderWall wall)
@@ -594,11 +584,7 @@ namespace ShopDrawing.Plugin.Core
             if (!IsSupportedSuspendedCeiling(wall))
                 return 0;
 
-            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
-            if (spec == null || spec.MushroomOffsetMm <= 0)
-                return 0;
-
-            return GetQuantitySuspensionMetrics(wall, spec.MushroomOffsetMm).TotalSegmentLengthMm / 1000.0;
+            return GetMushroomSuspensionMetrics(wall).TotalSegmentLengthMm / 1000.0;
         }
 
         private static int GetColdStorageTSuspensionLineCount(TenderWall wall)
@@ -606,11 +592,7 @@ namespace ShopDrawing.Plugin.Core
             if (!IsSupportedSuspendedCeiling(wall))
                 return 0;
 
-            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
-            if (spec == null)
-                return 0;
-
-            return GetQuantitySuspensionMetrics(wall, spec.TSpacingMm).LineCount;
+            return GetTSuspensionMetrics(wall).LineCount;
         }
 
         private static int GetColdStorageMushroomSuspensionLineCount(TenderWall wall)
@@ -618,17 +600,7 @@ namespace ShopDrawing.Plugin.Core
             if (!IsSupportedSuspendedCeiling(wall))
                 return 0;
 
-            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
-            if (spec == null || spec.MushroomOffsetMm <= 0)
-                return 0;
-
-            return GetQuantitySuspensionMetrics(wall, spec.MushroomOffsetMm).LineCount;
-        }
-
-        private static double GetSuspensionPointQty(double totalRunLengthM)
-        {
-            double totalRunLengthMm = totalRunLengthM * 1000.0;
-            return GetSuspensionPointQtyFromMm(totalRunLengthMm);
+            return GetMushroomSuspensionMetrics(wall).LineCount;
         }
 
         private static double GetSuspensionPointQtyFromMm(double totalRunLengthMm)
@@ -641,20 +613,12 @@ namespace ShopDrawing.Plugin.Core
 
         private static double GetColdStorageTSuspensionPointQty(TenderWall wall)
         {
-            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
-            if (spec == null)
-                return 0;
-
-            return GetQuantitySuspensionMetrics(wall, spec.TSpacingMm).PointQty;
+            return GetTSuspensionMetrics(wall).PointQty;
         }
 
         private static double GetColdStorageMushroomSuspensionPointQty(TenderWall wall)
         {
-            var spec = ResolveColdStorageSuspensionSpec(wall.PanelThickness);
-            if (spec == null || spec.MushroomOffsetMm <= 0)
-                return 0;
-
-            return GetQuantitySuspensionMetrics(wall, spec.MushroomOffsetMm).PointQty;
+            return GetMushroomSuspensionMetrics(wall).PointQty;
         }
 
         private static double GetWireRopeLength(double pointQty, double cableDropLengthMm)

@@ -152,7 +152,7 @@ namespace ShopDrawing.Plugin.Core
             { "Vít TEK inox", "B2S-TEK inox" },
             // v2.x → v3.x renames
             { "B2S-TEK", ExteriorTekScrewBaseName },               // vis panel: B2S-TEK → B2S-TEK 12x14
-            { "Mastic tape", "Băng keo butyl" },
+            { "Mastic tape", SealantMS617 },
             { "Alu. Omega profile", "Nẹp Omega" },
             { "Mastic tape (Omega)", "Băng keo butyl Omega" },
             { "Foam PU on site", "Foam PU bơm tại chỗ" },
@@ -338,6 +338,15 @@ namespace ShopDrawing.Plugin.Core
                     || string.Equals(name, "Rivets", StringComparison.OrdinalIgnoreCase))
                 {
                     accessory.Name = "B2S-TEK 15-15×20 HWFS";
+                }
+
+                // Khôi phục dữ liệu đã từng bị map nhầm: Sealant MS-617 @ khe đứng Omega
+                // cần quay về đúng vật tư băng keo butyl Omega.
+                if (string.Equals(accessory.Name, SealantMS617, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(accessory.Position, PosKheDung, StringComparison.OrdinalIgnoreCase)
+                    && accessory.CalcRule == AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT)
+                {
+                    accessory.Name = "Băng keo butyl Omega";
                 }
             }
 
@@ -618,6 +627,27 @@ namespace ShopDrawing.Plugin.Core
                 && string.Equals(name, "B2S-TEK 15-15×20 HWFS", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(position, PosVach, StringComparison.OrdinalIgnoreCase)
                 && accessory.CalcRule == AccessoryCalcRule.PER_WALL_LENGTH)
+            {
+                return true;
+            }
+
+            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(name, "Bộ cửa đi", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(name, "Băng keo butyl", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
+                && (string.Equals(name, "Diềm 05", StringComparison.OrdinalIgnoreCase)
+                    || (string.Equals(name, "B2S-TEK 15-15×20 HWFS", StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(position, PosMoiNoi, StringComparison.OrdinalIgnoreCase)
+                        && accessory.CalcRule == AccessoryCalcRule.PER_JOINT_LENGTH)))
             {
                 return true;
             }
@@ -997,10 +1027,8 @@ namespace ShopDrawing.Plugin.Core
             new() { Name = "Diềm 02", Material = "Tole", Position = PosCanhDuoi,  Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH,        Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Mép dưới vách, tiếp giáp nền/sàn" },
             new() { Name = "Diềm 03", Material = "Tole", Position = PosDauCuoi,   Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH,        Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Diềm kết thúc mép đứng đầu/cuối vách (che lõi xốp)" },
             new() { Name = "Diềm 04", Material = "Tole", Position = PosGocNgoai,  Unit = "md", CalcRule = AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT,     Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Góc giao 2 vách nhô ra ngoài (90°)" },
-            new() { Name = "Diềm 05", Material = "Tole", Position = PosMoiNoi,    Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH,              Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Khe nối T/G giữa 2 tấm panel kề nhau" },
             new() { Name = "Diềm 06", Material = "Tole", Position = PosCuaDi,     Unit = "md", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_PERIMETER,    Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bao quanh 3 mép lỗ cửa đi (trên + 2 đứng, bỏ nưỡng)" },
             new() { Name = "Diềm 07", Material = "Tole", Position = PosCuaSoLKT,  Unit = "md", CalcRule = AccessoryCalcRule.PER_NON_DOOR_OPENING_PERIMETER, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bao quanh 4 mép cửa sổ/LKT (trên + 2 đứng + sill)" },
-            new() { Name = "Bộ cửa đi",           Position = PosCuaDi,     Unit = "bộ", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_QTY,            Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Tính sơ bộ theo số lượng cửa đi" },
             new() { Name = ExteriorTekScrewBaseName, Position = PosPanelThep, Unit = "cái", CalcRule = AccessoryCalcRule.PER_TEK_SCREW_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Nhịp xà gồ 1500mm × 2 vít/điểm × số tấm" },
             new() { Name = SealantMS617, Position = PosMoiNoi,     Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH,                   Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bẹ khe nối mặt ngoài giữa 2 tấm panel" },
             new() { Name = SealantMS617, Position = PosCanhDungLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_VERTICAL_EDGES,         Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bẹ 2 cạnh đứng viền lỗ mở" },
@@ -1009,7 +1037,6 @@ namespace ShopDrawing.Plugin.Core
             new() { Name = SealantMS617, Position = PosDinhVach,   Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH,                Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Sealant hoàn thiện đỉnh vách ngoài nhà" },
             new() { Name = SealantMS617, Position = PosChanVach,   Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH,             Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Hoàn thiện chân vách biên tự do" },
             new() { Name = SealantMS617, Position = PosCanhHo,     Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH,             Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Hoàn thiện mép đứng tự do đầu/cuối vách" },
-            new() { Name = "Băng keo butyl",  Position = PosMoiNoi, Unit = "md",  CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH,  Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Băng butyl dán trong ngàm T/G trước khi lắp tấm" },
             // ─── Nhóm khe nối đứng (chỉ xếp Ngang, tự động = 0 khi xếp Dọc) ───
             new() { Name = "Nẹp Omega",  Material = "Nhôm", Position = PosKheDung, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 1.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Nẹp nhôm che khe đứng Omega (chỉ xếp Ngang)" },
             new() { Name = "Băng keo butyl Omega",               Position = PosKheDung, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 2.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Dán 2 mép nẹp Omega trước khi ép vào panel" },
@@ -1019,7 +1046,6 @@ namespace ShopDrawing.Plugin.Core
             new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosCanhDuoi, Unit = "cái", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt diềm chân vách, quy đổi ~6 con/md" },
             new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosDauCuoi, Unit = "cái", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt diềm đầu/cuối, quy đổi ~6 con/md" },
             new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosGocNgoai, Unit = "cái", CalcRule = AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt diềm góc ngoài, quy đổi ~6 con/md" },
-            new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosMoiNoi, Unit = "cái", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt diềm/nẹp theo khe nối T/G, quy đổi ~6 con/md" },
             new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosKheDung, Unit = "cái", CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt nẹp Omega theo khe đứng, quy đổi ~6 con/md" },
             new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosCuaDi, Unit = "cái", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_PERIMETER, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt diềm viền cửa đi, quy đổi ~6 con/md" },
             new() { Name = "B2S-TEK 15-15×20 HWFS", Position = PosCuaSoLKT, Unit = "cái", CalcRule = AccessoryCalcRule.PER_NON_DOOR_OPENING_PERIMETER, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Vít tự khoan bắt diềm viền cửa sổ/lỗ kỹ thuật, quy đổi ~6 con/md" },

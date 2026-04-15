@@ -3037,21 +3037,16 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     ed.WriteMessage($" | LT={finalStation:F0}mm | Rộng={finalW:F0}mm");
                 }
 
-                var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions(
-
-                    "\nNhập cao độ đáy lỗ mở (mm):");
-
-                bottomOpt.DefaultValue = finalBottom;
-
-                bottomOpt.AllowNegative = false;
-
-                bottomOpt.AllowZero = true;
-
-                var bottomResult = ed.GetDouble(bottomOpt);
-
-                if (bottomResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
-
-                finalBottom = Math.Max(0, Math.Round(bottomResult.Value));
+                if (isElevation)
+                {
+                    if (!TryResolveBottomElevationForElevationPick(ed, finalBottom, out finalBottom))
+                        return;
+                }
+                else
+                {
+                    if (!TryPromptBottomElevationManual(ed, finalBottom, out finalBottom))
+                        return;
+                }
 
                 bool confirmed = false;
 
@@ -3247,6 +3242,66 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             }
 
+        }
+
+        private static bool TryPromptBottomElevationManual(
+            Autodesk.AutoCAD.EditorInput.Editor ed,
+            double defaultBottomMm,
+            out double bottomElevationMm)
+        {
+            bottomElevationMm = Math.Max(0, Math.Round(defaultBottomMm));
+
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions(
+                $"\nNhập cao độ đáy lỗ mở (mm) <{bottomElevationMm:F0}>:");
+
+            bottomOpt.DefaultValue = bottomElevationMm;
+            bottomOpt.AllowNegative = false;
+            bottomOpt.AllowZero = true;
+
+            var bottomResult = ed.GetDouble(bottomOpt);
+            if (bottomResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            bottomElevationMm = Math.Max(0, Math.Round(bottomResult.Value));
+            return true;
+        }
+
+        private bool TryResolveBottomElevationForElevationPick(
+            Autodesk.AutoCAD.EditorInput.Editor ed,
+            double currentBottomMm,
+            out double bottomElevationMm)
+        {
+            bottomElevationMm = Math.Max(0, Math.Round(currentBottomMm));
+
+            var basePointOpt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions(
+                $"\nChọn điểm mốc cao độ đáy hoặc [Nhap] <Enter={bottomElevationMm:F0}>:");
+            basePointOpt.AllowNone = true;
+            basePointOpt.Keywords.Add("Nhap");
+
+            var basePointResult = ed.GetPoint(basePointOpt);
+            if (basePointResult.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
+            {
+                ed.WriteMessage($"\nGiữ cao độ đáy lỗ mở = {bottomElevationMm:F0} mm.");
+                return true;
+            }
+
+            if (basePointResult.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.Keyword)
+                return TryPromptBottomElevationManual(ed, bottomElevationMm, out bottomElevationMm);
+
+            if (basePointResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            var bottomPointOpt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đáy lỗ mở:");
+            bottomPointOpt.UseBasePoint = true;
+            bottomPointOpt.BasePoint = basePointResult.Value;
+
+            var bottomPointResult = ed.GetPoint(bottomPointOpt);
+            if (bottomPointResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            bottomElevationMm = Math.Max(0, Math.Round(basePointResult.Value.DistanceTo(bottomPointResult.Value)));
+            ed.WriteMessage($"\nCao độ đáy lỗ mở (pick 2 điểm) = {bottomElevationMm:F0} mm");
+            return true;
         }
 
 

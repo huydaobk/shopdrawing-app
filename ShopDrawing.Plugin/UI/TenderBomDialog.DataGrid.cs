@@ -391,14 +391,15 @@ namespace ShopDrawing.Plugin.UI
             return col;
         }
 
-        private static void ConfigureGridScrolling(DataGrid grid)
-        {
-            grid.CanUserResizeColumns = true;
-            grid.CanUserReorderColumns = false;
-            ScrollViewer.SetHorizontalScrollBarVisibility(grid, ScrollBarVisibility.Auto);
-            ScrollViewer.SetVerticalScrollBarVisibility(grid, ScrollBarVisibility.Auto);
-            ScrollViewer.SetCanContentScroll(grid, true);
-        }
+        private static void ConfigureGridScrolling(DataGrid grid)
+        {
+            grid.CanUserResizeColumns = true;
+            grid.CanUserReorderColumns = false;
+            grid.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
+            ScrollViewer.SetHorizontalScrollBarVisibility(grid, ScrollBarVisibility.Visible);
+            ScrollViewer.SetVerticalScrollBarVisibility(grid, ScrollBarVisibility.Auto);
+            ScrollViewer.SetCanContentScroll(grid, true);
+        }
 
         private static ComboBox CreatePresetCombo(IEnumerable<string> items, string? selectedItem, double width)
         {

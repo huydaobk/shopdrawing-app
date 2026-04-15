@@ -1722,6 +1722,25 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 return;
 
             double drawingLength = Math.Max(1.0, row.Length);
+            if (TryResolveOpeningPreviewChains(
+                    vertices,
+                    drawingLength,
+                    out var referenceChain,
+                    out var oppositeChain,
+                    out _))
+            {
+                AddOpeningCadPreviewOnDevelopedChains(
+                    referenceChain,
+                    oppositeChain,
+                    row,
+                    expandedOpenings,
+                    drawingLength,
+                    layerId,
+                    btr,
+                    tr);
+                return;
+            }
+
             double minX = vertices.Min(v => v[0]);
             double maxX = vertices.Max(v => v[0]);
             double minY = vertices.Min(v => v[1]);
@@ -1830,6 +1849,115 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (legendLines.Count > 0)
             {
                 AddOpeningPreviewLegend(vertices, legendLines, textHeight, layerId, btr, tr);
+            }
+        }
+
+        private void AddOpeningCadPreviewOnDevelopedChains(
+            List<double[]> referenceChain,
+            List<double[]> oppositeChain,
+            TenderWallRow row,
+            IReadOnlyList<TenderOpening> expandedOpenings,
+            double drawingLength,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
+            Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+        {
+            if (referenceChain == null || oppositeChain == null
+                || referenceChain.Count < 2 || oppositeChain.Count < 2)
+            {
+                return;
+            }
+
+            var heightSegments = BuildPreviewHeightSegments(row, drawingLength);
+            var missingStations = expandedOpenings.Count(o => o.CenterStationMm < 0);
+            double textHeight = ComputeAdaptivePreviewTextHeight(Math.Max(GetPolylineLength(referenceChain), GetPolylineLength(oppositeChain)));
+            double textOffset = Math.Max(80.0, textHeight * 0.8);
+            double stationTextHeight = Math.Max(90.0, textHeight * 0.75);
+
+            int fallbackIndex = 0;
+            int openingIndex = 0;
+            var legendLines = new List<string>();
+
+            foreach (var opening in expandedOpenings)
+            {
+                bool useFallback = opening.CenterStationMm < 0;
+                int currentFallback = useFallback ? fallbackIndex++ : -1;
+
+                if (!TryResolveOpeningStation(
+                        opening,
+                        currentFallback,
+                        missingStations,
+                        drawingLength,
+                        out var stationStartMm,
+                        out var stationEndMm))
+                {
+                    continue;
+                }
+
+                double ratioStart = Math.Max(0, Math.Min(1, stationStartMm / drawingLength));
+                double ratioEnd = Math.Max(0, Math.Min(1, stationEndMm / drawingLength));
+
+                var referenceStart = GetPointAlongPolyline(referenceChain, ratioStart);
+                var referenceEnd = GetPointAlongPolyline(referenceChain, ratioEnd);
+                var oppositeStart = GetPointAlongPolyline(oppositeChain, ratioStart);
+                var oppositeEnd = GetPointAlongPolyline(oppositeChain, ratioEnd);
+                if (referenceStart == null || referenceEnd == null || oppositeStart == null || oppositeEnd == null)
+                    continue;
+
+                if (!TryGetDirectionAndLength(referenceStart, oppositeStart, out var dirStart, out var localHeightStart)
+                    || !TryGetDirectionAndLength(referenceEnd, oppositeEnd, out var dirEnd, out var localHeightEnd))
+                {
+                    continue;
+                }
+
+                double stationCenterMm = (stationStartMm + stationEndMm) * 0.5;
+                double segmentHeightMm = Math.Max(1.0, GetHeightAt(stationCenterMm, heightSegments, drawingLength));
+                double localHeightMm = Math.Max(1.0, Math.Min(segmentHeightMm, Math.Min(localHeightStart, localHeightEnd)));
+                double bottomMm = Math.Max(0, Math.Min(opening.BottomElevationMm, localHeightMm));
+                double visibleHeightMm = Math.Max(0, Math.Min(opening.Height, localHeightMm - bottomMm));
+                if (visibleHeightMm <= 0.5)
+                    continue;
+
+                double[] leftBottom = OffsetPoint(referenceStart, dirStart, bottomMm);
+                double[] rightBottom = OffsetPoint(referenceEnd, dirEnd, bottomMm);
+                double[] leftTop = OffsetPoint(referenceStart, dirStart, bottomMm + visibleHeightMm);
+                double[] rightTop = OffsetPoint(referenceEnd, dirEnd, bottomMm + visibleHeightMm);
+
+                AddOpeningPreviewRectangle(leftBottom, rightBottom, rightTop, leftTop, layerId, btr, tr);
+
+                var labelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                    (leftTop[0] + rightTop[0]) * 0.5 + dirStart[0] * 90.0,
+                    (leftTop[1] + rightTop[1]) * 0.5 + dirStart[1] * 90.0,
+                    0);
+                AddPreviewText(
+                    labelPoint,
+                    $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
+                    OpeningPreviewTextColorIndex,
+                    textHeight,
+                    layerId,
+                    btr,
+                    tr);
+
+                var stationLabelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                    leftBottom[0] - dirStart[0] * textOffset,
+                    leftBottom[1] - dirStart[1] * textOffset,
+                    0);
+                AddPreviewText(
+                    stationLabelPoint,
+                    $"LT {stationStartMm:F0}",
+                    OpeningPreviewTextColorIndex,
+                    stationTextHeight,
+                    layerId,
+                    btr,
+                    tr);
+
+                legendLines.Add($"Lỗ{openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0} LT{stationStartMm:F0}");
+            }
+
+            if (legendLines.Count > 0)
+            {
+                var allPoints = referenceChain.Concat(oppositeChain).ToList();
+                AddOpeningPreviewLegend(allPoints, legendLines, textHeight, layerId, btr, tr);
             }
         }
 
@@ -1947,6 +2075,79 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             stationStartMm = Math.Max(0, Math.Min(drawingLength, stationStartMm));
             stationEndMm = Math.Max(stationStartMm, Math.Min(drawingLength, stationStartMm + opening.Width));
             return stationEndMm - stationStartMm > 0.5;
+        }
+
+        private static bool TryResolveOpeningPreviewChains(
+            IReadOnlyList<double[]> vertices,
+            double referenceLengthMm,
+            out List<double[]> referenceChain,
+            out List<double[]> oppositeChain,
+            out double chainLengthMm)
+        {
+            referenceChain = new List<double[]>();
+            oppositeChain = new List<double[]>();
+            chainLengthMm = 0;
+
+            if (vertices == null || vertices.Count < 3)
+                return false;
+
+            var input = vertices.Select(v => v.ToArray()).ToList();
+            double refLength = Math.Max(1.0, referenceLengthMm);
+            (List<double[]> A, List<double[]> B, double Score)? best = null;
+
+            bool TryEvaluate(bool horizontal)
+            {
+                if (!TryBuildDevelopedChains(input, horizontal, out var chainA, out var chainB))
+                    return false;
+
+                double lenA = GetPolylineLength(chainA);
+                double lenB = GetPolylineLength(chainB);
+                if (lenA <= 1.0 || lenB <= 1.0)
+                    return false;
+
+                double score = Math.Abs(Math.Min(lenA, lenB) - refLength) + Math.Abs(lenA - lenB) * 0.25;
+                if (!best.HasValue || score < best.Value.Score)
+                    best = (chainA, chainB, score);
+                return true;
+            }
+
+            TryEvaluate(horizontal: false);
+            TryEvaluate(horizontal: true);
+
+            if (!best.HasValue)
+                return false;
+
+            var chosenA = best.Value.A;
+            var chosenB = best.Value.B;
+            double chosenALength = GetPolylineLength(chosenA);
+            double chosenBLength = GetPolylineLength(chosenB);
+            bool useA = Math.Abs(chosenALength - refLength) <= Math.Abs(chosenBLength - refLength);
+
+            referenceChain = useA ? chosenA : chosenB;
+            oppositeChain = useA ? chosenB : chosenA;
+            chainLengthMm = GetPolylineLength(referenceChain);
+            return chainLengthMm > 1.0;
+        }
+
+        private static bool TryGetDirectionAndLength(
+            double[] from,
+            double[] to,
+            out double[] direction,
+            out double length)
+        {
+            direction = Array.Empty<double>();
+            length = 0;
+            if (from == null || to == null || from.Length < 2 || to.Length < 2)
+                return false;
+
+            double dx = to[0] - from[0];
+            double dy = to[1] - from[1];
+            length = Math.Sqrt(dx * dx + dy * dy);
+            if (length <= 1e-6)
+                return false;
+
+            direction = new[] { dx / length, dy / length };
+            return true;
         }
 
         private static List<TenderHeightSegment> BuildPreviewHeightSegments(TenderWallRow row, double drawingLength)

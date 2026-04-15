@@ -2900,6 +2900,24 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (polygonVertices == null || polygonVertices.Count < 3)
                 return false;
 
+            double lengthRef = Math.Max(1.0, referenceLengthMm);
+            var polygon = polygonVertices.Select(v => v.ToArray()).ToList();
+            if (TryResolveOpeningPreviewChains(
+                    polygon,
+                    lengthRef,
+                    out var referenceChain,
+                    out _,
+                    out var chainLength)
+                && TryProjectPointToPolylineChain(pickPoint1, referenceChain, out var station1, out _)
+                && TryProjectPointToPolylineChain(pickPoint2, referenceChain, out var station2, out _))
+            {
+                double scale = lengthRef / Math.Max(1.0, chainLength);
+                stationMm = Math.Max(0, Math.Min(station1, station2) * scale);
+                projectedWidthMm = Math.Max(0, Math.Abs(station2 - station1) * scale);
+                if (projectedWidthMm > 0.5)
+                    return true;
+            }
+
             double minX = polygonVertices.Min(v => v[0]);
             double maxX = polygonVertices.Max(v => v[0]);
             double minY = polygonVertices.Min(v => v[1]);
@@ -2919,10 +2937,53 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (axisWidth <= 0.5)
                 return false;
 
-            double lengthRef = Math.Max(1.0, referenceLengthMm);
             stationMm = ((axisStart - axisMin) / axisSpan) * lengthRef;
             projectedWidthMm = (axisWidth / axisSpan) * lengthRef;
             return projectedWidthMm > 0.5;
+        }
+
+        private static bool TryProjectPointToPolylineChain(
+            Autodesk.AutoCAD.Geometry.Point3d point,
+            IReadOnlyList<double[]> chain,
+            out double stationMm,
+            out double distanceMm)
+        {
+            stationMm = 0;
+            distanceMm = double.MaxValue;
+            if (chain == null || chain.Count < 2)
+                return false;
+
+            bool found = false;
+            double walked = 0;
+            for (int i = 0; i + 1 < chain.Count; i++)
+            {
+                var start = chain[i];
+                var end = chain[i + 1];
+                double dx = end[0] - start[0];
+                double dy = end[1] - start[1];
+                double segLen = Math.Sqrt(dx * dx + dy * dy);
+                if (segLen <= 1e-6)
+                    continue;
+
+                double vx = point.X - start[0];
+                double vy = point.Y - start[1];
+                double t = (vx * dx + vy * dy) / (segLen * segLen);
+                t = Math.Max(0, Math.Min(1, t));
+
+                double px = start[0] + dx * t;
+                double py = start[1] + dy * t;
+                double dist = Math.Sqrt((point.X - px) * (point.X - px) + (point.Y - py) * (point.Y - py));
+                if (dist < distanceMm)
+                {
+                    distanceMm = dist;
+                    stationMm = walked + t * segLen;
+                    found = true;
+                }
+
+                walked += segLen;
+            }
+
+            return found;
         }
 
         private bool TryResolveOpeningCenterStationFromCad(

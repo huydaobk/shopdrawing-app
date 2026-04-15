@@ -1,6 +1,8 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,7 +28,8 @@ namespace ShopDrawing.Plugin.Core
                 return await GetManifestFromGitHubReleaseApiAsync(manifestUrl, cancellationToken).ConfigureAwait(false);
             }
 
-            using HttpResponseMessage response = await HttpClient.GetAsync(manifestUrl, cancellationToken).ConfigureAwait(false);
+            using HttpRequestMessage request = CreateNoCacheRequest(manifestUrl);
+            using HttpResponseMessage response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -41,7 +44,7 @@ namespace ShopDrawing.Plugin.Core
 
         private static async Task<UpdateManifest?> GetManifestFromGitHubReleaseApiAsync(string manifestUrl, CancellationToken cancellationToken)
         {
-            using HttpRequestMessage request = new(HttpMethod.Get, manifestUrl);
+            using HttpRequestMessage request = CreateNoCacheRequest(manifestUrl);
             request.Headers.UserAgent.ParseAdd("ShopDrawing-Updater/1.0");
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
 
@@ -106,6 +109,40 @@ namespace ShopDrawing.Plugin.Core
             }
 
             return value.GetString()?.Trim() ?? string.Empty;
+        }
+
+        private static HttpRequestMessage CreateNoCacheRequest(string manifestUrl)
+        {
+            string requestedUrl = AppendCacheBuster(manifestUrl);
+            HttpRequestMessage request = new(HttpMethod.Get, requestedUrl);
+            request.Headers.CacheControl = new CacheControlHeaderValue
+            {
+                NoCache = true,
+                NoStore = true,
+                MustRevalidate = true
+            };
+            request.Headers.Pragma.ParseAdd("no-cache");
+            return request;
+        }
+
+        private static string AppendCacheBuster(string manifestUrl)
+        {
+            if (!Uri.TryCreate(manifestUrl, UriKind.Absolute, out Uri? uri))
+            {
+                return manifestUrl;
+            }
+
+            string queryPrefix = string.IsNullOrWhiteSpace(uri.Query)
+                ? string.Empty
+                : uri.Query.TrimStart('?') + "&";
+            string stamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
+
+            UriBuilder builder = new(uri)
+            {
+                Query = $"{queryPrefix}_ts={stamp}"
+            };
+
+            return builder.Uri.ToString();
         }
     }
 }

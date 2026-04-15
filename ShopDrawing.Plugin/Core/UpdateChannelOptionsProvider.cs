@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 
 namespace ShopDrawing.Plugin.Core
@@ -8,6 +9,9 @@ namespace ShopDrawing.Plugin.Core
     {
         private const string SettingsFileName = "update-settings.json";
         private const string DefaultManifestUrl = "https://api.github.com/repos/huydaobk/shopdrawing-app/releases/latest";
+        private static readonly Regex LegacyReleaseManifestRegex = new(
+            @"^https://github\.com/huydaobk/shopdrawing-app/releases/download/v[^/]+/latest\.json$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -33,10 +37,7 @@ namespace ShopDrawing.Plugin.Core
 
                 string json = File.ReadAllText(settingsPath);
                 var parsed = JsonSerializer.Deserialize<UpdateChannelOptions>(json, JsonOptions) ?? defaults;
-                if (string.IsNullOrWhiteSpace(parsed.ManifestUrl))
-                {
-                    parsed.ManifestUrl = DefaultManifestUrl;
-                }
+                parsed.ManifestUrl = NormalizeManifestUrl(parsed.ManifestUrl);
 
                 return parsed;
             }
@@ -48,6 +49,24 @@ namespace ShopDrawing.Plugin.Core
                     ManifestUrl = DefaultManifestUrl
                 };
             }
+        }
+
+        private static string NormalizeManifestUrl(string? manifestUrl)
+        {
+            if (string.IsNullOrWhiteSpace(manifestUrl))
+            {
+                return DefaultManifestUrl;
+            }
+
+            string normalized = manifestUrl.Trim();
+
+            // Tu dong nang cap cac URL cu dang pin vao 1 version release cu.
+            if (LegacyReleaseManifestRegex.IsMatch(normalized))
+            {
+                return "https://github.com/huydaobk/shopdrawing-app/releases/latest/download/latest.json";
+            }
+
+            return normalized;
         }
     }
 }

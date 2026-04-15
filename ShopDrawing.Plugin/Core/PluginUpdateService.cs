@@ -129,6 +129,9 @@ namespace ShopDrawing.Plugin.Core
                 }
 
                 string latestVersion = manifest.Version?.Trim() ?? string.Empty;
+                bool isUpdateAvailable = VersionComparer.IsNewer(latestVersion, currentVersion);
+                PluginLogger.Info(
+                    $"Update check: current={FormatVersionForDisplay(currentVersion)} | latest={FormatVersionForDisplay(latestVersion)} | hasUpdate={isUpdateAvailable} | url={options.ManifestUrl}");
 
                 return new UpdateCheckResult
                 {
@@ -139,7 +142,7 @@ namespace ShopDrawing.Plugin.Core
                     Notes = manifest.Notes?.Trim() ?? string.Empty,
                     IsMandatory = manifest.Mandatory,
                     IsConfigured = true,
-                    IsUpdateAvailable = VersionComparer.IsNewer(latestVersion, currentVersion),
+                    IsUpdateAvailable = isUpdateAvailable,
                     ChannelName = string.IsNullOrWhiteSpace(manifest.ChannelName) ? options.ChannelName : manifest.ChannelName
                 };
             }

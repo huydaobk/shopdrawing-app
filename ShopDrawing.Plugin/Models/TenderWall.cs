@@ -639,13 +639,14 @@ namespace ShopDrawing.Plugin.Models
             }
         }
 
-        public static readonly string[] CategoryOptions = { "Vách", "Trần", "Nền", "Ốp cột" };
+        public static readonly string[] CategoryOptions = { "Vách", "Trần", "Nền", "Ốp cột", "Mái" };
         public static readonly string[] LayoutDirectionOptions = { "Dọc", "Ngang" };
 
         public static string DefaultLayoutDirection(string category) => category switch
         {
             "Trần" => "Ngang",
             "Nền" => "Ngang",
+            "Mái" => "Ngang",
             "Ốp cột" => "Dọc",
             _ => "Dọc"
         };

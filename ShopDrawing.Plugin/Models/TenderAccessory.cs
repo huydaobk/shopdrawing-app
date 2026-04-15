@@ -181,7 +181,7 @@
         /// <summary>Danh sách hạng mục áp dụng cho dropdown</summary>
         public static readonly string[] CategoryScopeOptions =
         {
-            "Tất cả", "Vách", "Trần", "Nền", "Ốp cột"
+            "Tất cả", "Vách", "Trần", "Nền", "Ốp cột", "Mái"
         };
 
         /// <summary>Danh sách phạm vi dùng chung cho dropdown</summary>

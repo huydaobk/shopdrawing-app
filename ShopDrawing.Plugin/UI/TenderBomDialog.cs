@@ -53,6 +53,7 @@ namespace ShopDrawing.Plugin.UI
         private ComboBox _pickCategoryPreset = null!;
         private ComboBox _pickApplicationPreset = null!;
         private ComboBox _pickSpecPreset = null!;
+        private bool _isUpdatingPickPresetConstraints;
         private readonly DispatcherTimer _cadPreviewTimer;
         private readonly DispatcherTimer _cadSegmentSyncTimer;
         private TenderWallRow? _pendingPreviewRow;
@@ -242,18 +243,6 @@ namespace ShopDrawing.Plugin.UI
                 defaultApplication = TenderWall.ApplicationOptions[0];
             string defaultSpec = _wallRows.LastOrDefault()?.SpecKey ?? _project.Specs.FirstOrDefault()?.Key ?? string.Empty;
             var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
-
-            var cboFloor = new ComboBox
-            {
-                Width = 80,
-                FontSize = 12,
-                Margin = new Thickness(0, 0, 8, 0),
-                ToolTip = "Lọc theo tầng",
-                VerticalContentAlignment = VerticalAlignment.Center
-            };
-            cboFloor.Items.Add("-- Tầng --");
-            cboFloor.SelectedIndex = 0;
-            toolbar.Children.Add(cboFloor);
             toolbar.Children.Add(new TextBlock
             {
                 Text = "Mẫu sẵn:",
@@ -277,6 +266,9 @@ namespace ShopDrawing.Plugin.UI
                 defaultSpec,
                 110);
             toolbar.Children.Add(_pickSpecPreset);
+            _pickApplicationPreset.SelectionChanged += OnPickPresetSelectionChanged;
+            _pickCategoryPreset.SelectionChanged += OnPickPresetSelectionChanged;
+            ApplyPickPresetConstraints(forceSpecSelection: true);
             toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
 
             toolbar.Children.Add(Btn("Pick dài", AccentBlue, Brushes.White, OnPickLength));
@@ -664,6 +656,160 @@ private void SetStatus(string message)
 private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             return AccessoryDataManager.NormalizeConfiguredAccessories(_project.Accessories);
+        }
+
+        private void OnPickPresetSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingPickPresetConstraints)
+                return;
+
+            ApplyPickPresetConstraints(forceSpecSelection: true);
+        }
+
+        private void ApplyPickPresetConstraints(bool forceSpecSelection)
+        {
+            if (_pickCategoryPreset == null || _pickApplicationPreset == null || _pickSpecPreset == null)
+                return;
+
+            _isUpdatingPickPresetConstraints = true;
+            try
+            {
+                string selectedApplication = UiText.Normalize(_pickApplicationPreset.SelectedItem as string);
+                bool isExterior = string.Equals(selectedApplication, "Ngoài nhà", StringComparison.OrdinalIgnoreCase);
+
+                string[] allowedCategories = isExterior
+                    ? new[] { UiText.Normalize("Vách"), UiText.Normalize("Mái") }
+                    : TenderWall.CategoryOptions.Select(UiText.Normalize).ToArray();
+
+                string currentCategory = UiText.Normalize(_pickCategoryPreset.SelectedItem as string);
+                _pickCategoryPreset.ItemsSource = allowedCategories;
+                _pickCategoryPreset.IsEnabled = allowedCategories.Length > 1;
+
+                string resolvedCategory = allowedCategories
+                    .FirstOrDefault(item => string.Equals(item, currentCategory, StringComparison.OrdinalIgnoreCase))
+                    ?? allowedCategories.FirstOrDefault()
+                    ?? UiText.Normalize("Vách");
+                _pickCategoryPreset.SelectedItem = resolvedCategory;
+
+                bool shouldAutoSelectIsopar = isExterior
+                    && string.Equals(resolvedCategory, "Vách", StringComparison.OrdinalIgnoreCase);
+                bool shouldAutoSelectRoofGp = isExterior
+                    && string.Equals(resolvedCategory, "Mái", StringComparison.OrdinalIgnoreCase);
+
+                string currentSpec = UiText.Normalize(_pickSpecPreset.SelectedItem as string);
+                string[] allSpecs = GetAllSpecPresetOptions();
+                string[] isoparSpecs = GetIsoparSpecPresetOptions();
+                string[] gpRoofSpecs = GetGpRoofSpecPresetOptions();
+                string[] allowedSpecs = shouldAutoSelectIsopar && isoparSpecs.Length > 0
+                    ? isoparSpecs
+                    : shouldAutoSelectRoofGp && gpRoofSpecs.Length > 0
+                        ? gpRoofSpecs
+                        : allSpecs;
+
+                _pickSpecPreset.ItemsSource = allowedSpecs;
+
+                string resolvedSpec = allowedSpecs
+                    .FirstOrDefault(item => string.Equals(item, currentSpec, StringComparison.OrdinalIgnoreCase))
+                    ?? string.Empty;
+
+                if (shouldAutoSelectIsopar && (forceSpecSelection || string.IsNullOrWhiteSpace(resolvedSpec)))
+                {
+                    string preferredSpec = UiText.Normalize(ResolvePreferredSpecForExteriorWall(currentSpec));
+                    resolvedSpec = allowedSpecs
+                        .FirstOrDefault(item => string.Equals(item, preferredSpec, StringComparison.OrdinalIgnoreCase))
+                        ?? resolvedSpec;
+                }
+                else if (shouldAutoSelectRoofGp && (forceSpecSelection || string.IsNullOrWhiteSpace(resolvedSpec)))
+                {
+                    string preferredSpec = UiText.Normalize(ResolvePreferredSpecForExteriorRoof(currentSpec));
+                    resolvedSpec = allowedSpecs
+                        .FirstOrDefault(item => string.Equals(item, preferredSpec, StringComparison.OrdinalIgnoreCase))
+                        ?? resolvedSpec;
+                }
+
+                if (string.IsNullOrWhiteSpace(resolvedSpec))
+                    resolvedSpec = allowedSpecs.FirstOrDefault() ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(resolvedSpec))
+                    _pickSpecPreset.SelectedItem = resolvedSpec;
+            }
+            finally
+            {
+                _isUpdatingPickPresetConstraints = false;
+            }
+        }
+
+        private string[] GetAllSpecPresetOptions()
+        {
+            return _project.Specs
+                .Select(spec => UiText.Normalize(spec.Key))
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        private string[] GetIsoparSpecPresetOptions()
+        {
+            return _project.Specs
+                .Where(spec =>
+                    string.Equals((spec.PanelType ?? string.Empty).Trim(), "ISOPAR", StringComparison.OrdinalIgnoreCase)
+                    || (spec.Key ?? string.Empty).IndexOf("ISOPAR", StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(spec => UiText.Normalize(spec.Key))
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        private string[] GetGpRoofSpecPresetOptions()
+        {
+            return _project.Specs
+                .Where(spec =>
+                    string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP3", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP5", StringComparison.OrdinalIgnoreCase)
+                    || (spec.Key ?? string.Empty).IndexOf("GP3", StringComparison.OrdinalIgnoreCase) >= 0
+                    || (spec.Key ?? string.Empty).IndexOf("GP5", StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(spec => UiText.Normalize(spec.Key))
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        private string ResolvePreferredSpecForExteriorWall(string? fallbackSpecKey)
+        {
+            var byPanelType = _project.Specs.FirstOrDefault(spec =>
+                string.Equals((spec.PanelType ?? string.Empty).Trim(), "ISOPAR", StringComparison.OrdinalIgnoreCase));
+            if (byPanelType != null && !string.IsNullOrWhiteSpace(byPanelType.Key))
+                return byPanelType.Key;
+
+            var bySpecKey = _project.Specs.FirstOrDefault(spec =>
+                (spec.Key ?? string.Empty).IndexOf("ISOPAR", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (bySpecKey != null && !string.IsNullOrWhiteSpace(bySpecKey.Key))
+                return bySpecKey.Key;
+
+            if (!string.IsNullOrWhiteSpace(fallbackSpecKey))
+                return fallbackSpecKey;
+
+            return _project.Specs.FirstOrDefault()?.Key ?? string.Empty;
+        }
+
+        private string ResolvePreferredSpecForExteriorRoof(string? fallbackSpecKey)
+        {
+            var byPanelType = _project.Specs.FirstOrDefault(spec =>
+                string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP3", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP5", StringComparison.OrdinalIgnoreCase));
+            if (byPanelType != null && !string.IsNullOrWhiteSpace(byPanelType.Key))
+                return byPanelType.Key;
+
+            var bySpecKey = _project.Specs.FirstOrDefault(spec =>
+                (spec.Key ?? string.Empty).IndexOf("GP3", StringComparison.OrdinalIgnoreCase) >= 0
+                || (spec.Key ?? string.Empty).IndexOf("GP5", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (bySpecKey != null && !string.IsNullOrWhiteSpace(bySpecKey.Key))
+                return bySpecKey.Key;
+
+            if (!string.IsNullOrWhiteSpace(fallbackSpecKey))
+                return fallbackSpecKey;
+
+            return _project.Specs.FirstOrDefault()?.Key ?? string.Empty;
         }
 
         /// <summary>

@@ -37,6 +37,8 @@ namespace ShopDrawing.Plugin.UI
         private const short SuspensionTColorIndex = 5;
         private const short SuspensionMushroomColorIndex = 2;
         private const short PreviewSummaryTextColorIndex = 7;
+        private const short OpeningPreviewColorIndex = 6;
+        private const short OpeningPreviewTextColorIndex = 4;
 
         private readonly TenderProject _project;
         private readonly ObservableCollection<TenderWallRow> _wallRows;
@@ -1390,6 +1392,78 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         }
 
 
+        private static bool TryGetPointAndNormalAlongPolylineAtDistance(
+            List<double[]> vertices,
+            double distance,
+            out double[] point,
+            out double[] normal)
+        {
+            point = Array.Empty<double>();
+            normal = Array.Empty<double>();
+
+            if (vertices.Count < 2)
+                return false;
+
+            double target = Math.Max(0, distance);
+            double totalLength = GetPolylineChainLength(vertices);
+            if (totalLength <= 1e-6)
+                return false;
+
+            target = Math.Min(totalLength, target);
+
+            double walked = 0;
+            for (int i = 0; i + 1 < vertices.Count; i++)
+            {
+                double[] p0 = vertices[i];
+                double[] p1 = vertices[i + 1];
+                double dx = p1[0] - p0[0];
+                double dy = p1[1] - p0[1];
+                double segmentLength = Math.Sqrt(dx * dx + dy * dy);
+                if (segmentLength <= 1e-6)
+                    continue;
+
+                if (walked + segmentLength >= target - 1e-6)
+                {
+                    double ratio = (target - walked) / segmentLength;
+                    ratio = Math.Max(0, Math.Min(1, ratio));
+                    point = new[]
+                    {
+                        p0[0] + dx * ratio,
+                        p0[1] + dy * ratio
+                    };
+                    normal = new[]
+                    {
+                        -dy / segmentLength,
+                        dx / segmentLength
+                    };
+                    return true;
+                }
+
+                walked += segmentLength;
+            }
+
+            for (int i = vertices.Count - 2; i >= 0; i--)
+            {
+                double[] p0 = vertices[i];
+                double[] p1 = vertices[i + 1];
+                double dx = p1[0] - p0[0];
+                double dy = p1[1] - p0[1];
+                double segmentLength = Math.Sqrt(dx * dx + dy * dy);
+                if (segmentLength <= 1e-6)
+                    continue;
+
+                point = p1.ToArray();
+                normal = new[]
+                {
+                    -dy / segmentLength,
+                    dx / segmentLength
+                };
+                return true;
+            }
+
+            return false;
+        }
+
         private static bool TryGetPointAndNormalAlongPolyline(
             List<double[]> vertices,
             double distance,
@@ -1400,36 +1474,15 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             start = Array.Empty<double>();
             end = Array.Empty<double>();
 
-            if (vertices.Count < 2 || height <= 0)
+            if (height <= 0)
                 return false;
 
-            double walked = 0;
-            for (int i = 0; i + 1 < vertices.Count; i++)
-            {
-                double[] p0 = vertices[i];
-                double[] p1 = vertices[i + 1];
-                double dx = p1[0] - p0[0];
-                double dy = p1[1] - p0[1];
-                double segmentLength = Math.Sqrt(dx * dx + dy * dy);
-                if (segmentLength <= 1.0)
-                    continue;
+            if (!TryGetPointAndNormalAlongPolylineAtDistance(vertices, distance, out var point, out var normal))
+                return false;
 
-                if (walked + segmentLength >= distance)
-                {
-                    double ratio = (distance - walked) / segmentLength;
-                    double x = p0[0] + dx * ratio;
-                    double y = p0[1] + dy * ratio;
-                    double nx = -dy / segmentLength;
-                    double ny = dx / segmentLength;
-                    start = new[] { x, y };
-                    end = new[] { x + nx * height, y + ny * height };
-                    return true;
-                }
-
-                walked += segmentLength;
-            }
-
-            return false;
+            start = point;
+            end = OffsetPoint(point, normal, height);
+            return true;
         }
 
         private void AddPanelPreviewLines(
@@ -1512,6 +1565,357 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 PluginLogger.Info(
                     $"TenderPreview.PanelLines.Done | row={row.Name} | mode=scanline | lineCount={previewLineCount}");
             }
+        }
+
+        private void AddOpeningCadPreview(
+            Autodesk.AutoCAD.DatabaseServices.Entity sourceEnt,
+            List<double[]> previewVertices,
+            TenderWallRow row,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
+            Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+        {
+            if (row.Openings == null || row.Openings.Count == 0)
+                return;
+
+            if (sourceEnt is Autodesk.AutoCAD.DatabaseServices.Polyline pl
+                && !pl.Closed
+                && pl.NumberOfVertices >= 2)
+            {
+                AddOpeningCadPreviewOnDevelopedPath(GetPolylineVertices(pl), row, layerId, btr, tr);
+                return;
+            }
+
+            if (sourceEnt is Autodesk.AutoCAD.DatabaseServices.Line line)
+            {
+                var baseVertices = new List<double[]>
+                {
+                    new[] { line.StartPoint.X, line.StartPoint.Y },
+                    new[] { line.EndPoint.X, line.EndPoint.Y }
+                };
+
+                AddOpeningCadPreviewOnDevelopedPath(baseVertices, row, layerId, btr, tr);
+                return;
+            }
+
+            AddOpeningCadPreviewOnClosedRegion(previewVertices, row, layerId, btr, tr);
+        }
+
+        private void AddOpeningCadPreviewOnDevelopedPath(
+            List<double[]> baseVertices,
+            TenderWallRow row,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
+            Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+        {
+            if (baseVertices == null || baseVertices.Count < 2)
+                return;
+
+            double drawingLength = GetPolylineChainLength(baseVertices);
+            if (drawingLength <= 1.0)
+                return;
+
+            var expandedOpenings = ExpandOpeningsForPreview(row.Openings);
+            if (expandedOpenings.Count == 0)
+                return;
+
+            var missingStations = expandedOpenings.Count(o => o.CenterStationMm < 0);
+            var heightSegments = BuildPreviewHeightSegments(row, drawingLength);
+
+            int fallbackIndex = 0;
+            int openingIndex = 0;
+            foreach (var opening in expandedOpenings)
+            {
+                bool useFallback = opening.CenterStationMm < 0;
+                int currentFallback = useFallback ? fallbackIndex++ : -1;
+
+                if (!TryResolveOpeningStation(
+                        opening,
+                        currentFallback,
+                        missingStations,
+                        drawingLength,
+                        out var stationStartMm,
+                        out var stationEndMm))
+                {
+                    continue;
+                }
+
+                double stationCenterMm = (stationStartMm + stationEndMm) * 0.5;
+                double localHeightMm = Math.Max(1.0, GetHeightAt(stationCenterMm, heightSegments, drawingLength));
+                double bottomMm = Math.Max(0, Math.Min(opening.BottomElevationMm, localHeightMm));
+                double visibleHeightMm = Math.Max(0, Math.Min(opening.Height, localHeightMm - bottomMm));
+                if (visibleHeightMm <= 0.5)
+                    continue;
+
+                if (!TryGetPointAndNormalAlongPolylineAtDistance(baseVertices, stationStartMm, out var startBase, out var startNormal)
+                    || !TryGetPointAndNormalAlongPolylineAtDistance(baseVertices, stationEndMm, out var endBase, out var endNormal))
+                {
+                    continue;
+                }
+
+                double[] leftBottom = OffsetPoint(startBase, startNormal, bottomMm);
+                double[] rightBottom = OffsetPoint(endBase, endNormal, bottomMm);
+                double[] leftTop = OffsetPoint(startBase, startNormal, bottomMm + visibleHeightMm);
+                double[] rightTop = OffsetPoint(endBase, endNormal, bottomMm + visibleHeightMm);
+
+                AddOpeningPreviewRectangle(leftBottom, rightBottom, rightTop, leftTop, layerId, btr, tr);
+
+                var labelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                    (leftTop[0] + rightTop[0]) * 0.5 + startNormal[0] * 90.0,
+                    (leftTop[1] + rightTop[1]) * 0.5 + startNormal[1] * 90.0,
+                    0);
+
+                AddPreviewText(
+                    labelPoint,
+                    $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
+                    OpeningPreviewTextColorIndex,
+                    110.0,
+                    layerId,
+                    btr,
+                    tr);
+
+                var stationLabelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                    leftBottom[0] - startNormal[0] * 80.0,
+                    leftBottom[1] - startNormal[1] * 80.0,
+                    0);
+
+                AddPreviewText(
+                    stationLabelPoint,
+                    $"LT {stationStartMm:F0}",
+                    OpeningPreviewTextColorIndex,
+                    90.0,
+                    layerId,
+                    btr,
+                    tr);
+            }
+        }
+
+        private void AddOpeningCadPreviewOnClosedRegion(
+            List<double[]> vertices,
+            TenderWallRow row,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
+            Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+        {
+            if (vertices == null || vertices.Count < 3)
+                return;
+
+            var expandedOpenings = ExpandOpeningsForPreview(row.Openings);
+            if (expandedOpenings.Count == 0)
+                return;
+
+            double drawingLength = Math.Max(1.0, row.Length);
+            double minX = vertices.Min(v => v[0]);
+            double maxX = vertices.Max(v => v[0]);
+            double minY = vertices.Min(v => v[1]);
+            double maxY = vertices.Max(v => v[1]);
+            double spanX = Math.Max(1.0, maxX - minX);
+            double spanY = Math.Max(1.0, maxY - minY);
+            bool stationAlongX = spanX >= spanY;
+            double stationSpan = stationAlongX ? spanX : spanY;
+
+            var heightSegments = BuildPreviewHeightSegments(row, drawingLength);
+            var missingStations = expandedOpenings.Count(o => o.CenterStationMm < 0);
+            int fallbackIndex = 0;
+            int openingIndex = 0;
+
+            foreach (var opening in expandedOpenings)
+            {
+                bool useFallback = opening.CenterStationMm < 0;
+                int currentFallback = useFallback ? fallbackIndex++ : -1;
+
+                if (!TryResolveOpeningStation(
+                        opening,
+                        currentFallback,
+                        missingStations,
+                        drawingLength,
+                        out var stationStartMm,
+                        out var stationEndMm))
+                {
+                    continue;
+                }
+
+                double stationCenterMm = (stationStartMm + stationEndMm) * 0.5;
+                double localHeightMm = Math.Max(1.0, GetHeightAt(stationCenterMm, heightSegments, drawingLength));
+                double bottomMm = Math.Max(0, Math.Min(opening.BottomElevationMm, localHeightMm));
+                double visibleHeightMm = Math.Max(0, Math.Min(opening.Height, localHeightMm - bottomMm));
+                if (visibleHeightMm <= 0.5)
+                    continue;
+
+                double axisStart = (stationStartMm / drawingLength) * stationSpan;
+                double axisEnd = (stationEndMm / drawingLength) * stationSpan;
+                if (Math.Abs(axisEnd - axisStart) <= 0.5)
+                    continue;
+
+                if (stationAlongX)
+                {
+                    double x1 = minX + axisStart;
+                    double x2 = minX + axisEnd;
+                    double yBottom = minY + (bottomMm / localHeightMm) * spanY;
+                    double yTop = minY + ((bottomMm + visibleHeightMm) / localHeightMm) * spanY;
+                    AddOpeningPreviewRectangle(
+                        new[] { x1, yBottom },
+                        new[] { x2, yBottom },
+                        new[] { x2, yTop },
+                        new[] { x1, yTop },
+                        layerId,
+                        btr,
+                        tr);
+
+                    var labelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                        (x1 + x2) * 0.5,
+                        yTop + 80.0,
+                        0);
+                    AddPreviewText(
+                        labelPoint,
+                        $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
+                        OpeningPreviewTextColorIndex,
+                        100.0,
+                        layerId,
+                        btr,
+                        tr);
+                }
+                else
+                {
+                    double y1 = minY + axisStart;
+                    double y2 = minY + axisEnd;
+                    double xBottom = minX + (bottomMm / localHeightMm) * spanX;
+                    double xTop = minX + ((bottomMm + visibleHeightMm) / localHeightMm) * spanX;
+                    AddOpeningPreviewRectangle(
+                        new[] { xBottom, y1 },
+                        new[] { xBottom, y2 },
+                        new[] { xTop, y2 },
+                        new[] { xTop, y1 },
+                        layerId,
+                        btr,
+                        tr);
+
+                    var labelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                        xTop + 80.0,
+                        (y1 + y2) * 0.5,
+                        0);
+                    AddPreviewText(
+                        labelPoint,
+                        $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
+                        OpeningPreviewTextColorIndex,
+                        100.0,
+                        layerId,
+                        btr,
+                        tr);
+                }
+            }
+        }
+
+        private void AddOpeningPreviewRectangle(
+            double[] p1,
+            double[] p2,
+            double[] p3,
+            double[] p4,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
+            Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+        {
+            AddPreviewLine(
+                new Autodesk.AutoCAD.Geometry.Point3d(p1[0], p1[1], 0),
+                new Autodesk.AutoCAD.Geometry.Point3d(p2[0], p2[1], 0),
+                OpeningPreviewColorIndex,
+                Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030,
+                layerId,
+                btr,
+                tr);
+            AddPreviewLine(
+                new Autodesk.AutoCAD.Geometry.Point3d(p2[0], p2[1], 0),
+                new Autodesk.AutoCAD.Geometry.Point3d(p3[0], p3[1], 0),
+                OpeningPreviewColorIndex,
+                Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030,
+                layerId,
+                btr,
+                tr);
+            AddPreviewLine(
+                new Autodesk.AutoCAD.Geometry.Point3d(p3[0], p3[1], 0),
+                new Autodesk.AutoCAD.Geometry.Point3d(p4[0], p4[1], 0),
+                OpeningPreviewColorIndex,
+                Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030,
+                layerId,
+                btr,
+                tr);
+            AddPreviewLine(
+                new Autodesk.AutoCAD.Geometry.Point3d(p4[0], p4[1], 0),
+                new Autodesk.AutoCAD.Geometry.Point3d(p1[0], p1[1], 0),
+                OpeningPreviewColorIndex,
+                Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030,
+                layerId,
+                btr,
+                tr);
+        }
+
+        private static List<TenderOpening> ExpandOpeningsForPreview(IReadOnlyList<TenderOpening>? openings)
+        {
+            return (openings ?? Array.Empty<TenderOpening>())
+                .Where(o => o != null && o.Width > 0 && o.Height > 0 && o.Quantity > 0)
+                .SelectMany(o => Enumerable.Range(0, Math.Max(1, o.Quantity)).Select(_ => o))
+                .ToList();
+        }
+
+        private static bool TryResolveOpeningStation(
+            TenderOpening opening,
+            int fallbackIndex,
+            int fallbackCount,
+            double drawingLength,
+            out double stationStartMm,
+            out double stationEndMm)
+        {
+            stationStartMm = opening.CenterStationMm;
+            if (stationStartMm < 0)
+            {
+                if (fallbackCount <= 0)
+                {
+                    stationEndMm = 0;
+                    return false;
+                }
+
+                double ratio = (fallbackIndex + 1.0) / (fallbackCount + 1.0);
+                stationStartMm = Math.Max(0, ratio * drawingLength - opening.Width * 0.5);
+            }
+
+            stationStartMm = Math.Max(0, Math.Min(drawingLength, stationStartMm));
+            stationEndMm = Math.Max(stationStartMm, Math.Min(drawingLength, stationStartMm + opening.Width));
+            return stationEndMm - stationStartMm > 0.5;
+        }
+
+        private static List<TenderHeightSegment> BuildPreviewHeightSegments(TenderWallRow row, double drawingLength)
+        {
+            var segments = (row.HeightSegments ?? new List<TenderHeightSegment>())
+                .Where(s => s != null && s.LengthMm > 0 && s.HeightMm > 0)
+                .Select(s => new TenderHeightSegment
+                {
+                    LengthMm = s.LengthMm,
+                    HeightMm = s.HeightMm,
+                    CadHandle = s.CadHandle
+                })
+                .ToList();
+
+            if (segments.Count == 0)
+            {
+                return new List<TenderHeightSegment>
+                {
+                    new TenderHeightSegment
+                    {
+                        LengthMm = Math.Max(1.0, drawingLength),
+                        HeightMm = Math.Max(1.0, row.Height)
+                    }
+                };
+            }
+
+            double totalLength = segments.Sum(s => Math.Max(0, s.LengthMm));
+            if (totalLength > 1.0 && Math.Abs(totalLength - drawingLength) > 1.0)
+            {
+                double scale = drawingLength / totalLength;
+                foreach (var segment in segments)
+                    segment.LengthMm = Math.Max(1.0, segment.LengthMm * scale);
+            }
+
+            return segments;
         }
 
         private static bool HasNonOrthogonalEdges(IReadOnlyList<double[]> vertices)

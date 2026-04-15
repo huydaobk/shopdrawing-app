@@ -3948,7 +3948,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
                         AddDevelopedPolylinePreview(sourcePolyline, row, layerId, btr, tr);
-
+                        AddOpeningCadPreview(sourcePolyline, GetPolylineVertices(sourcePolyline), row, layerId, btr, tr);
                         AddPreviewSummaryText(GetPolylineVertices(sourcePolyline), row, layerId, btr, tr);
 
                         tr.Commit();
@@ -3982,7 +3982,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
                         AddPanelPreviewLines(previewVertices, row, layerId, btr, tr);
-
+                        AddOpeningCadPreview(sourceEnt, previewVertices, row, layerId, btr, tr);
                         AddPreviewSummaryText(previewVertices, row, layerId, btr, tr);
 
                     }

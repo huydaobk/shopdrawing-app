@@ -400,6 +400,16 @@ namespace ShopDrawing.Plugin.Models
                         return BuildContinuousVerticalBreakdown(effectiveSegments, Openings);
                 }
             }
+            else if (LayoutDirection == "Ngang")
+            {
+                bool hasResolvableOpenings = Openings.Count == 0
+                    || Openings.All(o => o != null
+                        && o.Width > 0
+                        && o.Height > 0
+                        && o.CenterStationMm >= 0);
+                if (hasResolvableOpenings)
+                    return BuildContinuousHorizontalBreakdown(Openings);
+            }
 
             var entries = new List<TenderPanelEntry>();
             if (PanelWidth <= 0 || DivisionSpan <= 0 || PanelSpan <= 0)
@@ -407,10 +417,14 @@ namespace ShopDrawing.Plugin.Models
 
             int totalPanels = EstimatedPanelCount;
             int totalReducedPanels = 0;
+            int remainingReduciblePanels = totalPanels;
             var reducedGroups = new Dictionary<double, int>();
 
             foreach (var op in Openings)
             {
+                if (remainingReduciblePanels <= 0)
+                    break;
+
                 double opDivDim = LayoutDirection == "Ngang" ? op.Height : op.Width;
                 double opSpanDim = LayoutDirection == "Ngang" ? op.Width : op.Height;
 
@@ -419,16 +433,18 @@ namespace ShopDrawing.Plugin.Models
                     int panelsInOp = Math.Max(0, (int)Math.Floor(opDivDim / PanelWidth) - 1);
                     int totalForThisOp = panelsInOp * op.Quantity;
                     double reducedSpan = Math.Max(0, PanelSpan - opSpanDim);
+                    int cappedForThisOp = Math.Min(totalForThisOp, remainingReduciblePanels);
 
-                    if (totalForThisOp > 0 && reducedSpan > 0)
+                    if (cappedForThisOp > 0 && reducedSpan > 0)
                     {
                         double key = Math.Round(reducedSpan);
                         if (reducedGroups.ContainsKey(key))
-                            reducedGroups[key] += totalForThisOp;
+                            reducedGroups[key] += cappedForThisOp;
                         else
-                            reducedGroups[key] = totalForThisOp;
+                            reducedGroups[key] = cappedForThisOp;
 
-                        totalReducedPanels += totalForThisOp;
+                        totalReducedPanels += cappedForThisOp;
+                        remainingReduciblePanels -= cappedForThisOp;
                     }
                 }
             }
@@ -457,7 +473,7 @@ namespace ShopDrawing.Plugin.Models
                 {
                     WidthMm = PanelWidth,
                     LengthMm = kv.Key,
-                    Count = Math.Min(kv.Value, totalPanels),
+                    Count = kv.Value,
                     Label = "Giảm (lỗ mở)"
                 });
             }
@@ -474,6 +490,135 @@ namespace ShopDrawing.Plugin.Models
             }
 
             return entries;
+        }
+
+        private List<TenderPanelEntry> BuildContinuousHorizontalBreakdown(
+            IReadOnlyList<TenderOpening>? openings)
+        {
+            var entries = new List<TenderPanelEntry>();
+            if (PanelWidth <= 0 || DivisionSpan <= 0 || PanelSpan <= 0)
+                return entries;
+
+            int totalPanels = (int)Math.Ceiling(DivisionSpan / PanelWidth);
+            if (totalPanels <= 0)
+                return entries;
+
+            var reducedGroups = new Dictionary<double, int>();
+            var wasteGroups = new Dictionary<(double Width, double Length), int>();
+            int normalPanels = 0;
+
+            var openingRanges = BuildOpeningRanges(openings)
+                .Select(o =>
+                {
+                    double start = Math.Max(0, Math.Min(PanelSpan, o.Start));
+                    double end = Math.Max(start, Math.Min(PanelSpan, o.End));
+                    double bottom = Math.Max(0, Math.Min(DivisionSpan, o.Bottom));
+                    double top = Math.Max(bottom, Math.Min(DivisionSpan, o.Top));
+                    return (Start: start, End: end, Bottom: bottom, Top: top);
+                })
+                .Where(o => o.End - o.Start > 1.0 && o.Top - o.Bottom > 1.0)
+                .ToList();
+
+            for (int panelIndex = 0; panelIndex < totalPanels; panelIndex++)
+            {
+                double divStart = panelIndex * PanelWidth;
+                double divEnd = Math.Min((panelIndex + 1) * PanelWidth, DivisionSpan);
+                double installedDiv = Math.Max(0, divEnd - divStart);
+                if (installedDiv <= 0.5)
+                    continue;
+
+                double removedArea = 0;
+                double remnantDiv = Math.Max(0, PanelWidth - installedDiv);
+                if (remnantDiv > 1.0)
+                {
+                    removedArea += remnantDiv * PanelSpan;
+                    AddWaste(remnantDiv, PanelSpan, wasteGroups);
+                }
+
+                foreach (var opening in openingRanges)
+                {
+                    double overlapDiv = Math.Max(0, Math.Min(divEnd, opening.Top) - Math.Max(divStart, opening.Bottom));
+                    if (overlapDiv <= 1.0)
+                        continue;
+
+                    double overlapSpan = Math.Max(0, Math.Min(PanelSpan, opening.End) - Math.Max(0, opening.Start));
+                    if (overlapSpan <= 1.0)
+                        continue;
+
+                    removedArea += overlapDiv * overlapSpan;
+                    AddWaste(overlapDiv, overlapSpan, wasteGroups);
+                }
+
+                double nominalArea = PanelWidth * PanelSpan;
+                removedArea = Math.Max(0, Math.Min(nominalArea, removedArea));
+                if (removedArea <= 1.0)
+                {
+                    normalPanels++;
+                    continue;
+                }
+
+                double remainingLength = (nominalArea - removedArea) / PanelWidth;
+                if (remainingLength > 1.0)
+                {
+                    double key = Math.Round(remainingLength);
+                    if (reducedGroups.ContainsKey(key))
+                        reducedGroups[key]++;
+                    else
+                        reducedGroups[key] = 1;
+                }
+            }
+
+            if (normalPanels > 0)
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = PanelWidth,
+                    LengthMm = PanelSpan,
+                    Count = normalPanels,
+                    Label = "Nguyên"
+                });
+            }
+
+            foreach (var kv in reducedGroups.OrderByDescending(x => x.Key))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = PanelWidth,
+                    LengthMm = kv.Key,
+                    Count = kv.Value,
+                    Label = "Giảm (lỗ mở)"
+                });
+            }
+
+            foreach (var kv in wasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = kv.Key.Width,
+                    LengthMm = kv.Key.Length,
+                    Count = kv.Value,
+                    Label = "Hao hụt"
+                });
+            }
+
+            return entries;
+
+            static void AddWaste(
+                double wasteWidth,
+                double wasteLength,
+                Dictionary<(double Width, double Length), int> dict)
+            {
+                double widthKey = Math.Round(wasteWidth);
+                double lengthKey = Math.Round(wasteLength);
+                if (widthKey <= 0 || lengthKey <= 0)
+                    return;
+
+                var key = (Width: widthKey, Length: lengthKey);
+                if (dict.ContainsKey(key))
+                    dict[key]++;
+                else
+                    dict[key] = 1;
+            }
         }
 
         private List<TenderPanelEntry> BuildContinuousVerticalBreakdown(

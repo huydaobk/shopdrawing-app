@@ -37,8 +37,8 @@ namespace ShopDrawing.Plugin.UI
         private const short SuspensionTColorIndex = 5;
         private const short SuspensionMushroomColorIndex = 2;
         private const short PreviewSummaryTextColorIndex = 7;
-        private const short OpeningPreviewColorIndex = 6;
-        private const short OpeningPreviewTextColorIndex = 4;
+        private const short OpeningPreviewColorIndex = 1;
+        private const short OpeningPreviewTextColorIndex = 2;
 
         private readonly TenderProject _project;
         private readonly ObservableCollection<TenderWallRow> _wallRows;
@@ -1621,6 +1621,10 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
             var missingStations = expandedOpenings.Count(o => o.CenterStationMm < 0);
             var heightSegments = BuildPreviewHeightSegments(row, drawingLength);
+            double textHeight = ComputeAdaptivePreviewTextHeight(Math.Max(drawingLength, Math.Max(1.0, row.Height)));
+            double stationTextHeight = Math.Max(90.0, textHeight * 0.75);
+            double textOffset = Math.Max(100.0, textHeight * 0.9);
+            var legendLines = new List<string>();
 
             int fallbackIndex = 0;
             int openingIndex = 0;
@@ -1669,24 +1673,33 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     labelPoint,
                     $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
                     OpeningPreviewTextColorIndex,
-                    110.0,
+                    textHeight,
                     layerId,
                     btr,
                     tr);
 
                 var stationLabelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
-                    leftBottom[0] - startNormal[0] * 80.0,
-                    leftBottom[1] - startNormal[1] * 80.0,
+                    leftBottom[0] - startNormal[0] * textOffset,
+                    leftBottom[1] - startNormal[1] * textOffset,
                     0);
 
                 AddPreviewText(
                     stationLabelPoint,
                     $"LT {stationStartMm:F0}",
                     OpeningPreviewTextColorIndex,
-                    90.0,
+                    stationTextHeight,
                     layerId,
                     btr,
                     tr);
+
+                legendLines.Add($"Lỗ{openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0} LT{stationStartMm:F0}");
+            }
+
+            if (legendLines.Count > 0)
+            {
+                var offsetBoundary = BuildOffsetPolylineBoundary(baseVertices, Math.Max(1.0, row.Height));
+                var allPoints = baseVertices.Concat(offsetBoundary).ToList();
+                AddOpeningPreviewLegend(allPoints, legendLines, textHeight, layerId, btr, tr);
             }
         }
 
@@ -1713,11 +1726,14 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             double spanY = Math.Max(1.0, maxY - minY);
             bool stationAlongX = spanX >= spanY;
             double stationSpan = stationAlongX ? spanX : spanY;
+            double textHeight = ComputeAdaptivePreviewTextHeight(Math.Max(spanX, spanY));
+            double textOffset = Math.Max(80.0, textHeight * 0.8);
 
             var heightSegments = BuildPreviewHeightSegments(row, drawingLength);
             var missingStations = expandedOpenings.Count(o => o.CenterStationMm < 0);
             int fallbackIndex = 0;
             int openingIndex = 0;
+            var legendLines = new List<string>();
 
             foreach (var opening in expandedOpenings)
             {
@@ -1764,13 +1780,13 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
                     var labelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
                         (x1 + x2) * 0.5,
-                        yTop + 80.0,
+                        yTop + textOffset,
                         0);
                     AddPreviewText(
                         labelPoint,
                         $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
                         OpeningPreviewTextColorIndex,
-                        100.0,
+                        textHeight,
                         layerId,
                         btr,
                         tr);
@@ -1791,18 +1807,25 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                         tr);
 
                     var labelPoint = new Autodesk.AutoCAD.Geometry.Point3d(
-                        xTop + 80.0,
+                        xTop + textOffset,
                         (y1 + y2) * 0.5,
                         0);
                     AddPreviewText(
                         labelPoint,
                         $"Lỗ{++openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0}",
                         OpeningPreviewTextColorIndex,
-                        100.0,
+                        textHeight,
                         layerId,
                         btr,
                         tr);
                 }
+
+                legendLines.Add($"Lỗ{openingIndex}: W{opening.Width:F0} H{opening.Height:F0} Đáy{bottomMm:F0} LT{stationStartMm:F0}");
+            }
+
+            if (legendLines.Count > 0)
+            {
+                AddOpeningPreviewLegend(vertices, legendLines, textHeight, layerId, btr, tr);
             }
         }
 
@@ -1855,6 +1878,45 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 .Where(o => o != null && o.Width > 0 && o.Height > 0 && o.Quantity > 0)
                 .SelectMany(o => Enumerable.Range(0, Math.Max(1, o.Quantity)).Select(_ => o))
                 .ToList();
+        }
+
+        private void AddOpeningPreviewLegend(
+            IReadOnlyList<double[]> vertices,
+            IReadOnlyList<string> legendLines,
+            double textHeight,
+            Autodesk.AutoCAD.DatabaseServices.ObjectId layerId,
+            Autodesk.AutoCAD.DatabaseServices.BlockTableRecord btr,
+            Autodesk.AutoCAD.DatabaseServices.Transaction tr)
+        {
+            if (vertices == null || vertices.Count == 0 || legendLines == null || legendLines.Count == 0)
+                return;
+
+            double minX = vertices.Min(v => v[0]);
+            double maxY = vertices.Max(v => v[1]);
+            double lineStep = Math.Max(100.0, textHeight * 1.1);
+            double startX = minX + Math.Max(90.0, textHeight * 0.7);
+            double startY = maxY - Math.Max(120.0, textHeight * 0.8);
+
+            for (int i = 0; i < legendLines.Count; i++)
+            {
+                var p = new Autodesk.AutoCAD.Geometry.Point3d(startX, startY - i * lineStep, 0);
+                AddPreviewText(
+                    p,
+                    legendLines[i],
+                    OpeningPreviewTextColorIndex,
+                    textHeight,
+                    layerId,
+                    btr,
+                    tr);
+            }
+        }
+
+        private static double ComputeAdaptivePreviewTextHeight(double spanMm)
+        {
+            if (spanMm <= 1.0)
+                return 120.0;
+
+            return Math.Max(120.0, Math.Min(420.0, spanMm / 140.0));
         }
 
         private static bool TryResolveOpeningStation(
@@ -2713,7 +2775,10 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 Count = e.Count
             }).ToList();
             _panelBreakdownGrid.ItemsSource = viewRows;
-            SetStatus($"Vùng tính khối lượng: {wallRow.Name} | Thống kê tấm: {viewRows.Count} dòng");
+            int breakdownPanelCount = breakdown
+                .Where(e => !string.Equals(e.Label, "Hao hụt", StringComparison.OrdinalIgnoreCase))
+                .Sum(e => Math.Max(0, e.Count));
+            SetStatus($"Vùng tính khối lượng: {wallRow.Name} | Tấm bảng chính: {model.EstimatedPanelCount} | Tấm thống kê: {breakdownPanelCount}");
         }
 
         private void LoadProjectData()

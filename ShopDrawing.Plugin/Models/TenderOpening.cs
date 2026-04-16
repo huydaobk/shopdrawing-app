@@ -23,6 +23,11 @@
         public bool IsDoor => Type == "Cửa đi";
         public bool IsNonDoor => !IsDoor;
 
+        public static string ResolveTypeByBottomElevation(double bottomElevationMm)
+        {
+            return bottomElevationMm <= 0.5 ? "Cửa đi" : "Lỗ kỹ thuật";
+        }
+
         /// <summary>Dien tich 1 opening (m2)</summary>
         public double AreaM2 => Width * Height / 1_000_000.0;
 

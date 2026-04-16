@@ -957,7 +957,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
             _openingRows.Add(new TenderOpeningRow
             {
-                Type = "Cửa đi",
+                Type = TenderOpening.ResolveTypeByBottomElevation(0),
                 Width = 2000,
                 Height = 2500,
                 BottomElevationMm = 0,
@@ -995,6 +995,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (choice == MessageBoxResult.Cancel) return;
             PickOpeningFromCad(choice == MessageBoxResult.No, selectedOp);
         }
+
         private void OnRepickWall(object sender, RoutedEventArgs e)
         {
             if (!(_wallGrid.SelectedItem is TenderWallRow selectedRow))
@@ -3747,7 +3748,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         {
             Openings = rows.Select(r => new TenderOpening
             {
-                Type = r.Type,
+                Type = TenderOpening.ResolveTypeByBottomElevation(r.BottomElevationMm),
                 Width = r.Width,
                 Height = r.Height,
                 BottomElevationMm = Math.Max(0, r.BottomElevationMm),

@@ -382,7 +382,11 @@ namespace ShopDrawing.Plugin.UI
             {
                 try
                 {
-                    foreach (var row in _openingRows) row.Refresh();
+                    foreach (var row in _openingRows)
+                    {
+                        row.Type = TenderOpening.ResolveTypeByBottomElevation(row.BottomElevationMm);
+                        row.Refresh();
+                    }
 
                     if (_wallGrid.SelectedItem is TenderWallRow wallRow)
                     {

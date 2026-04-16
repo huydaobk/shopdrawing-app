@@ -2546,7 +2546,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             opening = new TenderOpening
             {
-                Type = heightMm >= 2000 ? "Cửa đi" : "Cửa sổ",
+                Type = TenderOpening.ResolveTypeByBottomElevation(bottomElevationMm),
                 Width = widthMm,
                 Height = heightMm,
                 BottomElevationMm = bottomElevationMm,
@@ -3563,7 +3563,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         existingRow.BottomElevationMm = finalBottom;
                         existingRow.CenterStationMm = finalStation;
 
-                        existingRow.Type = finalH >= 2000 ? "Cửa đi" : "Cửa sổ";
+                        existingRow.Type = TenderOpening.ResolveTypeByBottomElevation(finalBottom);
 
                         existingRow.Refresh();
 
@@ -3577,7 +3577,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                         {
 
-                            Type = finalH >= 2000 ? "Cửa đi" : "Cửa sổ",
+                            Type = TenderOpening.ResolveTypeByBottomElevation(finalBottom),
 
                             Width = finalW,
 

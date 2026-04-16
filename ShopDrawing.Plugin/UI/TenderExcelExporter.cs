@@ -20,10 +20,11 @@ namespace ShopDrawing.Plugin.UI
         private const int BasisSheetMaxColumnIndex = 16;
         private const int SpecSheetMaxColumnIndex = 18;
         private const int PanelExplainSheetMaxColumnIndex = 13;
-        private const string TenderSheetName = "Khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u";
-        private const string PanelExplainSheetName = "Diá»…n giáº£i panel & lá»— má»Ÿ";
-        private const string BasisSheetName = "CÆ¡ sá»Ÿ tÃ­nh phá»¥ kiá»‡n riÃªng";
-        private const string SpecSheetName = "Quáº£n lÃ½ Spec";
+        // Keep sheet names ASCII + short to avoid NPOI validation issues on some encodings/locales.
+        private const string TenderSheetName = "Khoi luong dau thau";
+        private const string PanelExplainSheetName = "Dien giai panel lo mo";
+        private const string BasisSheetName = "Co so phu kien";
+        private const string SpecSheetName = "Quan ly spec";
 
         public void Export(TenderProject project, string filePath)
         {
@@ -214,7 +215,7 @@ namespace ShopDrawing.Plugin.UI
 
             int dataStartRowIndex = rowIdx;
             int stt = 1;
-            const string panelExplainSheetRef = "'Diá»…n giáº£i panel & lá»— má»Ÿ'";
+            string panelExplainSheetRef = $"'{PanelExplainSheetName}'";
             foreach (var row in rows)
             {
                 var excelRow = sheet.CreateRow(rowIdx++);

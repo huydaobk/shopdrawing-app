@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -71,7 +71,7 @@ namespace ShopDrawing.Plugin.UI
         public TenderBomDialog(TenderProject project)
         {
             _project = project;
-            Title = $"Quáº£n lÃ½ khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u - {project.ProjectName}";
+            Title = $"Qu\u1ea3n l\u00fd kh\u1ed1i l\u01b0\u1ee3ng \u0111\u1ea5u th\u1ea7u - {project.ProjectName}";
             Width = 1100;
             Height = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -123,7 +123,7 @@ namespace ShopDrawing.Plugin.UI
 
             var header = new TextBlock
             {
-                Text = "QUáº¢N LÃ KHá»I LÆ¯á»¢NG CHÃ€O GIÃ",
+                Text = "QU\u1ea2N L\u00dd KH\u1ed0I L\u01af\u1ee2NG CH\u00c0O GI\u00c1",
                 FontSize = 18,
                 FontWeight = FontWeights.Bold,
                 Foreground = FgDark,
@@ -152,7 +152,7 @@ namespace ShopDrawing.Plugin.UI
                     }
                     catch (Exception ex)
                     {
-                        SetStatus($"KhÃ´ng thá»ƒ tá»•ng há»£p khá»‘i lÆ°á»£ng: {ex.Message}");
+                        SetStatus($"Kh\u00f4ng th\u1ec3 t\u1ed5ng h\u1ee3p kh\u1ed1i l\u01b0\u1ee3ng: {ex.Message}");
                     }
                 }
                 else if (tabs.SelectedIndex == 0 && _wallGrid?.SelectedItem is TenderWallRow selectedRow)
@@ -183,7 +183,7 @@ namespace ShopDrawing.Plugin.UI
             };
             var btnClose = new Button
             {
-                Content = "ÄÃ³ng",
+                Content = "\u0110\u00f3ng",
                 Width = 90,
                 Height = 34,
                 Background = AccentBlue,
@@ -205,7 +205,7 @@ namespace ShopDrawing.Plugin.UI
         // ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â
         private TabItem CreateInputTab()
         {
-            var tab = new TabItem { Header = "Nháº­p vÃ¡ch vÃ  lá»— má»Ÿ" };
+            var tab = new TabItem { Header = "Nh\u1eadp v\u00e1ch v\u00e0 l\u1ed7 m\u1edf" };
 
             var panel = new Grid { Margin = new Thickness(8) };
             panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 0: info
@@ -219,7 +219,7 @@ namespace ShopDrawing.Plugin.UI
 
             var info = new TextBlock
             {
-                Text = "Nháº­p danh sÃ¡ch vÃ¡ch/tráº§n, kÃ­ch thÆ°á»›c vÃ  lá»— má»Ÿ. Pick tá»« CAD hoáº·c nháº­p thá»§ cÃ´ng.",
+                Text = "Nh\u1eadp danh s\u00e1ch v\u00e1ch/tr\u1ea7n, k\u00edch th\u01b0\u1edbc v\u00e0 l\u1ed7 m\u1edf. Pick t\u1eeb CAD ho\u1eb7c nh\u1eadp th\u1ee7 c\u00f4ng.",
                 Foreground = FgGray,
                 Margin = new Thickness(0, 0, 0, 6)
             };
@@ -228,7 +228,7 @@ namespace ShopDrawing.Plugin.UI
 
             var edgeGuide = new TextBlock
             {
-                Text = "Quy táº¯c nháº­p nhanh: náº¿u Ä‘Ã£ cÃ³ liÃªn káº¿t gÃ³c thÃ¬ khÃ´ng tick xá»­ lÃ½ mÃ©p trÃ¡i/pháº£i táº¡i cÃ¹ng vá»‹ trÃ­.",
+                Text = "Quy t\u1eafc nh\u1eadp nhanh: n\u1ebfu \u0111\u00e3 c\u00f3 li\u00ean k\u1ebft g\u00f3c th\u00ec kh\u00f4ng tick x\u1eed l\u00fd m\u00e9p tr\u00e1i/ph\u1ea3i t\u1ea1i c\u00f9ng v\u1ecb tr\u00ed.",
                 Foreground = AccentOrange,
                 FontSize = 11,
                 Margin = new Thickness(0, 18, 0, 0)
@@ -247,7 +247,7 @@ namespace ShopDrawing.Plugin.UI
             var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
             toolbar.Children.Add(new TextBlock
             {
-                Text = "Máº«u sáºµn:",
+                Text = "M\u1eabu s\u1eb5n:",
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 6, 0),
                 Foreground = FgDark,
@@ -277,11 +277,11 @@ namespace ShopDrawing.Plugin.UI
 
             toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
 
-            toolbar.Children.Add(Btn("Pick láº¡i", BtnGray, Brushes.White, OnRepickWall));
+            toolbar.Children.Add(Btn("Pick l\u1ea1i", BtnGray, Brushes.White, OnRepickWall));
 
             toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
 
-            toolbar.Children.Add(Btn("XÃ³a", AccentRed, Brushes.White, OnDeleteWall));
+            toolbar.Children.Add(Btn("X\u00f3a", AccentRed, Brushes.White, OnDeleteWall));
 
             Grid.SetRow(toolbar, 1);
             panel.Children.Add(toolbar);
@@ -297,7 +297,7 @@ namespace ShopDrawing.Plugin.UI
             };
             openingBar.Children.Add(new TextBlock
             {
-                Text = "Lá»— má»Ÿ (cá»§a vÃ¡ch Ä‘ang chá»n) ",
+                Text = "L\u1ed7 m\u1edf (c\u1ee7a v\u00e1ch \u0111ang ch\u1ecdn) ",
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
                 Foreground = AccentOrange,
@@ -305,7 +305,7 @@ namespace ShopDrawing.Plugin.UI
             });
             openingBar.Children.Add(new TextBlock
             {
-                Text = " | Quáº£n lÃ½ lá»— má»Ÿ trong popup Pick/Pick láº¡i",
+                Text = " | Qu\u1ea3n l\u00fd l\u1ed7 m\u1edf trong popup Pick/Pick l\u1ea1i",
                 FontSize = 12,
                 Foreground = FgGray,
                 VerticalAlignment = VerticalAlignment.Center
@@ -324,7 +324,7 @@ namespace ShopDrawing.Plugin.UI
             };
             breakdownBar.Children.Add(new TextBlock
             {
-                Text = "THá»NG KÃŠ Táº¤M SÆ  Bá»˜",
+                Text = "TH\u1ed0NG K\u00ca T\u1ea4M S\u01a0 B\u1ed8",
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
                 Foreground = AccentBlue,
@@ -349,9 +349,9 @@ namespace ShopDrawing.Plugin.UI
             var cellStyleBold = new Style(typeof(DataGridCell));
             cellStyleBold.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.Bold));
 
-            _panelBreakdownGrid.Columns.Add(Col("Loáº¡i", "Label", 90));
-            _panelBreakdownGrid.Columns.Add(Col("Rá»™ng (mm)", "WidthMm", 80, "F0"));
-            _panelBreakdownGrid.Columns.Add(Col("DÃ i (mm)", "LengthMm", 80, "F0"));
+            _panelBreakdownGrid.Columns.Add(Col("Lo\u1ea1i", "Label", 90));
+            _panelBreakdownGrid.Columns.Add(Col("R\u1ed9ng (mm)", "WidthMm", 80, "F0"));
+            _panelBreakdownGrid.Columns.Add(Col("D\u00e0i (mm)", "LengthMm", 80, "F0"));
             _panelBreakdownGrid.Columns.Add(Col("SL", "Count", 45));
             var colBkArea = Col("DT (mÂ²)", "AreaM2Display", 80);
             colBkArea.CellStyle = cellStyleBold;
@@ -362,7 +362,7 @@ namespace ShopDrawing.Plugin.UI
 
             _lblStatus = new TextBlock
             {
-                Text = "Sáºµn sÃ ng",
+                Text = "S\u1eb5n s\u00e0ng",
                 Foreground = FgDark,
                 FontSize = 12,
                 FontWeight = FontWeights.SemiBold,
@@ -379,7 +379,7 @@ namespace ShopDrawing.Plugin.UI
         // ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â
         private TabItem CreateBomTab()
         {
-            var tab = new TabItem { Header = "Khá»‘i lÆ°á»£ng tá»•ng há»£p" };
+            var tab = new TabItem { Header = "Kh\u1ed1i l\u01b0\u1ee3ng t\u1ed5ng h\u1ee3p" };
             var panel = new Grid { Margin = new Thickness(8) };
             panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -391,14 +391,14 @@ namespace ShopDrawing.Plugin.UI
             panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
-            toolbar.Children.Add(Btn("TÃ­nh láº¡i khá»‘i lÆ°á»£ng", AccentBlue, Brushes.White, (s, e) => RefreshBomSummary()));
-            toolbar.Children.Add(Btn("Cáº¥u hÃ¬nh phá»¥ kiá»‡n", BtnGray, Brushes.White, OnEditAccessories));
+            toolbar.Children.Add(Btn("T\u00ednh l\u1ea1i kh\u1ed1i l\u01b0\u1ee3ng", AccentBlue, Brushes.White, (s, e) => RefreshBomSummary()));
+            toolbar.Children.Add(Btn("C\u1ea5u h\u00ecnh ph\u1ee5 ki\u1ec7n", BtnGray, Brushes.White, OnEditAccessories));
             Grid.SetRow(toolbar, 0);
             panel.Children.Add(toolbar);
 
             var panelLabel = new TextBlock
             {
-                Text = "Tá»”NG Há»¢P Táº¤M PANEL",
+                Text = "T\u1ed4NG H\u1ee2P T\u1ea4M PANEL",
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
                 Foreground = AccentBlue,
@@ -416,21 +416,21 @@ namespace ShopDrawing.Plugin.UI
                 AlternatingRowBackground = AltRow
             };
             ConfigureGridScrolling(_panelSummaryGrid);
-            _panelSummaryGrid.Columns.Add(Col("Táº§ng", "Floor", 60));
-            _panelSummaryGrid.Columns.Add(Col("Háº¡ng má»¥c", "Category", 70));
-            _panelSummaryGrid.Columns.Add(Col("MÃ£ spec", "SpecKey", 100));
-            _panelSummaryGrid.Columns.Add(Col("Sá»‘ vÃ¡ch", "WallCount", 60));
-            _panelSummaryGrid.Columns.Add(Col("Tá»•ng dÃ i (m)", "TotalLengthM", 85, "F1"));
-            _panelSummaryGrid.Columns.Add(Col("DT vÃ¡ch (m2)", "WallAreaM2", 95, "F2"));
-            _panelSummaryGrid.Columns.Add(Col("DT lá»— má»Ÿ (m2)", "OpeningAreaM2", 105, "F2"));
+            _panelSummaryGrid.Columns.Add(Col("T\u1ea7ng", "Floor", 60));
+            _panelSummaryGrid.Columns.Add(Col("H\u1ea1ng m\u1ee5c", "Category", 70));
+            _panelSummaryGrid.Columns.Add(Col("M\u00e3 spec", "SpecKey", 100));
+            _panelSummaryGrid.Columns.Add(Col("S\u1ed1 v\u00e1ch", "WallCount", 60));
+            _panelSummaryGrid.Columns.Add(Col("T\u1ed5ng d\u00e0i (m)", "TotalLengthM", 85, "F1"));
+            _panelSummaryGrid.Columns.Add(Col("DT h\u00ecnh h\u1ecdc (m2)", "WallAreaM2", 95, "F2"));
+            _panelSummaryGrid.Columns.Add(Col("DT l\u1ed7 m\u1edf (m2)", "OpeningAreaM2", 105, "F2"));
             _panelSummaryGrid.Columns.Add(Col("DT net (m2)", "NetAreaM2", 85, "F2"));
-            _panelSummaryGrid.Columns.Add(Col("Sá»‘ táº¥m", "EstimatedPanels", 55));
+            _panelSummaryGrid.Columns.Add(Col("S\u1ed1 t\u1ea5m", "EstimatedPanels", 55));
             var wasteStyle = new Style(typeof(DataGridCell));
             wasteStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, AccentOrange));
             wasteStyle.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.SemiBold));
-            var colOrdered = Col("DT Ä‘áº·t hÃ ng (m2)", "OrderedAreaM2", 100, "F2");
-            var colWaste = Col("Hao há»¥t (m2)", "WasteAreaM2", 90, "F2");
-            var colPct = Col("Hao há»¥t (%)", "WastePercent", 80, "F1");
+            var colOrdered = Col("DT d\u1ef1 ki\u1ebfn c\u1ea5p (m2)", "OrderedAreaM2", 100, "F2");
+            var colWaste = Col("Hao h\u1ee5t (m2)", "WasteAreaM2", 90, "F2");
+            var colPct = Col("Hao h\u1ee5t (%)", "WastePercent", 80, "F1");
             colPct.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
             colPct.MinWidth = 95;
             colWaste.CellStyle = wasteStyle;
@@ -443,7 +443,7 @@ namespace ShopDrawing.Plugin.UI
 
             var basisLabel = new TextBlock
             {
-                Text = "CÆ  Sá»ž TÃNH PHá»¤ KIá»†N",
+                Text = "C\u01a0 S\u1ede T\u00cdNH PH\u1ee4 KI\u1ec6N",
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
                 Foreground = AccentOrange,
@@ -462,26 +462,26 @@ namespace ShopDrawing.Plugin.UI
             };
             ConfigureGridScrolling(_accessoryBasisGrid);
             _accessoryBasisGrid.Columns.Add(Col("STT", "Index", 40));
-            _accessoryBasisGrid.Columns.Add(Col("Táº§ng", "Floor", 55));
-            _accessoryBasisGrid.Columns.Add(Col("Háº¡ng má»¥c", "Category", 70));
-            _accessoryBasisGrid.Columns.Add(Col("KÃ½ hiá»‡u vÃ¡ch", "WallName", 90));
-            _accessoryBasisGrid.Columns.Add(Col("á»¨ng dá»¥ng", "Application", 85));
-            _accessoryBasisGrid.Columns.Add(Col("MÃ£ spec", "SpecKey", 85));
-            _accessoryBasisGrid.Columns.Add(Col("Phá»¥ kiá»‡n", "AccessoryName", 150));
-            _accessoryBasisGrid.Columns.Add(Col("Váº­t liá»‡u", "Material", 90));
-            _accessoryBasisGrid.Columns.Add(Col("Vá»‹ trÃ­", "Position", 100));
-            _accessoryBasisGrid.Columns.Add(Col("Quy táº¯c", "RuleLabel", 120));
-            _accessoryBasisGrid.Columns.Add(Col("CÆ¡ sá»Ÿ tÃ­nh", "BasisLabel", 110));
-            _accessoryBasisGrid.Columns.Add(Col("GiÃ¡ trá»‹", "BasisValue", 75, "F2"));
-            _accessoryBasisGrid.Columns.Add(Col("Há»‡ sá»‘", "FactorDisplay", 60));
-            _accessoryBasisGrid.Columns.Add(Col("KL tá»± Ä‘á»™ng", "AutoQuantity", 85, "F2"));
-            _accessoryBasisGrid.Columns.Add(ColStar("Ghi chÃº", "Note"));
+            _accessoryBasisGrid.Columns.Add(Col("T\u1ea7ng", "Floor", 55));
+            _accessoryBasisGrid.Columns.Add(Col("H\u1ea1ng m\u1ee5c", "Category", 70));
+            _accessoryBasisGrid.Columns.Add(Col("K\u00fd hi\u1ec7u v\u00e1ch", "WallName", 90));
+            _accessoryBasisGrid.Columns.Add(Col("\u1ee8ng d\u1ee5ng", "Application", 85));
+            _accessoryBasisGrid.Columns.Add(Col("M\u00e3 spec", "SpecKey", 85));
+            _accessoryBasisGrid.Columns.Add(Col("Ph\u1ee5 ki\u1ec7n", "AccessoryName", 150));
+            _accessoryBasisGrid.Columns.Add(Col("V\u1eadt li\u1ec7u", "Material", 90));
+            _accessoryBasisGrid.Columns.Add(Col("V\u1ecb tr\u00ed", "Position", 100));
+            _accessoryBasisGrid.Columns.Add(Col("Quy t\u1eafc", "RuleLabel", 120));
+            _accessoryBasisGrid.Columns.Add(Col("C\u01a1 s\u1edf t\u00ednh", "BasisLabel", 110));
+            _accessoryBasisGrid.Columns.Add(Col("Gi\u00e1 tr\u1ecb", "BasisValue", 75, "F2"));
+            _accessoryBasisGrid.Columns.Add(Col("H\u1ec7 s\u1ed1", "FactorDisplay", 60));
+            _accessoryBasisGrid.Columns.Add(Col("KL t\u1ef1 \u0111\u1ed9ng", "AutoQuantity", 85, "F2"));
+            _accessoryBasisGrid.Columns.Add(ColStar("Ghi ch\u00fa", "Note"));
             Grid.SetRow(_accessoryBasisGrid, 4);
             panel.Children.Add(_accessoryBasisGrid);
 
             var summaryLabel = new TextBlock
             {
-                Text = "Tá»”NG Há»¢P PHá»¤ KIá»†N Äáº¤U THáº¦U",
+                Text = "T\u1ed4NG H\u1ee2P PH\u1ee4 KI\u1ec6N \u0110\u1ea4U TH\u1ea6U",
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 12,
                 Foreground = AccentGreen,
@@ -500,22 +500,22 @@ namespace ShopDrawing.Plugin.UI
             };
             ConfigureGridScrolling(_accessorySummaryGrid);
             _accessorySummaryGrid.Columns.Add(Col("STT", "Index", 40));
-            _accessorySummaryGrid.Columns.Add(Col("Pháº¡m vi HM", "CategoryScope", 85));
-            _accessorySummaryGrid.Columns.Add(Col("á»¨ng dá»¥ng", "Application", 85));
-            _accessorySummaryGrid.Columns.Add(Col("MÃ£ spec", "SpecKey", 85));
-            _accessorySummaryGrid.Columns.Add(Col("Phá»¥ kiá»‡n", "Name", 150));
-            _accessorySummaryGrid.Columns.Add(Col("Váº­t liá»‡u", "Material", 90));
-            _accessorySummaryGrid.Columns.Add(Col("Vá»‹ trÃ­", "Position", 100));
-            _accessorySummaryGrid.Columns.Add(Col("ÄÆ¡n vá»‹", "Unit", 60));
-            _accessorySummaryGrid.Columns.Add(Col("Quy táº¯c", "RuleLabel", 120));
-            _accessorySummaryGrid.Columns.Add(Col("CÆ¡ sá»Ÿ tÃ­nh", "BasisLabel", 110));
-            _accessorySummaryGrid.Columns.Add(Col("GiÃ¡ trá»‹", "BasisValue", 75, "F2"));
-            _accessorySummaryGrid.Columns.Add(Col("Há»‡ sá»‘", "FactorDisplay", 60));
-            _accessorySummaryGrid.Columns.Add(Col("Hao há»¥t (%)", "WastePercent", 85, "F1"));
-            _accessorySummaryGrid.Columns.Add(Col("KL tá»± Ä‘á»™ng", "AutoQuantity", 85, "F2"));
-            _accessorySummaryGrid.Columns.Add(Col("Äiá»u chá»‰nh", "Adjustment", 80, "F2"));
-            _accessorySummaryGrid.Columns.Add(Col("KL chá»‘t", "FinalQuantity", 85, "F2"));
-            _accessorySummaryGrid.Columns.Add(ColStar("Ghi chÃº", "Note"));
+            _accessorySummaryGrid.Columns.Add(Col("Ph\u1ea1m vi HM", "CategoryScope", 85));
+            _accessorySummaryGrid.Columns.Add(Col("\u1ee8ng d\u1ee5ng", "Application", 85));
+            _accessorySummaryGrid.Columns.Add(Col("M\u00e3 spec", "SpecKey", 85));
+            _accessorySummaryGrid.Columns.Add(Col("Ph\u1ee5 ki\u1ec7n", "Name", 150));
+            _accessorySummaryGrid.Columns.Add(Col("V\u1eadt li\u1ec7u", "Material", 90));
+            _accessorySummaryGrid.Columns.Add(Col("V\u1ecb tr\u00ed", "Position", 100));
+            _accessorySummaryGrid.Columns.Add(Col("\u0110\u01a1n v\u1ecb", "Unit", 60));
+            _accessorySummaryGrid.Columns.Add(Col("Quy t\u1eafc", "RuleLabel", 120));
+            _accessorySummaryGrid.Columns.Add(Col("C\u01a1 s\u1edf t\u00ednh", "BasisLabel", 110));
+            _accessorySummaryGrid.Columns.Add(Col("Gi\u00e1 tr\u1ecb", "BasisValue", 75, "F2"));
+            _accessorySummaryGrid.Columns.Add(Col("H\u1ec7 s\u1ed1", "FactorDisplay", 60));
+            _accessorySummaryGrid.Columns.Add(Col("Hao h\u1ee5t (%)", "WastePercent", 85, "F1"));
+            _accessorySummaryGrid.Columns.Add(Col("KL t\u1ef1 \u0111\u1ed9ng", "AutoQuantity", 85, "F2"));
+            _accessorySummaryGrid.Columns.Add(Col("\u0110i\u1ec1u ch\u1ec9nh", "Adjustment", 80, "F2"));
+            _accessorySummaryGrid.Columns.Add(Col("KL ch\u1ed1t", "FinalQuantity", 85, "F2"));
+            _accessorySummaryGrid.Columns.Add(ColStar("Ghi ch\u00fa", "Note"));
             Grid.SetRow(_accessorySummaryGrid, 6);
             panel.Children.Add(_accessorySummaryGrid);
 
@@ -568,27 +568,27 @@ private void SetStatus(string message)
                 return FgDark;
             }
 
-            if (message.Contains("lá»—i", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("khÃ´ng thá»ƒ", StringComparison.OrdinalIgnoreCase) ||
+            if (message.Contains("l\u1ed7i", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("kh\u00f4ng th\u1ec3", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("error", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("failed", StringComparison.OrdinalIgnoreCase))
             {
                 return AccentRed;
             }
 
-            if (message.Contains("cáº£nh bÃ¡o", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("hÃ£y", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("chá»n", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("há»§y", StringComparison.OrdinalIgnoreCase) ||
+            if (message.Contains("c\u1ea3nh b\u00e1o", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("h\u00e3y", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("ch\u1ecdn", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("h\u1ee7y", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("warning", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("cancel", StringComparison.OrdinalIgnoreCase))
             {
                 return AccentOrange;
             }
 
-            if (message.Contains("Ä‘Ã£ ", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("thÃ nh cÃ´ng", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("sáºµn sÃ ng", StringComparison.OrdinalIgnoreCase) ||
+            if (message.Contains("\u0111\u00e3 ", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("th\u00e0nh c\u00f4ng", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("s\u1eb5n s\u00e0ng", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("success", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("created", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("updated", StringComparison.OrdinalIgnoreCase) ||
@@ -615,7 +615,7 @@ private void SetStatus(string message)
                 }
                 else
                 {
-                    SetStatus("HÃ£y hoÃ n táº¥t dá»¯ liá»‡u Ä‘ang chá»‰nh sá»­a trÆ°á»›c khi tá»•ng há»£p khá»‘i lÆ°á»£ng.");
+                    SetStatus("H\u00e3y ho\u00e0n t\u1ea5t d\u1eef li\u1ec7u \u0111ang ch\u1ec9nh s\u1eeda tr\u01b0\u1edbc khi t\u1ed5ng h\u1ee3p kh\u1ed1i l\u01b0\u1ee3ng.");
                     PluginLogger.Warn("Tender.RefreshBomSummary.CommitFailed");
                     return;
                 }
@@ -644,17 +644,17 @@ private void SetStatus(string message)
                 .ToList();
 
             _lblBomFooter.Text =
-                $"CÆ¡ sá»Ÿ tÃ­nh: {accessoryReport.BasisRows.Count} dÃ²ng | " +
-                $"Tá»•ng há»£p phá»¥ kiá»‡n: {accessoryReport.SummaryRows.Count} dÃ²ng | " +
-                $"Khá»‘i lÆ°á»£ng chá»‘t: {accessoryReport.SummaryRows.Sum(r => r.FinalQuantity):F2}";
+                $"C\u01a1 s\u1edf t\u00ednh: {accessoryReport.BasisRows.Count} d\u00f2ng | " +
+                $"T\u1ed5ng h\u1ee3p ph\u1ee5 ki\u1ec7n: {accessoryReport.SummaryRows.Count} d\u00f2ng | " +
+                $"Kh\u1ed1i l\u01b0\u1ee3ng ch\u1ed1t: {accessoryReport.SummaryRows.Sum(r => r.FinalQuantity):F2}";
             PluginLogger.Info(
                 $"Tender.RefreshBomSummary.Done | walls={walls.Count} | panelGroups={panelSummary.Count} | " +
                 $"panelQty={panelSummary.Sum(p => p.EstimatedPanels)} | accessoryRows={accessoryReport.SummaryRows.Count}");
 
             SetStatus(
-                $"Khá»‘i lÆ°á»£ng: {panelSummary.Count} nhÃ³m panel | " +
-                $"Tá»•ng {panelSummary.Sum(p => p.EstimatedPanels)} táº¥m | " +
-                $"Phá»¥ kiá»‡n chá»‘t {accessoryReport.SummaryRows.Sum(r => r.FinalQuantity):F2}");
+                $"Kh\u1ed1i l\u01b0\u1ee3ng: {panelSummary.Count} nh\u00f3m panel | " +
+                $"T\u1ed5ng {panelSummary.Sum(p => p.EstimatedPanels)} t\u1ea5m | " +
+                $"Ph\u1ee5 ki\u1ec7n ch\u1ed1t {accessoryReport.SummaryRows.Sum(r => r.FinalQuantity):F2}");
         }
 private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
@@ -678,10 +678,10 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             try
             {
                 string selectedApplication = UiText.Normalize(_pickApplicationPreset.SelectedItem as string);
-                bool isExterior = string.Equals(selectedApplication, "NgoÃ i nhÃ ", StringComparison.OrdinalIgnoreCase);
+                bool isExterior = string.Equals(selectedApplication, "Ngo\u00e0i nh\u00e0", StringComparison.OrdinalIgnoreCase);
 
                 string[] allowedCategories = isExterior
-                    ? new[] { UiText.Normalize("VÃ¡ch"), UiText.Normalize("MÃ¡i") }
+                    ? new[] { UiText.Normalize("V\u00e1ch"), UiText.Normalize("M\u00e1i") }
                     : TenderWall.CategoryOptions.Select(UiText.Normalize).ToArray();
 
                 string currentCategory = UiText.Normalize(_pickCategoryPreset.SelectedItem as string);
@@ -691,16 +691,16 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 string resolvedCategory = allowedCategories
                     .FirstOrDefault(item => string.Equals(item, currentCategory, StringComparison.OrdinalIgnoreCase))
                     ?? allowedCategories.FirstOrDefault()
-                    ?? UiText.Normalize("VÃ¡ch");
+                    ?? UiText.Normalize("V\u00e1ch");
                 _pickCategoryPreset.SelectedItem = resolvedCategory;
 
                 bool shouldAutoSelectIsopar = isExterior
-                    && string.Equals(resolvedCategory, "VÃ¡ch", StringComparison.OrdinalIgnoreCase);
+                    && string.Equals(resolvedCategory, "V\u00e1ch", StringComparison.OrdinalIgnoreCase);
                 bool shouldAutoSelectRoofGp = isExterior
-                    && string.Equals(resolvedCategory, "MÃ¡i", StringComparison.OrdinalIgnoreCase);
+                    && string.Equals(resolvedCategory, "M\u00e1i", StringComparison.OrdinalIgnoreCase);
                 bool isCleanroomOrColdStorage =
-                    string.Equals(selectedApplication, "PhÃ²ng sáº¡ch", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(selectedApplication, "Kho láº¡nh", StringComparison.OrdinalIgnoreCase);
+                    string.Equals(selectedApplication, "Ph\u00f2ng s\u1ea1ch", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(selectedApplication, "Kho l\u1ea1nh", StringComparison.OrdinalIgnoreCase);
 
                 string currentSpec = UiText.Normalize(_pickSpecPreset.SelectedItem as string);
                 string[] allSpecs = GetAllSpecPresetOptions();
@@ -926,23 +926,23 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
 
         private static bool IsVerticalJointColumn(DataGridColumn column)
-            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Khe Ä‘á»©ng", StringComparison.OrdinalIgnoreCase);
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Khe \u0111\u1ee9ng", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsSuspensionLayoutColumn(DataGridColumn column)
-            => string.Equals(UiText.Normalize(column.Header?.ToString()), "HÆ°á»›ng PK", StringComparison.OrdinalIgnoreCase);
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "H\u01b0\u1edbng PK", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsTopPanelTreatmentColumn(DataGridColumn column)
-            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi tiáº¿t Ä‘á»‰nh vÃ¡ch", StringComparison.OrdinalIgnoreCase);
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi ti\u1ebft \u0111\u1ec9nh v\u00e1ch", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsEndPanelTreatmentColumn(DataGridColumn column)
-            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi tiáº¿t Ä‘áº§u/cuá»‘i vÃ¡ch", StringComparison.OrdinalIgnoreCase);
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi ti\u1ebft \u0111\u1ea7u/cu\u1ed1i v\u00e1ch", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsBottomPanelTreatmentColumn(DataGridColumn column)
-            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi tiáº¿t chÃ¢n vÃ¡ch", StringComparison.OrdinalIgnoreCase);
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Chi ti\u1ebft ch\u00e2n v\u00e1ch", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsCornerLinkColumn(DataGridColumn column)
-            => string.Equals(UiText.Normalize(column.Header?.ToString()), "LiÃªn káº¿t gÃ³c", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(UiText.Normalize(column.Header?.ToString()), "GÃ³c ngoÃ i", StringComparison.OrdinalIgnoreCase);
+            => string.Equals(UiText.Normalize(column.Header?.ToString()), "Li\u00ean k\u1ebft g\u00f3c", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(UiText.Normalize(column.Header?.ToString()), "G\u00f3c ngo\u00e0i", StringComparison.OrdinalIgnoreCase);
 
 
 
@@ -961,8 +961,8 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         private void OnDeleteWall(object sender, RoutedEventArgs e)
         {
             var selected = _wallGrid.SelectedItems.Cast<TenderWallRow>().ToList();
-            if (selected.Count == 0) { SetStatus("Cáº£nh bÃ¡o: Chá»n vÃ¡ch Ä‘á»ƒ xÃ³a"); return; }
-            if (UiFeedback.AskYesNo("XÃ³a dÃ²ng nÃ y vÃ  toÃ n bá»™ hÃ¬nh Ä‘Ã£ dá»±ng ngoÃ i CAD?", "XÃ³a dá»¯ liá»‡u Tender") != MessageBoxResult.Yes)
+            if (selected.Count == 0) { SetStatus("C\u1ea3nh b\u00e1o: Ch\u1ecdn v\u00e1ch \u0111\u1ec3 x\u00f3a"); return; }
+            if (UiFeedback.AskYesNo("X\u00f3a d\u00f2ng n\u00e0y v\u00e0 to\u00e0n b\u1ed9 h\u00ecnh \u0111\u00e3 d\u1ef1ng ngo\u00e0i CAD?", "X\u00f3a d\u1eef li\u1ec7u Tender") != MessageBoxResult.Yes)
                 return;
 
             foreach (var row in selected)
@@ -978,13 +978,13 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
             _project.Walls = GetWallModels();
             RefreshFooter();
-            SetStatus($"ÄÃ£ xÃ³a {selected.Count} vÃ¡ch");
+            SetStatus($"\u0110\u00e3 x\u00f3a {selected.Count} v\u00e1ch");
         }
         private void OnRepickWall(object sender, RoutedEventArgs e)
         {
             if (!(_wallGrid.SelectedItem is TenderWallRow selectedRow))
             {
-                SetStatus("Chá»n vÃ¡ch cáº§n pick láº¡i.");
+                SetStatus("Ch\u1ecdn v\u00e1ch c\u1ea7n pick l\u1ea1i.");
                 return;
             }
 
@@ -3009,7 +3009,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             double minX = vertices.Min(v => v[0]);
             double maxY = vertices.Max(v => v[1]);
-            string dropText = row.CableDropLengthMm > 0 ? $"Ty tháº£ {row.CableDropLengthMm:F0}" : "Ty tháº£ ?";
+            string dropText = row.CableDropLengthMm > 0 ? $"Ty th\u1ea3 {row.CableDropLengthMm:F0}" : "Ty th\u1ea3 ?";
             string text = $"PW{row.PanelWidth} | {row.PanelThickness}T | {dropText}";
             var point = new Autodesk.AutoCAD.Geometry.Point3d(minX + 180.0, maxY - 180.0, 0);
             AddPreviewText(point, text, PreviewSummaryTextColorIndex, 160.0, layerId, btr, tr);
@@ -3055,11 +3055,11 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
                 _project.Accessories = dialog.GetAccessories();
                 RefreshBomSummary();
-                SetStatus($"ÄÃ£ cáº­p nháº­t {_project.Accessories.Count} dÃ²ng phá»¥ kiá»‡n");
+                SetStatus($"\u0110\u00e3 c\u1eadp nh\u1eadt {_project.Accessories.Count} d\u00f2ng ph\u1ee5 ki\u1ec7n");
             }
             catch (Exception ex)
             {
-                SetStatus($"Lá»—i sá»­a phá»¥ kiá»‡n: {ex.Message}");
+                SetStatus($"L\u1ed7i s\u1eeda ph\u1ee5 ki\u1ec7n: {ex.Message}");
             }
         }
 
@@ -3069,14 +3069,14 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
         private string GetFooterText()
         {
-            if (_wallRows.Count == 0) return "Tá»”NG: 0 táº¥m | 0 mÂ²";
+            if (_wallRows.Count == 0) return "T\u1ed4NG: 0 t\u1ea5m | 0 m\u00b2";
             var walls = GetWallModels();
             int totalPanels = walls.Sum(w => w.EstimatedPanelCount);
             double netArea = walls.Sum(w => w.NetAreaM2);
             double orderedArea = walls.Sum(w => w.OrderedAreaM2);
             double wasteArea = Math.Max(0, orderedArea - netArea);
             double wastePct = orderedArea > 0 ? wasteArea / orderedArea * 100 : 0;
-            return $"Tá»”NG: {totalPanels} táº¥m | {netArea:F2} mÂ² net | HH ~{wasteArea:F2} mÂ² ({wastePct:F1}%)";
+            return $"T\u1ed4NG: {totalPanels} t\u1ea5m | {netArea:F2} m\u00b2 net | HH ~{wasteArea:F2} m\u00b2 ({wastePct:F1}%)";
         }
 
         private void RefreshFooter()
@@ -3098,9 +3098,9 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             _panelBreakdownGrid.ItemsSource = viewRows;
             int breakdownPanelCount = breakdown
                 .Where(e => string.IsNullOrWhiteSpace(e.Label)
-                    || !e.Label.Trim().StartsWith("Hao há»¥t", StringComparison.OrdinalIgnoreCase))
+                    || !e.Label.Trim().StartsWith("Hao h\u1ee5t", StringComparison.OrdinalIgnoreCase))
                 .Sum(e => Math.Max(0, e.Count));
-            SetStatus($"VÃ¹ng tÃ­nh khá»‘i lÆ°á»£ng: {wallRow.Name} | Táº¥m báº£ng chÃ­nh: {model.EstimatedPanelCount} | Táº¥m thá»‘ng kÃª: {breakdownPanelCount}");
+            SetStatus($"V\u00f9ng t\u00ednh kh\u1ed1i l\u01b0\u1ee3ng: {wallRow.Name} | T\u1ea5m b\u1ea3ng ch\u00ednh: {model.EstimatedPanelCount} | T\u1ea5m th\u1ed1ng k\u00ea: {breakdownPanelCount}");
         }
 
         private void LoadProjectData()
@@ -3236,7 +3236,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             var col = Col(header, binding, width, format);
             var editableBrush = new SolidColorBrush(Color.FromRgb(255, 249, 219));
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chá»‰ nháº­p cho VÃ¡ch + NgoÃ i nhÃ  Ä‘á»ƒ tÃ­nh khe Ä‘á»©ng/Omega.");
+            var tooltip = UiText.Normalize("Ch\u1ec9 nh\u1eadp cho V\u00e1ch + Ngo\u00e0i nh\u00e0 \u0111\u1ec3 t\u00ednh khe \u0111\u1ee9ng/Omega.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, editableBrush));
@@ -3284,7 +3284,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             var col = Col(header, binding, width, format);
             var editableBrush = new SolidColorBrush(Color.FromRgb(255, 249, 219));
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chá»‰ nháº­p cho VÃ¡ch + NgoÃ i nhÃ  khi cÃ³ phá»¥ kiá»‡n liÃªn káº¿t gÃ³c.");
+            var tooltip = UiText.Normalize("Ch\u1ec9 nh\u1eadp cho V\u00e1ch + Ngo\u00e0i nh\u00e0 khi c\u00f3 ph\u1ee5 ki\u1ec7n li\u00ean k\u1ebft g\u00f3c.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, editableBrush));
@@ -3363,7 +3363,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             var col = ColTemplateCombo(header, binding, width, new[] { "Dá»c", "Ngang" });
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chá»‰ nháº­p cho háº¡ng má»¥c Tráº§n.");
+            var tooltip = UiText.Normalize("Ch\u1ec9 nh\u1eadp cho h\u1ea1ng m\u1ee5c Tr\u1ea7n.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3387,7 +3387,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             var col = ColTemplateCombo(header, binding, width, TenderWall.TopPanelTreatmentOptions);
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("VÃ¡ch + NgoÃ i nhÃ  sáº½ tá»± Ä‘á»™ng khÃ³a vÃ  dÃ¹ng Diá»m 01 theo Ä‘á»‰nh vÃ¡ch.");
+            var tooltip = UiText.Normalize("V\u00e1ch + Ngo\u00e0i nh\u00e0 s\u1ebd t\u1ef1 \u0111\u1ed9ng kh\u00f3a v\u00e0 d\u00f9ng Di\u1ec1m 01 theo \u0111\u1ec9nh v\u00e1ch.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3423,7 +3423,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             var col = ColTemplateCombo(header, binding, width, TenderWall.EndPanelTreatmentOptions);
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chá»‰ nháº­p cho háº¡ng má»¥c VÃ¡ch, khÃ´ng Ã¡p dá»¥ng cho VÃ¡ch + NgoÃ i nhÃ .");
+            var tooltip = UiText.Normalize("Ch\u1ec9 nh\u1eadp cho h\u1ea1ng m\u1ee5c V\u00e1ch, kh\u00f4ng \u00e1p d\u1ee5ng cho V\u00e1ch + Ngo\u00e0i nh\u00e0.");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3448,7 +3448,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             var col = Col(header, binding, width);
             col.IsReadOnly = true;
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Tá»± Ä‘á»™ng theo háº¡ng má»¥c. VÃ¡ch + Kho láº¡nh sáº½ dÃ¹ng TrÃªn bá»‡ chÃ¢n (curb).");
+            var tooltip = UiText.Normalize("T\u1ef1 \u0111\u1ed9ng theo h\u1ea1ng m\u1ee5c. V\u00e1ch + Kho l\u1ea1nh s\u1ebd d\u00f9ng Tr\u00ean b\u1ec7 ch\u00e2n (curb).");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3484,7 +3484,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             var col = ColCheck(header, binding, width);
             var cellStyle = new Style(typeof(DataGridCell));
-            cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, UiText.Normalize("Báº­t/táº¯t tÃ­nh chÃ¢n vÃ¡ch. Vá»›i Kho láº¡nh, chi tiáº¿t chÃ¢n sáº½ tá»± dÃ¹ng TrÃªn bá»‡ chÃ¢n (curb).")));
+            cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, UiText.Normalize("B\u1eadt/t\u1eaft t\u00ednh ch\u00e2n v\u00e1ch. V\u1edbi Kho l\u1ea1nh, chi ti\u1ebft ch\u00e2n s\u1ebd t\u1ef1 d\u00f9ng Tr\u00ean b\u1ec7 ch\u00e2n (curb).")));
             col.CellStyle = cellStyle;
             return col;
         }
@@ -3493,7 +3493,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {
             var col = ColCheck(header, binding, width);
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
-            var tooltip = UiText.Normalize("Chá»‰ Ã¡p dá»¥ng khi Chi tiáº¿t Ä‘áº§u/cuá»‘i vÃ¡ch khÃ¡c 'KhÃ´ng Ã¡p dá»¥ng' (khÃ´ng dÃ¹ng cho VÃ¡ch + NgoÃ i nhÃ ).");
+            var tooltip = UiText.Normalize("Ch\u1ec9 \u00e1p d\u1ee5ng khi Chi ti\u1ebft \u0111\u1ea7u/cu\u1ed1i v\u00e1ch kh\u00e1c 'Kh\u00f4ng \u00e1p d\u1ee5ng' (kh\u00f4ng d\u00f9ng cho V\u00e1ch + Ngo\u00e0i nh\u00e0).");
 
             var cellStyle = new Style(typeof(DataGridCell));
             cellStyle.Setters.Add(new Setter(FrameworkElement.ToolTipProperty, tooltip));
@@ -3835,6 +3835,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 string normalizedToken = token
                     .Replace("*", "x", StringComparison.Ordinal)
                     .Replace("X", "x", StringComparison.Ordinal)
+                    .Replace("\u00d7", "x", StringComparison.Ordinal)
                     .Replace("Ã—", "x", StringComparison.Ordinal);
 
                 var pair = normalizedToken.Split('x');
@@ -4024,7 +4025,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 PolygonVertices = w.PolygonVertices,
                 VerticalJointCount = w.VerticalJointCount,
                 DraftGeometryMode = w.PolygonVertices != null && w.PolygonVertices.Count >= 3
-                    ? (string.Equals(UiText.Normalize(w.Category), "Tráº§n", StringComparison.OrdinalIgnoreCase) ? "CeilingPolygon" : "WallPolygon")
+                    ? (string.Equals(UiText.Normalize(w.Category), "Tr\u1ea7n", StringComparison.OrdinalIgnoreCase) ? "CeilingPolygon" : "WallPolygon")
                     : "WallLineChain",
                 _prevCategory = UiText.Normalize(w.Category)
             };
@@ -4042,7 +4043,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
     public class TenderOpeningRow : INotifyPropertyChanged
     {
-        public string Type { get; set; } = "Cá»­a Ä‘i";
+        public string Type { get; set; } = "C\u1eeda \u0111i";
         public double Width { get; set; }
         public double Height { get; set; }
         public double BottomElevationMm { get; set; }

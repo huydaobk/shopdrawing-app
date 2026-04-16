@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
@@ -124,7 +124,7 @@ namespace ShopDrawing.Plugin.UI
 
             {
 
-                SetStatus("Chá»n vÃ¡ch hoáº·c tráº§n cáº§n preview CAD.");
+                SetStatus("Ch\u1ecdn v\u00e1ch ho\u1eb7c tr\u1ea7n c\u1ea7n preview CAD.");
 
                 return;
 
@@ -217,7 +217,7 @@ namespace ShopDrawing.Plugin.UI
 
         private static bool IsCeilingCategory(string? category)
         {
-            return string.Equals(UiText.Normalize(category), "Tráº§n", System.StringComparison.OrdinalIgnoreCase);
+            return string.Equals(UiText.Normalize(category), "Tr\u1ea7n", System.StringComparison.OrdinalIgnoreCase);
         }
 
         private static TenderPopupGeometryMode ResolvePopupMode(TenderWallRow row)
@@ -306,25 +306,25 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     return;
                 }
 
-                Dispatcher.BeginInvoke(new Action(() =>
+                Dispatcher.Invoke(new Action(() =>
                 {
-                    ApplyPopupResultToRow(targetRow, popupResult);
                     SyncWallRowSpecData(targetRow);
                     targetRow.Refresh();
                     if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
                         LoadOpeningsForWall(targetRow);
                     SafeRefreshWallGrid();
+                    RefreshWallGridViewAfterPopupApply();
                     RefreshFooter();
                     RefreshPanelBreakdown(targetRow);
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
                     _lastCadPreviewKey = null;
-                    SetStatus($"Da cap nhat {targetRow.Name}");
+                    SetStatus($"\u0110\u00e3 c\u1eadp nh\u1eadt {targetRow.Name}");
                 }));
             }
             catch (Exception ex)
             {
-                Dispatcher.BeginInvoke(new Action(() => SetStatus($"Loi repick: {ex.Message}")));
+                Dispatcher.BeginInvoke(new Action(() => SetStatus($"L\u1ed7i pick l\u1ea1i: {ex.Message}")));
             }
             finally
             {
@@ -361,29 +361,32 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     return;
                 }
 
-                ApplyPopupResultToRow(popupDraftRow, popupResult);
-                SyncWallRowSpecData(popupDraftRow);
-                popupDraftRow.Refresh();
-
-                _wallRows.Add(popupDraftRow);
-                ReindexWalls();
-                if (_wallGrid != null)
+                Dispatcher.Invoke(new Action(() =>
                 {
-                    _wallGrid.SelectedItem = popupDraftRow;
-                    Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(popupDraftRow)), System.Windows.Threading.DispatcherPriority.Background);
-                }
-                SafeRefreshWallGrid();
-                LoadOpeningsForWall(popupDraftRow);
-                RefreshFooter();
-                RefreshPanelBreakdown(popupDraftRow);
-                RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
-                _project.Walls = GetWallModels();
-                _lastCadPreviewKey = null;
-                SetStatus($"Da them {popupDraftRow.Name}");
+                    SyncWallRowSpecData(popupDraftRow);
+                    popupDraftRow.Refresh();
+
+                    _wallRows.Add(popupDraftRow);
+                    ReindexWalls();
+                    if (_wallGrid != null)
+                    {
+                        _wallGrid.SelectedItem = popupDraftRow;
+                        Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(popupDraftRow)), System.Windows.Threading.DispatcherPriority.Background);
+                    }
+                    SafeRefreshWallGrid();
+                    RefreshWallGridViewAfterPopupApply();
+                    LoadOpeningsForWall(popupDraftRow);
+                    RefreshFooter();
+                    RefreshPanelBreakdown(popupDraftRow);
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                    _project.Walls = GetWallModels();
+                    _lastCadPreviewKey = null;
+                    SetStatus($"\u0110\u00e3 th\u00eam {popupDraftRow.Name}");
+                }));
             }
             catch (Exception ex)
             {
-                SetStatus($"Loi pick: {ex.Message}");
+                Dispatcher.BeginInvoke(new Action(() => SetStatus($"L\u1ed7i pick: {ex.Message}")));
             }
             finally
             {
@@ -454,7 +457,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Title = "Nháº­p chiá»u cao",
+                    Title = "Nh\u1eadp chi\u1ec1u cao",
 
                     Width = 420,
 
@@ -482,7 +485,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "ÄÃ£ pick chiá»u dÃ i. Nháº­p chiá»u cao Ä‘á»ƒ hoÃ n táº¥t dÃ²ng khá»‘i lÆ°á»£ng:",
+                    Text = "\u0110\u00e3 pick chi\u1ec1u d\u00e0i. Nh\u1eadp chi\u1ec1u cao \u0111\u1ec3 ho\u00e0n t\u1ea5t d\u00f2ng kh\u1ed1i l\u01b0\u1ee3ng:",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -500,7 +503,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Chiá»u cao (mm)",
+                    Text = "Chi\u1ec1u cao (mm)",
 
                     Margin = new Thickness(0, 0, 0, 6),
 
@@ -532,7 +535,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "VÃ­ dá»¥: 3000",
+                    Text = "V\u00ed d\u1ee5: 3000",
 
                     Margin = new Thickness(0, 6, 0, 0),
 
@@ -590,9 +593,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                var btnOk = Btn("OK", AccentGreen, Brushes.White, (s, e) => ConfirmAndClose(), 110);
+                var btnOk = Btn("X\u00e1c nh\u1eadn", AccentGreen, Brushes.White, (s, e) => ConfirmAndClose(), 110);
 
-                var btnCancel = Btn("Há»§y", BtnGray, Brushes.White, (s, e) =>
+                var btnCancel = Btn("H\u1ee7y", BtnGray, Brushes.White, (s, e) =>
 
                 {
 
@@ -707,7 +710,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     HeightMm = defaultHeightMm,
                     CadHandle = null
                 });
-                note = "Äang dÃ¹ng 1 nhá»‹p máº·c Ä‘á»‹nh toÃ n tuyáº¿n.";
+                note = "\u0110ang d\u00f9ng 1 nh\u1ecbp m\u1eb7c \u0111\u1ecbnh to\u00e0n tuy\u1ebfn.";
                 return true;
             }
 
@@ -780,8 +783,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
 
             var ed = doc.Editor;
-            var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nChá»n polyline kÃ­n:");
-            opt.SetRejectMessage("\nPháº£i lÃ  polyline kÃ­n.");
+            var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nCh\u1ecdn polyline k\u00edn:");
+            opt.SetRejectMessage("\nPh\u1ea3i l\u00e0 polyline k\u00edn.");
             opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
             var res = ed.GetEntity(opt);
             if (res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
@@ -1155,7 +1158,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (polygonVertices == null || polygonVertices.Count < 3)
                 return false;
 
-            var choice = UiFeedback.AskYesNoCancel("YES = Pick 2 Ä‘iá»ƒm Ä‘á»ƒ láº¥y LT/Rá»™ng, nháº­p Cao + Cao Ä‘á»™ Ä‘Ã¡y\nNO = Pick vÃ¹ng lá»— má»Ÿ", "Pick lá»— má»Ÿ");
+            var choice = UiFeedback.AskYesNoCancel("C\u00d3 = Pick 2 \u0111i\u1ec3m \u0111\u1ec3 l\u1ea5y LT/R\u1ed9ng, nh\u1eadp Cao + Cao \u0111\u1ed9 \u0111\u00e1y\nKH\u00d4NG = Pick v\u00f9ng l\u1ed7 m\u1edf", "Pick l\u1ed7 m\u1edf");
             if (choice == MessageBoxResult.Cancel)
                 return false;
 
@@ -1171,12 +1174,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
 
             var ed = doc.Editor;
-            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 1 lá»— má»Ÿ (Enter Ä‘á»ƒ káº¿t thÃºc):") { AllowNone = true };
+            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nCh\u1ecdn \u0111i\u1ec3m 1 l\u1ed7 m\u1edf (Enter \u0111\u1ec3 k\u1ebft th\u00fac):") { AllowNone = true };
             var p1Res = ed.GetPoint(p1Opt);
             if (p1Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
 
-            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 2 lá»— má»Ÿ:");
+            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nCh\u1ecdn \u0111i\u1ec3m 2 l\u1ed7 m\u1edf:");
             p2Opt.UseBasePoint = true;
             p2Opt.BasePoint = p1Res.Value;
             var p2Res = ed.GetPoint(p2Opt);
@@ -1197,7 +1200,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
             }
 
-            var heightOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao lá»— má»Ÿ (mm):")
+            var heightOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao l\u1ed7 m\u1edf (mm):")
             {
                 DefaultValue = 2100,
                 AllowNegative = false,
@@ -1207,7 +1210,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (heightRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
 
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao Ä‘á»™ Ä‘Ã¡y lá»— má»Ÿ (mm):")
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao \u0111\u1ed9 \u0111\u00e1y l\u1ed7 m\u1edf (mm):")
             {
                 DefaultValue = 0,
                 AllowNegative = false,
@@ -1284,12 +1287,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             Dispatcher.Invoke(() =>
             {
-                Canvas previewCanvas = null!;
-                ScrollViewer previewScroll = null!;
-                TextBlock lblNote = null!;
-                DataGrid segmentGrid = null!;
-                DataGrid openingGrid = null!;
-                ComboBox cboLayoutDirection = null!;
+                Canvas previewCanvas = new Canvas();
+                ScrollViewer previewScroll = new ScrollViewer();
+                TextBlock lblNote = new TextBlock();
+                DataGrid segmentGrid = new DataGrid();
+                DataGrid openingGrid = new DataGrid();
+                ComboBox cboLayoutDirection = new ComboBox();
                 Point? panStart = null;
                 double panStartH = 0;
                 double panStartV = 0;
@@ -1297,7 +1300,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 void SetZoom(double zoom)
                 {
                     previewZoom = Math.Max(0.25, Math.Min(5.0, zoom));
-                    previewCanvas.LayoutTransform = new ScaleTransform(previewZoom, previewZoom);
+                    previewCanvas!.LayoutTransform = new ScaleTransform(previewZoom, previewZoom);
                 }
 
                 void FitPreview()
@@ -1314,7 +1317,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     double fitZoom = Math.Min(viewportW / contentW, viewportH / contentH);
                     SetZoom(fitZoom);
-                    previewScroll.ScrollToHorizontalOffset(0);
+                    previewScroll!.ScrollToHorizontalOffset(0);
                     previewScroll.ScrollToVerticalOffset(0);
                 }
 
@@ -1337,7 +1340,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                         referenceLengthMm = Math.Max(1, normalized.Sum(s => Math.Max(0, s.LengthMm)));
                         DrawHeightProfilePreview(previewCanvas, normalized, referenceLengthMm, seedRow.PanelWidth, layout, openingRows.Select(ToTenderOpeningFromRow).ToList());
-                        lblNote.Text = string.IsNullOrWhiteSpace(note) ? $"Mode: {mode} | D\u00e0i={referenceLengthMm:F0} mm" : note;
+                        lblNote.Text = string.IsNullOrWhiteSpace(note) ? $"Ch\u1ebf \u0111\u1ed9: {mode} | D\u00e0i={referenceLengthMm:F0} mm" : note;
                         lblNote.Foreground = string.IsNullOrWhiteSpace(note) ? Brushes.DarkGreen : Brushes.DarkGoldenrod;
                         return;
                     }
@@ -1351,13 +1354,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             referenceLengthMm = wallReference.ReferenceLengthMm;
                             referenceHeightMm = wallReference.ReferenceHeightMm;
                             DrawLocalPolygonPreview(previewCanvas, wallReference.BoundaryVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openingRows.Select(ToTenderOpeningFromRow).ToList(), referenceLengthMm, true, seedRow);
-                            lblNote.Text = $"Mode: {mode} | D\u00e0i={referenceLengthMm:F0} mm | Cao max={referenceHeightMm:F0} mm";
+                            lblNote.Text = $"Ch\u1ebf \u0111\u1ed9: {mode} | D\u00e0i={referenceLengthMm:F0} mm | Cao max={referenceHeightMm:F0} mm";
                             lblNote.Foreground = Brushes.DarkGreen;
                             return;
                         }
 
                         DrawLocalPolygonPreview(previewCanvas, polygonVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), null, 0, false, seedRow);
-                        lblNote.Text = $"Mode: {mode} | Bi\u00ean d\u1ea1ng v\u00f9ng: {polygonVertices.Count} \u0111\u1ec9nh";
+                        lblNote.Text = $"Ch\u1ebf \u0111\u1ed9: {mode} | Bi\u00ean d\u1ea1ng v\u00f9ng: {polygonVertices.Count} \u0111\u1ec9nh";
                         lblNote.Foreground = Brushes.DarkGreen;
                         return;
                     }
@@ -1625,7 +1628,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 previewGrid.Children.Add(new TextBlock
                 {
-                    Text = "Preview Popup",
+                    Text = "Xem tr\u01b0\u1edbc popup",
                     FontWeight = FontWeights.SemiBold,
                     Foreground = FgDark,
                     Margin = new Thickness(0, 0, 0, 6)
@@ -1890,7 +1893,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 .Where(o => o != null && o.Width > 0 && o.Height > 0 && o.Quantity > 0)
                 .Select(o => new TenderOpening
                 {
-                    Type = string.IsNullOrWhiteSpace(o.Type) ? "Cá»­a Ä‘i" : o.Type,
+                    Type = string.IsNullOrWhiteSpace(o.Type) ? "C\u1eeda \u0111i" : o.Type,
                     Width = Math.Max(1, Math.Round(o.Width)),
                     Height = Math.Max(1, Math.Round(o.Height)),
                     BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
@@ -2027,7 +2030,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return;
             }
 
-            if (string.Equals(layoutDirection, "Dá»c", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(layoutDirection, "D\u1ecdc", StringComparison.OrdinalIgnoreCase))
             {
                 for (double boundary = panelWidthMm; boundary < drawingLength - 0.5; boundary += panelWidthMm)
                 {
@@ -2226,7 +2229,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 });
                 var bottomLabel = new TextBlock
                 {
-                    Text = $"ÄÃ¡y {bottomElevationMm:F0}",
+                    Text = $"\u0110\u00e1y {bottomElevationMm:F0}",
                     FontSize = 9,
                     Foreground = dimBrush,
                     Background = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
@@ -2316,7 +2319,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var lbl = new TextBlock
                 {
-                    Text = $"Lá»—{i + 1}: {opening.Width:F0}x{opening.Height:F0} | LT {stationStartMm:F0} | ÄÃ¡y {bottomElevationMm:F0}",
+                    Text = $"L\u1ed7{i + 1}: {opening.Width:F0}x{opening.Height:F0} | LT {stationStartMm:F0} | \u0110\u00e1y {bottomElevationMm:F0}",
                     FontSize = 10,
                     Foreground = new SolidColorBrush(Color.FromRgb(128, 20, 20)),
                     Background = new SolidColorBrush(Color.FromArgb(210, 255, 255, 255))
@@ -2352,7 +2355,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
 
             var ed = doc.Editor;
-            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 1 lá»— má»Ÿ (Enter Ä‘á»ƒ káº¿t thÃºc):")
+            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nCh\u1ecdn \u0111i\u1ec3m 1 l\u1ed7 m\u1edf (Enter \u0111\u1ec3 k\u1ebft th\u00fac):")
             {
                 AllowNone = true
             };
@@ -2362,7 +2365,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
 
-            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 2 lá»— má»Ÿ:");
+            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nCh\u1ecdn \u0111i\u1ec3m 2 l\u1ed7 m\u1edf:");
             p2Opt.UseBasePoint = true;
             p2Opt.BasePoint = p1Result.Value;
             var p2Result = ed.GetPoint(p2Opt);
@@ -2385,10 +2388,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 if (projectedWidth > 0)
                     widthMm = Math.Round(projectedWidth);
 
-                ed.WriteMessage($"\nÄá»‹nh vá»‹ lá»— má»Ÿ: LT={stationMm:F0} mm | Rá»™ng={widthMm:F0} mm");
+                ed.WriteMessage($"\n\u0110\u1ecbnh v\u1ecb l\u1ed7 m\u1edf: LT={stationMm:F0} mm | R\u1ed9ng={widthMm:F0} mm");
             }
 
-            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao lá»— má»Ÿ (mm):")
+            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao l\u1ed7 m\u1edf (mm):")
             {
                 DefaultValue = 2100,
                 AllowNegative = false,
@@ -2401,7 +2404,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (heightMm <= 0)
                 return false;
 
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao Ä‘á»™ Ä‘Ã¡y lá»— má»Ÿ (mm):")
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao \u0111\u1ed9 \u0111\u00e1y l\u1ed7 m\u1edf (mm):")
             {
                 DefaultValue = 0,
                 AllowNegative = false,
@@ -3237,6 +3240,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
         }
 
+        private void RefreshWallGridViewAfterPopupApply()
+        {
+            try
+            {
+                if (_wallGrid?.ItemsSource == null)
+                    return;
+
+                CollectionViewSource.GetDefaultView(_wallGrid.ItemsSource)?.Refresh();
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn($"TenderApply.GridRefreshSkipped | {ex.Message}");
+            }
+        }
+
         private bool TryPromptAppliedGeometryPlacementPoint(
             TenderPopupGeometryMode mode,
             out Autodesk.AutoCAD.Geometry.Point3d placementPoint)
@@ -3247,8 +3265,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
 
             string message = mode == TenderPopupGeometryMode.CeilingPolygon
-                ? "\nChá»n Ä‘iá»ƒm Ä‘áº·t hÃ¬nh tráº§n:"
-                : "\nChá»n gÃ³c trÃ¡i dÆ°á»›i Ä‘á»ƒ Ä‘áº·t máº·t Ä‘á»©ng:";
+                ? "\nCh\u1ecdn \u0111i\u1ec3m \u0111\u1eb7t h\u00ecnh tr\u1ea7n:"
+                : "\nCh\u1ecdn g\u00f3c tr\u00e1i d\u01b0\u1edbi \u0111\u1ec3 \u0111\u1eb7t m\u1eb7t \u0111\u1ee9ng:";
             var res = doc.Editor.GetPoint(new Autodesk.AutoCAD.EditorInput.PromptPointOptions(message));
             if (res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
@@ -3265,7 +3283,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             Autodesk.AutoCAD.Geometry.Point3d placementPoint;
             if (isRepick && targetRow.AppliedPlacementX.HasValue && targetRow.AppliedPlacementY.HasValue)
             {
-                var keep = UiFeedback.AskYesNoCancel("Giá»¯ vá»‹ trÃ­ dá»±ng CAD cÅ©?", "Pick láº¡i Tender");
+                var keep = UiFeedback.AskYesNoCancel("Gi\u1eef v\u1ecb tr\u00ed d\u1ef1ng CAD c\u0169?", "Pick l\u1ea1i Tender");
                 if (keep == MessageBoxResult.Cancel)
                     return false;
 
@@ -3293,12 +3311,26 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             var drawRow = targetRow.Clone();
             ApplyPopupResultToRow(drawRow, result);
+            EnsurePopupReferenceGeometry(result, drawRow);
+
+            PluginLogger.Info(
+                $"TenderApply.Start | row={targetRow.Name} | mode={result.Mode} | " +
+                $"segments={DescribeSegments(drawRow.HeightSegments)} | openings={DescribeOpenings(drawRow.Openings)} | " +
+                $"poly={(drawRow.PolygonVertices?.Count ?? 0)} | panelWidth={drawRow.PanelWidth}");
 
             if (!TryDrawAppliedTenderGeometry(drawRow, result, placementPoint, out var appliedHandles, out var primaryHandle))
+            {
+                PluginLogger.Warn(
+                    $"TenderApply.DrawFailed | row={targetRow.Name} | mode={result.Mode} | " +
+                    $"segments={DescribeSegments(drawRow.HeightSegments)} | openings={DescribeOpenings(drawRow.Openings)}");
                 return false;
+            }
 
             var newHandleSet = new HashSet<string>(appliedHandles, StringComparer.OrdinalIgnoreCase);
             TryEraseCadEntitiesByHandles(oldHandles.Where(h => !newHandleSet.Contains(h)));
+
+            // Đồng bộ hình học popup -> row chính thức ngay tại điểm apply thành công.
+            ApplyPopupResultToRow(targetRow, result);
 
             targetRow.AppliedEntityHandles = appliedHandles;
             targetRow.AppliedGroupId = Guid.NewGuid().ToString("N");
@@ -3308,7 +3340,54 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle)
                 ? appliedHandles.FirstOrDefault()
                 : primaryHandle;
+            PluginLogger.Info(
+                $"TenderApply.Done | row={targetRow.Name} | primary={targetRow.CadHandle} | " +
+                $"handles={appliedHandles.Count} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
+                $"panels={targetRow.EstimatedPanelCountDisplay}");
             return true;
+        }
+
+        private void EnsurePopupReferenceGeometry(DraftGeometrySession result, TenderWallRow row)
+        {
+            if (result == null || result.ReferenceGeometry != null)
+                return;
+
+            if (result.Mode == TenderPopupGeometryMode.WallLineChain)
+            {
+                var segments = (result.Segments != null && result.Segments.Count > 0)
+                    ? result.Segments
+                    : row.HeightSegments;
+                double length = Math.Max(0, segments.Sum(s => Math.Max(0, s.LengthMm)));
+                double height = segments.Count > 0 ? segments.Max(s => Math.Max(0, s.HeightMm)) : Math.Max(0, row.Height);
+                var developedChain = new List<double[]> { new[] { 0.0, 0.0 } };
+                double cursor = 0;
+                foreach (var segment in segments)
+                {
+                    cursor += Math.Max(0, segment.LengthMm);
+                    developedChain.Add(new[] { cursor, 0.0 });
+                }
+
+                result.ReferenceGeometry = new ReferenceGeometry
+                {
+                    GeometryMode = TenderPopupGeometryMode.WallLineChain,
+                    BoundaryVertices = BuildStepBoundaryFromSegments(segments),
+                    DevelopedChainVertices = developedChain,
+                    ReferenceLengthMm = length,
+                    ReferenceHeightMm = height,
+                    Origin = new[] { 0.0, 0.0 },
+                    UAxis = new[] { 1.0, 0.0 },
+                    VAxis = new[] { 0.0, 1.0 },
+                    IsRectangularLike = true
+                };
+                return;
+            }
+
+            if (result.Mode == TenderPopupGeometryMode.WallPolygon
+                && result.PolygonVertices != null
+                && TryBuildWallReferenceGeometry(result.PolygonVertices, out var wallReference))
+            {
+                result.ReferenceGeometry = wallReference;
+            }
         }
 
         private static List<double[]> BuildStepBoundaryFromSegments(IReadOnlyList<TenderHeightSegment> segments)
@@ -3436,7 +3515,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     bool stationOpeningMode = result.Mode != TenderPopupGeometryMode.CeilingPolygon;
                     if (result.Mode == TenderPopupGeometryMode.WallLineChain)
                     {
-                        localVertices = BuildStepBoundaryFromSegments(row.HeightSegments);
+                        localVertices = result.ReferenceGeometry?.BoundaryVertices?.Count >= 3
+                            ? result.ReferenceGeometry.BoundaryVertices.Select(v => v.ToArray()).ToList()
+                            : BuildStepBoundaryFromSegments(row.HeightSegments);
                         foreach (var handle in result.Segments
                                      .Where(s => !string.IsNullOrWhiteSpace(s.CadHandle))
                                      .Select(s => s.CadHandle!)
@@ -3492,6 +3573,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
 
                     AddClosedPolyline(localVertices, PreviewBoundaryColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight050, primary: true);
+                    for (int i = 0; i < localVertices.Count; i++)
+                    {
+                        var a = localVertices[i];
+                        var b = localVertices[(i + 1) % localVertices.Count];
+                        if (Math.Abs(a[0] - b[0]) > 0.5 || Math.Abs(a[1] - b[1]) > 0.5)
+                            AddLine(a, b, PreviewBoundaryColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight050);
+                    }
 
                     bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
                     double minAxis = horizontal ? localVertices.Min(v => v[1]) : localVertices.Min(v => v[0]);
@@ -3523,7 +3611,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             AddLine(new[] { right, bottom }, new[] { right, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { right, top }, new[] { left, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { left, top }, new[] { left, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
-                            AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | ÄÃ¡y {bottom:F0}", OpeningPreviewTextColorIndex, 120);
+                            AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | \u0110\u00e1y {bottom:F0}", OpeningPreviewTextColorIndex, 120);
                         }
                     }
 
@@ -3663,161 +3751,55 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
         private void ClearHighlightCore(bool ignoreGuards)
-
         {
-
             if (!ignoreGuards && (_isEditingCell || _suspendCadOperations)) return;
 
             try
-
             {
-
                 if (_highlightedSourceEntityIds.Count == 0
-
-                    && _previewEntityIds.Count == 0
-
-                    && _transientPreviewEntities.Count == 0) return;
+                    && _previewEntityIds.Count == 0) return;
 
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
                 if (doc == null)
-
                 {
-
                     _highlightedSourceEntityIds.Clear();
-
                     _previewEntityIds.Clear();
-
-                    foreach (var entity in _transientPreviewEntities)
-
-                    {
-
-                        try { entity.Dispose(); } catch (System.Exception ex)
-
-            {
-
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-
-            }
-
-                    }
-
-                    _transientPreviewEntities.Clear();
-
                     return;
-
                 }
-
-
 
                 using (doc.LockDocument())
-
                 using (var tr = doc.Database.TransactionManager.StartTransaction())
-
                 {
-
                     foreach (var objId in _highlightedSourceEntityIds)
-
                     {
-
                         if (objId != Autodesk.AutoCAD.DatabaseServices.ObjectId.Null
-
                             && !objId.IsErased
-
                             && tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) is Autodesk.AutoCAD.DatabaseServices.Entity sourceEnt)
-
                         {
-
                             sourceEnt.Unhighlight();
-
                         }
-
                     }
-
-
 
                     foreach (var objId in _previewEntityIds)
-
                     {
-
                         if (objId != Autodesk.AutoCAD.DatabaseServices.ObjectId.Null && !objId.IsErased)
-
                         {
-
                             var dbObj = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite, false);
-
                             dbObj?.Erase();
-
                         }
-
                     }
 
-
-
                     tr.Commit();
-
-                }
-
-                var transientManager = Autodesk.AutoCAD.GraphicsInterface.TransientManager.CurrentTransientManager;
-
-                var viewportIds = new Autodesk.AutoCAD.Geometry.IntegerCollection();
-
-                foreach (var entity in _transientPreviewEntities)
-
-                {
-
-                    try { transientManager.EraseTransient(entity, viewportIds); } catch (System.Exception ex)
-
-            {
-
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-
-            }
-
-                    try { entity.Dispose(); } catch (System.Exception ex)
-
-            {
-
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-
-            }
-
                 }
 
                 _highlightedSourceEntityIds.Clear();
-
                 _previewEntityIds.Clear();
-
-                _transientPreviewEntities.Clear();
-
             }
-
             catch
-
             {
-
                 _highlightedSourceEntityIds.Clear();
-
                 _previewEntityIds.Clear();
-
-                foreach (var entity in _transientPreviewEntities)
-
-                {
-
-                    try { entity.Dispose(); } catch (System.Exception ex)
-
-            {
-
-                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-
             }
-
-                }
-
-                _transientPreviewEntities.Clear();
-
-            }
-
         }
 
 
@@ -3905,7 +3887,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
 
-                if (doc == null) { SetStatus("Cáº£nh bÃ¡o: KhÃ´ng tÃ¬m tháº¥y document"); return; }
+                if (doc == null) { SetStatus("C\u1ea3nh b\u00e1o: Kh\u00f4ng t\u00ecm th\u1ea5y document"); return; }
 
 
 
@@ -3921,7 +3903,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     {
 
-                SetStatus("Cáº£nh bÃ¡o: Ä‘á»‘i tÆ°á»£ng khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ thay Ä‘á»•i.");
+                SetStatus("C\u1ea3nh b\u00e1o: \u0110\u1ed1i t\u01b0\u1ee3ng kh\u00f4ng t\u1ed3n t\u1ea1i ho\u1eb7c \u0111\u00e3 b\u1ecb thay \u0111\u1ed5i.");
 
                         tr.Commit(); return;
 
@@ -3951,7 +3933,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             }
 
-            catch (Exception ex) { SetStatus($"Cáº£nh bÃ¡o: Highlight {ex.Message}"); }
+            catch (Exception ex) { SetStatus($"C\u1ea3nh b\u00e1o: Highlight {ex.Message}"); }
 
         }
 
@@ -3973,7 +3955,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
 
-                if (doc == null) { SetStatus("Cáº£nh bÃ¡o: KhÃ´ng tÃ¬m tháº¥y document"); return; }
+                if (doc == null) { SetStatus("C\u1ea3nh b\u00e1o: Kh\u00f4ng t\u00ecm th\u1ea5y document"); return; }
 
 
 
@@ -3989,7 +3971,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     {
 
-                SetStatus("Cáº£nh bÃ¡o: Ä‘á»‘i tÆ°á»£ng khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ thay Ä‘á»•i.");
+                SetStatus("C\u1ea3nh b\u00e1o: \u0110\u1ed1i t\u01b0\u1ee3ng kh\u00f4ng t\u1ed3n t\u1ea1i ho\u1eb7c \u0111\u00e3 b\u1ecb thay \u0111\u1ed5i.");
 
                         tr.Commit(); return;
 
@@ -4037,7 +4019,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             }
 
-            catch (Exception ex) { SetStatus($"Cáº£nh bÃ¡o: Highlight {ex.Message}"); }
+            catch (Exception ex) { SetStatus($"C\u1ea3nh b\u00e1o: Highlight {ex.Message}"); }
 
         }
 
@@ -4063,13 +4045,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 HighlightCadHandles(handles, focusView: force);
                 _lastCadPreviewKey = BuildCadPreviewKey(row);
-                SetStatus($"Vi tri: {row.Name}");
+                SetStatus($"V\u1ecb tr\u00ed: {row.Name}");
                 return;
             }
 
             ClearHighlight();
             _lastCadPreviewKey = null;
-            SetStatus($"Dong {row.Name} chua co hinh CAD da dung.");
+            SetStatus($"D\u00f2ng {row.Name} ch\u01b0a c\u00f3 h\u00ecnh CAD \u0111\u00e3 d\u1ef1ng.");
         }
 
         private void HighlightCadHandles(IEnumerable<string> handles, bool focusView)
@@ -4147,7 +4129,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
             catch (Exception ex)
             {
-                SetStatus($"Cáº£nh bÃ¡o: Highlight {ex.Message}");
+                SetStatus($"C\u1ea3nh b\u00e1o: Highlight {ex.Message}");
             }
         }
 
@@ -4371,7 +4353,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                SetStatus($"Highlight vÃ¹ng: {ex.Message}");
+                SetStatus($"Highlight v\u00f9ng: {ex.Message}");
 
                 return false;
 
@@ -4661,7 +4643,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                SetStatus($"Lá»—i preview tráº§n: {ex.Message}");
+                SetStatus($"L\u1ed7i preview tr\u1ea7n: {ex.Message}");
 
                 return false;
 
@@ -4721,7 +4703,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Title = "Chá»n hÆ°á»›ng chia phá»¥ kiá»‡n tráº§n",
+                    Title = "Ch\u1ecdn h\u01b0\u1edbng chia ph\u1ee5 ki\u1ec7n tr\u1ea7n",
 
                     Width = 480,
 
@@ -4747,7 +4729,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Chá»n hÆ°á»›ng chia phá»¥ kiá»‡n vÃ  tuyáº¿n treo cho vÃ¹ng tráº§n Ä‘ang pick:",
+                    Text = "Ch\u1ecdn h\u01b0\u1edbng chia ph\u1ee5 ki\u1ec7n v\u00e0 tuy\u1ebfn treo cho v\u00f9ng tr\u1ea7n \u0111ang pick:",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -4765,7 +4747,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "HÆ°á»›ng nÃ y Ä‘á»™c láº­p vá»›i hÆ°á»›ng chia táº¥m trong cá»™t HÆ°á»›ng. Dá»c/Ngang á»Ÿ Ä‘Ã¢y chá»‰ Ã¡p dá»¥ng cho tuyáº¿n phá»¥ kiá»‡n tráº§n.",
+                    Text = "H\u01b0\u1edbng n\u00e0y \u0111\u1ed9c l\u1eadp v\u1edbi h\u01b0\u1edbng chia t\u1ea5m trong c\u1ed9t H\u01b0\u1edbng. D\u1ecdc/Ngang \u1edf \u0111\u00e2y ch\u1ec9 \u00e1p d\u1ee5ng cho tuy\u1ebfn ph\u1ee5 ki\u1ec7n tr\u1ea7n.",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -4791,11 +4773,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                buttonBar.Children.Add(Btn("Dá»c", AccentBlue, Brushes.White, (s, e) =>
+                buttonBar.Children.Add(Btn("D\u1ecdc", AccentBlue, Brushes.White, (s, e) =>
 
                 {
 
-                    result = "Dá»c";
+                    result = "D\u1ecdc";
 
                     dlg.Close();
 
@@ -4819,7 +4801,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                var btnCancel = Btn("Há»§y", BtnGray, Brushes.White, (s, e) =>
+                var btnCancel = Btn("H\u1ee7y", BtnGray, Brushes.White, (s, e) =>
 
                 {
 
@@ -4865,11 +4847,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                string primaryLabel = runAlongX ? "Tá»« cáº¡nh dÆ°á»›i" : "Tá»« cáº¡nh trÃ¡i";
+                string primaryLabel = runAlongX ? "T\u1eeb c\u1ea1nh d\u01b0\u1edbi" : "T\u1eeb c\u1ea1nh tr\u00e1i";
 
-                string secondaryLabel = runAlongX ? "Tá»« cáº¡nh trÃªn" : "Tá»« cáº¡nh pháº£i";
+                string secondaryLabel = runAlongX ? "T\u1eeb c\u1ea1nh tr\u00ean" : "T\u1eeb c\u1ea1nh ph\u1ea3i";
 
-                string axisText = runAlongX ? "theo bá» rá»™ng Ä‘á»©ng" : "theo bá» rá»™ng ngang";
+                string axisText = runAlongX ? "theo b\u1ec1 r\u1ed9ng \u0111\u1ee9ng" : "theo b\u1ec1 r\u1ed9ng ngang";
 
 
 
@@ -4877,7 +4859,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Title = "Chá»n phÆ°Æ¡ng chia tuyáº¿n treo",
+                    Title = "Ch\u1ecdn ph\u01b0\u01a1ng chia tuy\u1ebfn treo",
 
                     Width = 480,
 
@@ -4903,7 +4885,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = $"VÃ¹ng pick sáº½ chia tuyáº¿n treo {axisText}. Chá»n cáº¡nh gá»‘c Ä‘á»ƒ báº¯t Ä‘áº§u chia nhá»‹p:",
+                    Text = $"V\u00f9ng pick s\u1ebd chia tuy\u1ebfn treo {axisText}. Ch\u1ecdn c\u1ea1nh g\u1ed1c \u0111\u1ec3 b\u1eaft \u0111\u1ea7u chia nh\u1ecbp:",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -4921,7 +4903,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Lá»±a chá»n nÃ y chá»‰ xÃ¡c Ä‘á»‹nh cáº¡nh báº¯t Ä‘áº§u chia tuyáº¿n treo, khÃ´ng thay Ä‘á»•i hÆ°á»›ng chia táº¥m panel trong báº£ng.",
+                    Text = "L\u1ef1a ch\u1ecdn n\u00e0y ch\u1ec9 x\u00e1c \u0111\u1ecbnh c\u1ea1nh b\u1eaft \u0111\u1ea7u chia tuy\u1ebfn treo, kh\u00f4ng thay \u0111\u1ed5i h\u01b0\u1edbng chia t\u1ea5m panel trong b\u1ea3ng.",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -4975,7 +4957,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                var btnCancel = Btn("Há»§y", BtnGray, Brushes.White, (s, e) =>
+                var btnCancel = Btn("H\u1ee7y", BtnGray, Brushes.White, (s, e) =>
 
                 {
 

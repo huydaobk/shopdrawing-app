@@ -355,11 +355,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     return;
                 }
 
-                if (!TryApplyTenderPopupResult(popupDraftRow, popupResult, isRepick: false))
-                {
-                    CleanupDraftCadHandles(popupResult);
-                    return;
-                }
+                // Đồng bộ dữ liệu popup vào bảng trước khi dựng CAD.
+                // Nếu user hủy bước chọn điểm đặt mặt đứng, khối lượng vẫn không bị mất.
+                ApplyPopupResultToRow(popupDraftRow, popupResult);
 
                 Dispatcher.Invoke(new Action(() =>
                 {
@@ -381,7 +379,39 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
                     _lastCadPreviewKey = null;
-                    SetStatus($"\u0110\u00e3 th\u00eam {popupDraftRow.Name}");
+                    SetStatus($"\u0110\u00e3 th\u00eam d\u1eef li\u1ec7u {popupDraftRow.Name}. Ch\u1ecdn \u0111i\u1ec3m \u0111\u1eb7t \u0111\u1ec3 d\u1ef1ng CAD.");
+                }));
+
+                if (!TryApplyTenderPopupResult(popupDraftRow, popupResult, isRepick: false))
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        popupDraftRow.Refresh();
+                        SafeRefreshWallGrid();
+                        RefreshWallGridViewAfterPopupApply();
+                        LoadOpeningsForWall(popupDraftRow);
+                        RefreshFooter();
+                        RefreshPanelBreakdown(popupDraftRow);
+                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                        _project.Walls = GetWallModels();
+                        SetStatus($"\u0110\u00e3 gi\u1eef d\u1eef li\u1ec7u {popupDraftRow.Name}; ch\u01b0a d\u1ef1ng CAD do h\u1ee7y/ch\u01b0a ch\u1ecdn \u0111i\u1ec3m \u0111\u1eb7t.");
+                    }));
+                    return;
+                }
+
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    SyncWallRowSpecData(popupDraftRow);
+                    popupDraftRow.Refresh();
+                    SafeRefreshWallGrid();
+                    RefreshWallGridViewAfterPopupApply();
+                    LoadOpeningsForWall(popupDraftRow);
+                    RefreshFooter();
+                    RefreshPanelBreakdown(popupDraftRow);
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                    _project.Walls = GetWallModels();
+                    _lastCadPreviewKey = null;
+                    SetStatus($"\u0110\u00e3 th\u00eam {popupDraftRow.Name} v\u00e0 d\u1ef1ng CAD.");
                 }));
             }
             catch (Exception ex)
@@ -811,6 +841,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         private bool TryBuildWallReferenceGeometry(List<double[]> polygonVertices, out ReferenceGeometry geometry)
         {
             geometry = new ReferenceGeometry();
+            if (TryBuildRectangularWallReferenceGeometry(polygonVertices, out geometry))
+                return true;
+
             if (!TryResolvePolygonDevelopedGeometry(polygonVertices, out var referenceChain, out var oppositeChain, out var chainLength)
                 || referenceChain.Count < 2
                 || oppositeChain.Count < 2
@@ -893,6 +926,88 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             geometry.IsRectangularLike = !HasNonOrthogonalEdges(polygonVertices);
             geometry.GeometryMode = TenderPopupGeometryMode.WallPolygon;
             return true;
+        }
+
+        private static bool TryBuildRectangularWallReferenceGeometry(
+            IReadOnlyList<double[]> polygonVertices,
+            out ReferenceGeometry geometry)
+        {
+            geometry = new ReferenceGeometry();
+            var polygon = (polygonVertices ?? Array.Empty<double[]>())
+                .Where(v => v != null && v.Length >= 2)
+                .Select(v => v.ToArray())
+                .ToList();
+            if (polygon.Count < 4 || HasNonOrthogonalEdges(polygon))
+                return false;
+
+            double minX = polygon.Min(v => v[0]);
+            double maxX = polygon.Max(v => v[0]);
+            double minY = polygon.Min(v => v[1]);
+            double maxY = polygon.Max(v => v[1]);
+            double spanX = maxX - minX;
+            double spanY = maxY - minY;
+            if (spanX <= 1.0 || spanY <= 1.0)
+                return false;
+
+            static bool Near(double a, double b) => Math.Abs(a - b) <= 1.0;
+
+            // Chỉ nhận diện rectangle thật. Biên dạng bậc/L-shape vẫn đi qua nhánh khai triển chain cũ.
+            bool allOnBoundingRectangle = polygon.All(v =>
+                Near(v[0], minX) || Near(v[0], maxX) || Near(v[1], minY) || Near(v[1], maxY));
+            if (!allOnBoundingRectangle)
+                return false;
+
+            double area = Math.Abs(ComputePolygonArea(polygon));
+            double boundingArea = spanX * spanY;
+            if (boundingArea <= 1.0 || area < boundingArea * 0.98)
+                return false;
+
+            bool stationAlongX = spanX >= spanY;
+            double length = stationAlongX ? spanX : spanY;
+            double height = stationAlongX ? spanY : spanX;
+
+            geometry.ReferenceChain = new List<double[]>
+            {
+                new[] { 0.0, 0.0 },
+                new[] { length, 0.0 }
+            };
+            geometry.OppositeChain = new List<double[]>
+            {
+                new[] { 0.0, height },
+                new[] { length, height }
+            };
+            geometry.DevelopedChainVertices = geometry.ReferenceChain.Select(v => v.ToArray()).ToList();
+            geometry.BoundaryVertices = new List<double[]>
+            {
+                new[] { 0.0, 0.0 },
+                new[] { length, 0.0 },
+                new[] { length, height },
+                new[] { 0.0, height }
+            };
+            geometry.ReferenceLengthMm = length;
+            geometry.ReferenceHeightMm = height;
+            geometry.Origin = stationAlongX ? new[] { minX, minY } : new[] { minX, minY };
+            geometry.UAxis = stationAlongX ? new[] { 1.0, 0.0 } : new[] { 0.0, 1.0 };
+            geometry.VAxis = stationAlongX ? new[] { 0.0, 1.0 } : new[] { 1.0, 0.0 };
+            geometry.IsRectangularLike = true;
+            geometry.GeometryMode = TenderPopupGeometryMode.WallPolygon;
+            return true;
+        }
+
+        private static double ComputePolygonArea(IReadOnlyList<double[]> polygon)
+        {
+            if (polygon == null || polygon.Count < 3)
+                return 0;
+
+            double area2 = 0;
+            for (int i = 0; i < polygon.Count; i++)
+            {
+                var a = polygon[i];
+                var b = polygon[(i + 1) % polygon.Count];
+                area2 += a[0] * b[1] - b[0] * a[1];
+            }
+
+            return area2 * 0.5;
         }
 
         private static IEnumerable<double> BuildChainRatios(IReadOnlyList<double[]> vertices)
@@ -4195,465 +4310,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-        private bool TryShowRowRegionPreview(TenderWallRow row)
-
-        {
-
-            if (_isEditingCell || _suspendCadOperations || string.IsNullOrWhiteSpace(row.CadHandle))
-
-                return false;
-
-
-
-            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
-            if (doc == null)
-
-                return false;
-
-
-
-            ClearHighlight();
-
-
-
-            try
-
-            {
-
-                Autodesk.AutoCAD.DatabaseServices.Entity? previewEntity = null;
-
-
-
-                using (doc.LockDocument())
-
-                using (var tr = doc.Database.TransactionManager.StartTransaction())
-
-                {
-
-                    var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(Convert.ToInt64(row.CadHandle, 16));
-
-                    if (!doc.Database.TryGetObjectId(handle, out var objId))
-
-                    {
-
-                        tr.Commit();
-
-                        return false;
-
-                    }
-
-
-
-                    var sourceEnt = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false)
-
-                        as Autodesk.AutoCAD.DatabaseServices.Entity;
-
-                    if (sourceEnt == null)
-
-                    {
-
-                        tr.Commit();
-
-                        return false;
-
-                    }
-
-
-
-                    sourceEnt.Highlight();
-
-                    if (!_highlightedSourceEntityIds.Contains(objId))
-
-                        _highlightedSourceEntityIds.Add(objId);
-
-
-
-                    if (sourceEnt is Autodesk.AutoCAD.DatabaseServices.Polyline sourcePolyline
-
-                        && !sourcePolyline.Closed
-
-                        && sourcePolyline.NumberOfVertices >= 2
-
-                        && row.Height > 0)
-
-                    {
-
-                        var layerId = EnsureHighlightLayer(doc.Database, tr);
-
-                        var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(
-
-                            doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
-
-                        var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
-
-                            bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
-
-                            Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
-
-
-
-                        AddDevelopedPolylinePreview(sourcePolyline, row, layerId, btr, tr);
-                        AddOpeningCadPreview(sourcePolyline, GetPolylineVertices(sourcePolyline), row, layerId, btr, tr);
-                        AddPreviewSummaryText(GetPolylineVertices(sourcePolyline), row, layerId, btr, tr);
-
-                        tr.Commit();
-
-                        return true;
-
-                    }
-
-
-
-                    previewEntity = BuildRowRegionPreviewEntity(row, sourceEnt);
-
-                    var previewVertices = GetPreviewVertices(row, sourceEnt);
-
-                    if (previewVertices.Count >= 3)
-
-                    {
-
-                        var layerId = EnsureHighlightLayer(doc.Database, tr);
-
-                        var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(
-
-                            doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
-
-                        var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
-
-                            bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
-
-                            Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
-
-
-
-                        AddPanelPreviewLines(previewVertices, row, layerId, btr, tr);
-                        AddOpeningCadPreview(sourceEnt, previewVertices, row, layerId, btr, tr);
-                        AddPreviewSummaryText(previewVertices, row, layerId, btr, tr);
-
-                    }
-
-                    tr.Commit();
-
-                }
-
-
-
-                if (previewEntity != null)
-
-                    AddTransientPreviewEntity(previewEntity);
-
-
-
-                return true;
-
-            }
-
-            catch (Exception ex)
-
-            {
-
-                SetStatus($"Highlight v\u00f9ng: {ex.Message}");
-
-                return false;
-
-            }
-
-        }
-
-
-
-        private void AddTransientPreviewEntity(Autodesk.AutoCAD.DatabaseServices.Entity entity)
-
-        {
-
-            entity.SetDatabaseDefaults();
-
-            entity.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(
-
-                Autodesk.AutoCAD.Colors.ColorMethod.ByAci, PreviewBoundaryColorIndex);
-
-            entity.LineWeight = Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight211;
-
-
-
-            var transientManager = Autodesk.AutoCAD.GraphicsInterface.TransientManager.CurrentTransientManager;
-
-            var viewportIds = new Autodesk.AutoCAD.Geometry.IntegerCollection();
-
-            transientManager.AddTransient(
-
-                entity,
-
-                Autodesk.AutoCAD.GraphicsInterface.TransientDrawingMode.DirectShortTerm,
-
-                0,
-
-                viewportIds);
-
-
-
-            _transientPreviewEntities.Add(entity);
-
-        }
-
-
-
-        private bool TryDrawColdStorageCeilingPreview(TenderWallRow row, bool focusView = false)
-
-        {
-
-            if (!IsSuspendedCeilingRow(row) || string.IsNullOrWhiteSpace(row.CadHandle))
-
-                return false;
-
-
-
-            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
-            if (doc == null)
-
-                return false;
-
-
-
-            ClearHighlight();
-
-
-
-            try
-
-            {
-
-                Autodesk.AutoCAD.DatabaseServices.Entity? previewBoundary = null;
-
-
-
-                using (doc.LockDocument())
-
-                using (var tr = doc.Database.TransactionManager.StartTransaction())
-
-                {
-
-                    var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(Convert.ToInt64(row.CadHandle, 16));
-
-                    if (!doc.Database.TryGetObjectId(handle, out var objId))
-
-                    {
-
-                        tr.Commit();
-
-                        return false;
-
-                    }
-
-
-
-                    var pl = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead)
-
-                        as Autodesk.AutoCAD.DatabaseServices.Polyline;
-
-                    if (pl == null || !pl.Closed)
-
-                    {
-
-                        tr.Commit();
-
-                        return false;
-
-                    }
-
-
-
-                    var vertices = GetPolylineVertices(pl);
-
-                    if (vertices.Count < 3)
-
-                    {
-
-                        tr.Commit();
-
-                        return false;
-
-                    }
-
-
-
-                    var layerId = EnsureHighlightLayer(doc.Database, tr);
-
-                    var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(
-
-                        doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
-
-                    var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(
-
-                        bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace],
-
-                        Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
-
-                    pl.Highlight();
-
-                    _highlightedSourceEntityIds.Add(objId);
-
-                    previewBoundary = BuildRowRegionPreviewEntity(row, pl);
-
-                    AddPanelPreviewLines(vertices, row, layerId, btr, tr);
-
-                    AddPreviewSummaryText(vertices, row, layerId, btr, tr);
-
-
-
-                    var preview = TenderBomCalculator.GetColdStorageCeilingPreviewData(row.ToModel());
-
-                    if (preview.HasValue)
-
-                    {
-
-                        bool runAlongX = IsColdStorageRunAlongX(row);
-
-                        var tPositions = BuildSuspensionLinePositions(
-
-                            vertices,
-
-                            runAlongX,
-
-                            row.ColdStorageDivideFromMaxSide,
-
-                            preview.Value.TSpacingMm,
-
-                            preview.Value.TSpacingMm,
-
-                            preview.Value.TLineCount);
-
-                        var mushroomPositions = BuildSuspensionLinePositions(
-
-                            vertices,
-
-                            runAlongX,
-
-                            row.ColdStorageDivideFromMaxSide,
-
-                            preview.Value.TSpacingMm,
-
-                            preview.Value.MushroomOffsetMm,
-
-                            preview.Value.MushroomLineCount);
-
-
-
-                        AddSuspensionPreviewLines(
-
-                            vertices,
-
-                            runAlongX,
-
-                            tPositions,
-
-                            preview.Value.TSpacingMm,
-
-                            "T",
-
-                            SuspensionTColorIndex,
-
-                            Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight050,
-
-                            false,
-
-                            false,
-
-                            false,
-
-                            layerId,
-
-                            btr,
-
-                            tr);
-
-
-
-                        AddSuspensionPreviewLines(
-
-                            vertices,
-
-                            runAlongX,
-
-                            mushroomPositions,
-
-                            preview.Value.MushroomOffsetMm,
-
-                            "M",
-
-                            SuspensionMushroomColorIndex,
-
-                            Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight035,
-
-                            false,
-
-                            false,
-
-                            false,
-
-                            layerId,
-
-                            btr,
-
-                            tr);
-
-                    }
-
-
-
-                    if (focusView)
-
-                    {
-
-                        var ext = pl.GeometricExtents;
-
-                        var view = doc.Editor.GetCurrentView();
-
-                        view.CenterPoint = new Autodesk.AutoCAD.Geometry.Point2d(
-
-                            (ext.MinPoint.X + ext.MaxPoint.X) / 2,
-
-                            (ext.MinPoint.Y + ext.MaxPoint.Y) / 2);
-
-                        view.Height = (ext.MaxPoint.Y - ext.MinPoint.Y) * 1.5;
-
-                        view.Width = (ext.MaxPoint.X - ext.MinPoint.X) * 1.5;
-
-                        doc.Editor.SetCurrentView(view);
-
-                    }
-
-
-
-                    tr.Commit();
-
-                    if (previewBoundary != null)
-
-                        AddTransientPreviewEntity(previewBoundary);
-
-                    return true;
-
-                }
-
-            }
-
-            catch (Exception ex)
-
-            {
-
-                SetStatus($"L\u1ed7i preview tr\u1ea7n: {ex.Message}");
-
-                return false;
-
-            }
-
-        }
-
-
-
-        private bool TryConfigureSuspendedCeilingDivision(TenderWallRow row)
+                                private bool TryConfigureSuspendedCeilingDivision(TenderWallRow row)
 
         {
 

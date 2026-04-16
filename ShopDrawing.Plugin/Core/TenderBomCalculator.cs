@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -406,14 +406,11 @@ namespace ShopDrawing.Plugin.Core
         }
 
         private static bool IsSuspensionRunAlongX(TenderWall wall)
-            => !string.Equals(GetSuspensionLayoutDirection(wall), "Ngang", StringComparison.OrdinalIgnoreCase);
-
-        private static string GetSuspensionLayoutDirection(TenderWall wall)
         {
             if (!string.IsNullOrWhiteSpace(wall.SuspensionLayoutDirection))
-                return wall.SuspensionLayoutDirection;
+                return string.Equals(wall.SuspensionLayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
 
-            return wall.LayoutDirection;
+            return !string.Equals(wall.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
         }
 
         private static List<double[]> GetSuspensionVertices(TenderWall wall)

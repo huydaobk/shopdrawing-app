@@ -3783,10 +3783,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
         private static bool IsColdStorageRunAlongX(TenderWallRow row)
         {
-            string suspensionDirection = string.IsNullOrWhiteSpace(row.SuspensionLayoutDirection)
-                ? row.LayoutDirection
-                : row.SuspensionLayoutDirection;
-            return !string.Equals(suspensionDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(row.SuspensionLayoutDirection))
+                return string.Equals(row.SuspensionLayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
+
+            return !string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
         }
 
         private static List<double[]> GetPolylineVertices(Autodesk.AutoCAD.DatabaseServices.Polyline pl)

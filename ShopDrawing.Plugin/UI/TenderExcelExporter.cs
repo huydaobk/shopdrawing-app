@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +11,7 @@ using ShopDrawing.Plugin.Models;
 namespace ShopDrawing.Plugin.UI
 {
     /// <summary>
-    /// Xuáº¥t báº£ng khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u ra Excel.
+    /// Xu\u1EA5t b\u1EA3ng kh\u1ED1i l\u01B0\u1EE3ng \u0111\u1EA5u th\u1EA7u ra Excel.
     /// </summary>
     public class TenderExcelExporter
     {
@@ -35,7 +35,7 @@ namespace ShopDrawing.Plugin.UI
             var basisSheet = workbook.CreateSheet(BasisSheetName);
             var specSheet = workbook.CreateSheet(SpecSheetName);
 
-            // Chá»‘t thá»© tá»± sheet: Khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u -> Diá»…n giáº£i -> CÆ¡ sá»Ÿ -> Spec.
+            // Ch\u1ED1t th\u1EE9 t\u1EF1 sheet: Kh\u1ED1i l\u01B0\u1EE3ng \u0111\u1EA5u th\u1EA7u -> Di\u1EC5n gi\u1EA3i -> C\u01A1 s\u1EDF -> Spec.
             workbook.SetSheetOrder(TenderSheetName, 0);
             workbook.SetSheetOrder(PanelExplainSheetName, 1);
             workbook.SetSheetOrder(BasisSheetName, 2);
@@ -58,7 +58,7 @@ namespace ShopDrawing.Plugin.UI
 
             int tenderRowIdx = WriteSheetHeader(
                 tenderSheet,
-                $"Báº¢NG KHá»I LÆ¯á»¢NG Äáº¤U THáº¦U - {project.ProjectName}",
+                $"B\u1EA2NG KH\u1ED0I L\u01AF\u1EE2NG \u0110\u1EA4U TH\u1EA6U - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -89,7 +89,7 @@ namespace ShopDrawing.Plugin.UI
 
             int basisRowIdx = WriteSheetHeader(
                 basisSheet,
-                $"CÆ  Sá»ž TÃNH PHá»¤ KIá»†N - {project.ProjectName}",
+                $"C\u01A0 S\u1EDE T\u00CDNH PH\u1EE4 KI\u1EC6N - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -169,8 +169,8 @@ namespace ShopDrawing.Plugin.UI
             SetMergedTextCell(sheet, titleRow, 0, maxColumnIndex, title, titleStyle);
 
             var infoRow = sheet.CreateRow(rowIdx++);
-            SetCell(infoRow, 0, $"KhÃ¡ch hÃ ng: {customerName}", infoStyle);
-            SetCell(infoRow, Math.Min(5, maxColumnIndex), $"NgÃ y xuáº¥t: {DateTime.Now:dd/MM/yyyy}", infoStyle);
+            SetCell(infoRow, 0, $"Kh\u00E1ch h\u00E0ng: {customerName}", infoStyle);
+            SetCell(infoRow, Math.Min(5, maxColumnIndex), $"Ng\u00E0y xu\u1EA5t: {DateTime.Now:dd/MM/yyyy}", infoStyle);
 
             rowIdx++;
             return rowIdx;
@@ -191,7 +191,7 @@ namespace ShopDrawing.Plugin.UI
             var rows = calculator.CalculatePanelSummary(project.Walls);
 
             var sectionRow = sheet.CreateRow(rowIdx++);
-            SetCell(sectionRow, 0, "Tá»”NG Há»¢P KHá»I LÆ¯á»¢NG Táº¤M THEO Táº¦NG + SPEC", sectionStyle);
+            SetCell(sectionRow, 0, "T\u1ED4NG H\u1EE2P KH\u1ED0I L\u01AF\u1EE2NG T\u1EA4M THEO T\u1EA6NG + SPEC", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 sectionRow,
@@ -202,9 +202,9 @@ namespace ShopDrawing.Plugin.UI
 
             string[] headers =
             {
-                "STT", "Táº§ng", "Háº¡ng má»¥c", "MÃ£ spec", "Sá»‘ vÃ¹ng",
-                "DT hÃ¬nh há»c (mÂ²)", "DT lá»— má»Ÿ (mÂ²)", "DT net (mÂ²)",
-                "DT dá»± kiáº¿n cáº¥p (mÂ²)", "Khá»‘i lÆ°á»£ng hao há»¥t tá»•ng (mÂ²)", "Hao há»¥t (%)"
+                "STT", "T\u1EA7ng", "H\u1EA1ng m\u1EE5c", "M\u00E3 spec", "S\u1ED1 v\u00F9ng",
+                "DT h\u00ECnh h\u1ECDc (m\u00B2)", "DT l\u1ED7 m\u1EDF (m\u00B2)", "DT net (m\u00B2)",
+                "DT d\u1EF1 ki\u1EBFn c\u1EA5p (m\u00B2)", "Kh\u1ED1i l\u01B0\u1EE3ng hao h\u1EE5t t\u1ED5ng (m\u00B2)", "Hao h\u1EE5t (%)"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -231,12 +231,12 @@ namespace ShopDrawing.Plugin.UI
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$I:$I,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"ThÃ´ng sá»‘\")",
+                    $"SUMIFS({panelExplainSheetRef}!$I:$I,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Th\u00F4ng s\u1ED1\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Cá»­a Ä‘i\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Cá»­a sá»•\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Lá»— ká»¹ thuáº­t\")",
+                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"C\u1EEDa \u0111i\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"C\u1EEDa s\u1ED5\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"L\u1ED7 k\u1EF9 thu\u1EADt\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
@@ -246,12 +246,12 @@ namespace ShopDrawing.Plugin.UI
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"NguyÃªn\")+SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Giáº£m*\")",
+                    $"SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Nguy\u00EAn\")+SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Gi\u1EA3m*\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Hao há»¥t*\")",
+                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Hao h\u1EE5t*\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
@@ -262,7 +262,7 @@ namespace ShopDrawing.Plugin.UI
 
             int dataEndRowIndex = rowIdx - 1;
             var totalRow = sheet.CreateRow(rowIdx++);
-            SetCell(totalRow, 3, "Tá»”NG Cá»˜NG:", totalStyle);
+            SetCell(totalRow, 3, "T\u1ED4NG C\u1ED8NG:", totalStyle);
             if (rows.Count > 0)
             {
                 SetFormulaCell(totalRow, 4, $"SUM({CellRef(dataStartRowIndex, 4)}:{CellRef(dataEndRowIndex, 4)})", totalStyle);
@@ -287,7 +287,7 @@ namespace ShopDrawing.Plugin.UI
             rowIdx++;
 
             var supplyTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(supplyTitleRow, 0, "Tá»”NG KHá»I LÆ¯á»¢NG PANEL Cáº¤P Dá»° KIáº¾N", sectionStyle);
+            SetCell(supplyTitleRow, 0, "T\u1ED4NG KH\u1ED0I L\u01AF\u1EE2NG PANEL C\u1EA4P D\u1EF0 KI\u1EBEN", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 supplyTitleRow,
@@ -298,17 +298,17 @@ namespace ShopDrawing.Plugin.UI
 
             var supplyHeaderRow = sheet.CreateRow(rowIdx++);
             SetCell(supplyHeaderRow, 0, "STT", headerStyle);
-            SetCell(supplyHeaderRow, 1, "Chá»‰ tiÃªu", headerStyle);
-            SetCell(supplyHeaderRow, 2, "GiÃ¡ trá»‹", headerStyle);
-            SetMergedTextCell(sheet, supplyHeaderRow, 3, 8, "Ghi chÃº", headerStyle);
+            SetCell(supplyHeaderRow, 1, "Ch\u1EC9 ti\u00EAu", headerStyle);
+            SetCell(supplyHeaderRow, 2, "Gi\u00E1 tr\u1ECB", headerStyle);
+            SetMergedTextCell(sheet, supplyHeaderRow, 3, 8, "Ghi ch\u00FA", headerStyle);
 
             string totalOrderedRef = CellRef(totalRow.RowNum, 8);
             string totalWasteRef = CellRef(totalRow.RowNum, 9);
             var supplyRows = new (string Label, string Formula, string Note)[]
             {
-                ("Tá»•ng diá»‡n tÃ­ch dá»± kiáº¿n pháº£i cáº¥p (mÂ²)", totalOrderedRef, "Diá»‡n tÃ­ch panel quy Ä‘á»•i theo tá»•ng sá»‘ táº¥m nguyÃªn cáº§n cáº¥p."),
-                ("Khá»‘i lÆ°á»£ng hao há»¥t tá»•ng (mÂ²)", totalWasteRef, "Bao gá»“m pháº§n cáº¯t bá» táº¥m cuá»‘i vÃ  pháº§n diá»‡n tÃ­ch panel bá»‹ vÆ°á»›ng vÃ o lá»— má»Ÿ."),
-                ("Tá»· lá»‡ hao há»¥t tá»•ng (%)", $"IF({totalOrderedRef}>0,{totalWasteRef}/{totalOrderedRef}*100,0)", "Tá»· lá»‡ hao há»¥t = Khá»‘i lÆ°á»£ng hao há»¥t tá»•ng / Tá»•ng diá»‡n tÃ­ch dá»± kiáº¿n pháº£i cáº¥p.")
+                ("T\u1ED5ng di\u1EC7n t\u00EDch d\u1EF1 ki\u1EBFn ph\u1EA3i c\u1EA5p (m\u00B2)", totalOrderedRef, "Di\u1EC7n t\u00EDch panel quy \u0111\u1ED5i theo t\u1ED5ng s\u1ED1 t\u1EA5m nguy\u00EAn c\u1EA7n c\u1EA5p."),
+                ("Kh\u1ED1i l\u01B0\u1EE3ng hao h\u1EE5t t\u1ED5ng (m\u00B2)", totalWasteRef, "Bao g\u1ED3m ph\u1EA7n c\u1EAFt b\u1ECF t\u1EA5m cu\u1ED1i v\u00E0 ph\u1EA7n di\u1EC7n t\u00EDch panel b\u1ECB v\u01B0\u1EDBng v\u00E0o l\u1ED7 m\u1EDF."),
+                ("T\u1EF7 l\u1EC7 hao h\u1EE5t t\u1ED5ng (%)", $"IF({totalOrderedRef}>0,{totalWasteRef}/{totalOrderedRef}*100,0)", "T\u1EF7 l\u1EC7 hao h\u1EE5t = Kh\u1ED1i l\u01B0\u1EE3ng hao h\u1EE5t t\u1ED5ng / T\u1ED5ng di\u1EC7n t\u00EDch d\u1EF1 ki\u1EBFn ph\u1EA3i c\u1EA5p.")
             };
 
             for (int i = 0; i < supplyRows.Length; i++)
@@ -339,7 +339,7 @@ namespace ShopDrawing.Plugin.UI
             var report = calculator.CalculateAccessoryReport(project.Walls, project.Accessories);
 
             var titleRow = sheet.CreateRow(rowIdx++);
-            SetCell(titleRow, 0, "CÆ  Sá»ž TÃNH PHá»¤ KIá»†N", sectionStyle);
+            SetCell(titleRow, 0, "C\u01A0 S\u1EDE T\u00CDNH PH\u1EE4 KI\u1EC6N", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 titleRow,
@@ -350,9 +350,9 @@ namespace ShopDrawing.Plugin.UI
 
             string[] headers =
             {
-                "STT", "Táº§ng", "Háº¡ng má»¥c", "KÃ½ hiá»‡u vÃ¡ch", "á»¨ng dá»¥ng", "MÃ£ spec",
-                "Phá»¥ kiá»‡n", "Váº­t liá»‡u", "ÄÆ¡n vá»‹", "Vá»‹ trÃ­", "Quy táº¯c tÃ­nh", "CÆ¡ sá»Ÿ tÃ­nh", "GiÃ¡ trá»‹ cÆ¡ sá»Ÿ",
-                "Há»‡ sá»‘", "Khá»‘i lÆ°á»£ng tá»± Ä‘á»™ng", "Vá»‹ trÃ­ / Pháº¡m vi", "ThÃ´ng sá»‘ chÃ­nh"
+                "STT", "T\u1EA7ng", "H\u1EA1ng m\u1EE5c", "K\u00FD hi\u1EC7u v\u00E1ch", "\u1EE8ng d\u1EE5ng", "M\u00E3 spec",
+                "Ph\u1EE5 ki\u1EC7n", "V\u1EADt li\u1EC7u", "\u0110\u01A1n v\u1ECB", "V\u1ECB tr\u00ED", "Quy t\u1EAFc t\u00EDnh", "C\u01A1 s\u1EDF t\u00EDnh", "Gi\u00E1 tr\u1ECB c\u01A1 s\u1EDF",
+                "H\u1EC7 s\u1ED1", "Kh\u1ED1i l\u01B0\u1EE3ng t\u1EF1 \u0111\u1ED9ng", "V\u1ECB tr\u00ED / Ph\u1EA1m vi", "Th\u00F4ng s\u1ED1 ch\u00EDnh"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -408,7 +408,7 @@ namespace ShopDrawing.Plugin.UI
             var summary = calculator.CalculateAccessorySummary(project.Walls, project.Accessories);
 
             var titleRow = sheet.CreateRow(rowIdx++);
-            SetCell(titleRow, 0, "Tá»”NG Há»¢P PHá»¤ KIá»†N Äáº¤U THáº¦U", sectionStyle);
+            SetCell(titleRow, 0, "T\u1ED4NG H\u1EE2P PH\u1EE4 KI\u1EC6N \u0110\u1EA4U TH\u1EA6U", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 titleRow,
@@ -419,9 +419,9 @@ namespace ShopDrawing.Plugin.UI
 
             string[] headers =
             {
-                "STT", "Pháº¡m vi háº¡ng má»¥c", "á»¨ng dá»¥ng", "MÃ£ spec", "Phá»¥ kiá»‡n", "Váº­t liá»‡u", "Vá»‹ trÃ­", "ÄÆ¡n vá»‹",
-                "Quy táº¯c tÃ­nh", "CÆ¡ sá»Ÿ tÃ­nh", "GiÃ¡ trá»‹ cÆ¡ sá»Ÿ", "Há»‡ sá»‘", "Hao há»¥t (%)",
-                "Khá»‘i lÆ°á»£ng tá»± Ä‘á»™ng", "Äiá»u chá»‰nh", "Khá»‘i lÆ°á»£ng chá»‘t", "Vá»‹ trÃ­ / Pháº¡m vi", "ThÃ´ng sá»‘ chÃ­nh"
+                "STT", "Ph\u1EA1m vi h\u1EA1ng m\u1EE5c", "\u1EE8ng d\u1EE5ng", "M\u00E3 spec", "Ph\u1EE5 ki\u1EC7n", "V\u1EADt li\u1EC7u", "V\u1ECB tr\u00ED", "\u0110\u01A1n v\u1ECB",
+                "Quy t\u1EAFc t\u00EDnh", "C\u01A1 s\u1EDF t\u00EDnh", "Gi\u00E1 tr\u1ECB c\u01A1 s\u1EDF", "H\u1EC7 s\u1ED1", "Hao h\u1EE5t (%)",
+                "Kh\u1ED1i l\u01B0\u1EE3ng t\u1EF1 \u0111\u1ED9ng", "\u0110i\u1EC1u ch\u1EC9nh", "Kh\u1ED1i l\u01B0\u1EE3ng ch\u1ED1t", "V\u1ECB tr\u00ED / Ph\u1EA1m vi", "Th\u00F4ng s\u1ED1 ch\u00EDnh"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -431,7 +431,7 @@ namespace ShopDrawing.Plugin.UI
             }
 
             int stt = 1;
-            const string basisSheetRef = "'CÆ¡ sá»Ÿ tÃ­nh phá»¥ kiá»‡n riÃªng'";
+            string basisSheetRef = $"'{BasisSheetName}'";
             foreach (var row in summary)
             {
                 var noteParts = SplitDisplayNote(row.Note);
@@ -494,7 +494,7 @@ namespace ShopDrawing.Plugin.UI
         {
             int rowIdx = WriteSheetHeader(
                 sheet,
-                $"Báº¢NG QUáº¢N LÃ SPEC - {project.ProjectName}",
+                $"B\u1EA2NG QU\u1EA2N L\u00DD SPEC - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -507,7 +507,7 @@ namespace ShopDrawing.Plugin.UI
             var bottomHeaderStyle = CreateSubHeaderStyle(workbook, IndexedColors.LightGreen.Index);
 
             var sectionRow = sheet.CreateRow(rowIdx++);
-            SetCell(sectionRow, 0, "DANH SÃCH SPEC Dá»° ÃN", sectionStyle);
+            SetCell(sectionRow, 0, "DANH S\u00C1CH SPEC D\u1EF0 \u00C1N", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 sectionRow,
@@ -517,18 +517,18 @@ namespace ShopDrawing.Plugin.UI
                 sectionStyle);
 
             var groupRow = sheet.CreateRow(rowIdx++);
-            SetCell(groupRow, 0, "THÃ”NG TIN CHUNG", specGroupStyle);
-            SetCell(groupRow, 9, "Máº¶T TRÃŠN", topGroupStyle);
-            SetCell(groupRow, 14, "Máº¶T DÆ¯á»šI", bottomGroupStyle);
+            SetCell(groupRow, 0, "TH\u00D4NG TIN CHUNG", specGroupStyle);
+            SetCell(groupRow, 9, "M\u1EB6T TR\u00CAN", topGroupStyle);
+            SetCell(groupRow, 14, "M\u1EB6T D\u01AF\u1EDAI", bottomGroupStyle);
             SetMergedTextCell(sheet, groupRow, 0, 8, groupRow.GetCell(0)?.StringCellValue ?? string.Empty, specGroupStyle);
             SetMergedTextCell(sheet, groupRow, 9, 13, groupRow.GetCell(9)?.StringCellValue ?? string.Empty, topGroupStyle);
             SetMergedTextCell(sheet, groupRow, 14, 18, groupRow.GetCell(14)?.StringCellValue ?? string.Empty, bottomGroupStyle);
 
             string[] headers =
             {
-                "STT", "MÃ£ spec", "MÃ£ kÃ½ hiá»‡u", "Khá»• táº¥m (mm)", "Loáº¡i panel", "Tá»· trá»ng", "Chiá»u dÃ y (mm)", "Chá»‘ng chÃ¡y", "FM",
-                "MÃ u máº·t trÃªn", "Váº­t liá»‡u máº·t trÃªn", "Äá»™ máº¡ máº·t trÃªn", "DÃ y tÃ´n máº·t trÃªn (mm)", "Profile máº·t trÃªn",
-                "MÃ u máº·t dÆ°á»›i", "Váº­t liá»‡u máº·t dÆ°á»›i", "Äá»™ máº¡ máº·t dÆ°á»›i", "DÃ y tÃ´n máº·t dÆ°á»›i (mm)", "Profile máº·t dÆ°á»›i"
+                "STT", "M\u00E3 spec", "M\u00E3 k\u00FD hi\u1EC7u", "Kh\u1ED5 t\u1EA5m (mm)", "Lo\u1EA1i panel", "T\u1EF7 tr\u1ECDng", "Chi\u1EC1u d\u00E0y (mm)", "Ch\u1ED1ng ch\u00E1y", "FM",
+                "M\u00E0u m\u1EB7t tr\u00EAn", "V\u1EADt li\u1EC7u m\u1EB7t tr\u00EAn", "\u0110\u1ED9 m\u1EA1 m\u1EB7t tr\u00EAn", "D\u00E0y t\u00F4n m\u1EB7t tr\u00EAn (mm)", "Profile m\u1EB7t tr\u00EAn",
+                "M\u00E0u m\u1EB7t d\u01B0\u1EDBi", "V\u1EADt li\u1EC7u m\u1EB7t d\u01B0\u1EDBi", "\u0110\u1ED9 m\u1EA1 m\u1EB7t d\u01B0\u1EDBi", "D\u00E0y t\u00F4n m\u1EB7t d\u01B0\u1EDBi (mm)", "Profile m\u1EB7t d\u01B0\u1EDBi"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -557,7 +557,7 @@ namespace ShopDrawing.Plugin.UI
                 SetCell(row, col++, spec.Density, dataStyle);
                 SetCell(row, col++, spec.Thickness, dataStyle);
                 SetCell(row, col++, spec.FireRating, dataStyle);
-                SetCell(row, col++, spec.FmApproved ? "CÃ³" : "KhÃ´ng", dataStyle);
+                SetCell(row, col++, spec.FmApproved ? "C\u00F3" : "Kh\u00F4ng", dataStyle);
                 SetCell(row, col++, spec.FacingColor, dataStyle);
                 SetCell(row, col++, spec.TopFacing, dataStyle);
                 SetCell(row, col++, spec.TopCoating, dataStyle);
@@ -571,7 +571,7 @@ namespace ShopDrawing.Plugin.UI
             }
 
             var totalRow = sheet.CreateRow(rowIdx++);
-            SetCell(totalRow, 1, "Tá»”NG Sá» SPEC:", totalStyle);
+            SetCell(totalRow, 1, "T\u1ED4NG S\u1ED0 SPEC:", totalStyle);
             SetCell(totalRow, 2, project.Specs.Count, totalStyle);
         }
 
@@ -591,7 +591,7 @@ namespace ShopDrawing.Plugin.UI
         {
             int rowIdx = WriteSheetHeader(
                 sheet,
-                $"DIá»„N GIáº¢I KHá»I LÆ¯á»¢NG PANEL & Lá»– Má»ž - {project.ProjectName}",
+                $"DI\u1EC4N GI\u1EA2I KH\u1ED0I L\u01AF\u1EE2NG PANEL & L\u1ED6 M\u1EDE - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -603,7 +603,7 @@ namespace ShopDrawing.Plugin.UI
                 .ToList();
 
             var openingTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(openingTitleRow, 0, "DIá»„N GIáº¢I Lá»– Má»ž THEO VÃCH", sectionStyle);
+            SetCell(openingTitleRow, 0, "DI\u1EC4N GI\u1EA2I L\u1ED6 M\u1EDE THEO V\u00C1CH", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 openingTitleRow,
@@ -614,8 +614,8 @@ namespace ShopDrawing.Plugin.UI
 
             string[] openingHeaders =
             {
-                "STT", "Táº§ng", "KÃ½ Hiá»‡u VÃ¡ch", "Háº¡ng Má»¥c", "á»¨ng Dá»¥ng", "MÃ£ Spec", "Loáº¡i Lá»— Má»Ÿ",
-                "LÃ½ TrÃ¬nh LT (mm)", "Rá»™ng (mm)", "Cao (mm)", "Cao Äá»™ ÄÃ¡y (mm)", "SL", "DT Lá»— Má»Ÿ (mÂ²)", "Ghi ChÃº"
+                "STT", "T\u1EA7ng", "K\u00FD Hi\u1EC7u V\u00E1ch", "H\u1EA1ng M\u1EE5c", "\u1EE8ng D\u1EE5ng", "M\u00E3 Spec", "Lo\u1EA1i L\u1ED7 M\u1EDF",
+                "L\u00FD Tr\u00ECnh LT (mm)", "R\u1ED9ng (mm)", "Cao (mm)", "Cao \u0110\u1ED9 \u0110\u00E1y (mm)", "SL", "DT L\u1ED7 M\u1EDF (m\u00B2)", "Ghi Ch\u00FA"
             };
 
             var openingHeaderRow = sheet.CreateRow(rowIdx++);
@@ -646,7 +646,7 @@ namespace ShopDrawing.Plugin.UI
                     if (opening.CenterStationMm >= 0)
                         SetCell(row, 7, Math.Round(opening.CenterStationMm), computedIntegerStyle);
                     else
-                        SetCell(row, 7, "ChÆ°a xÃ¡c Ä‘á»‹nh", dataStyle);
+                        SetCell(row, 7, "Ch\u01B0a x\u00E1c \u0111\u1ECBnh", dataStyle);
 
                     SetCell(row, 8, Math.Round(opening.Width), computedIntegerStyle);
                     SetCell(row, 9, Math.Round(opening.Height), computedIntegerStyle);
@@ -659,15 +659,15 @@ namespace ShopDrawing.Plugin.UI
                         computedStyle);
 
                     string openingNote = opening.CenterStationMm >= 0
-                        ? $"VÃ¡ch {wall.Name}: LT {Math.Round(opening.CenterStationMm)} mm"
-                        : $"VÃ¡ch {wall.Name}: chÆ°a cÃ³ LT";
+                        ? $"V\u00E1ch {wall.Name}: LT {Math.Round(opening.CenterStationMm)} mm"
+                        : $"V\u00E1ch {wall.Name}: ch\u01B0a c\u00F3 LT";
                     SetCell(row, 13, openingNote, dataWrapStyle);
                     ApplyWrapRowHeight(row, openingNote, 80);
                 }
             }
 
             var openingTotalRow = sheet.CreateRow(rowIdx++);
-            SetMergedTextCell(sheet, openingTotalRow, 0, 10, "Tá»”NG Lá»– Má»ž", totalStyle);
+            SetMergedTextCell(sheet, openingTotalRow, 0, 10, "T\u1ED4NG L\u1ED6 M\u1EDE", totalStyle);
             if (rowIdx > openingDataStart)
             {
                 SetFormulaCell(
@@ -692,7 +692,7 @@ namespace ShopDrawing.Plugin.UI
             rowIdx += 2;
 
             var geometryTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(geometryTitleRow, 0, "THÃ”NG Sá» HÃŒNH Há»ŒC VÃCH / Máº¢NG TRáº¦N", sectionStyle);
+            SetCell(geometryTitleRow, 0, "TH\u00D4NG S\u1ED0 H\u00CCNH H\u1ECCC V\u00C1CH / M\u1EA2NG TR\u1EA6N", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 geometryTitleRow,
@@ -703,8 +703,8 @@ namespace ShopDrawing.Plugin.UI
 
             string[] geometryHeaders =
             {
-                "STT", "Táº§ng", "KÃ½ Hiá»‡u VÃ¡ch", "Háº¡ng Má»¥c", "á»¨ng Dá»¥ng", "MÃ£ Spec", "NhÃ³m DÃ²ng",
-                "DÃ i Máº£ng (mm)", "Cao TB (mm)", "DT HÃ¬nh Há»c (mÂ²)", "Ghi ChÃº"
+                "STT", "T\u1EA7ng", "K\u00FD Hi\u1EC7u V\u00E1ch", "H\u1EA1ng M\u1EE5c", "\u1EE8ng D\u1EE5ng", "M\u00E3 Spec", "Nh\u00F3m D\u00F2ng",
+                "D\u00E0i M\u1EA3ng (mm)", "Cao TB (mm)", "DT H\u00ECnh H\u1ECDc (m\u00B2)", "Ghi Ch\u00FA"
             };
 
             var geometryHeaderRow = sheet.CreateRow(rowIdx++);
@@ -724,7 +724,7 @@ namespace ShopDrawing.Plugin.UI
                 SetCell(row, 3, wall.Category, dataStyle);
                 SetCell(row, 4, wall.Application, dataStyle);
                 SetCell(row, 5, wall.SpecKey, dataStyle);
-                SetCell(row, 6, "ThÃ´ng sá»‘", dataStyle);
+                SetCell(row, 6, "Th\u00F4ng s\u1ED1", dataStyle);
                 SetCell(row, 7, Math.Round(wall.Length), computedIntegerStyle);
                 SetCell(row, 8, Math.Round(wall.RepresentativeHeightMm), computedIntegerStyle);
                 SetFormulaCell(
@@ -732,7 +732,7 @@ namespace ShopDrawing.Plugin.UI
                     9,
                     $"{CellRef(row.RowNum, 7)}*{CellRef(row.RowNum, 8)}/1000000",
                     computedStyle);
-                string geometryNote = $"KÃ­ch thÆ°á»›c hÃ¬nh há»c: L={Math.Round(wall.Length)} mm; Htb={Math.Round(wall.RepresentativeHeightMm)} mm";
+                string geometryNote = $"K\u00EDch th\u01B0\u1EDBc h\u00ECnh h\u1ECDc: L={Math.Round(wall.Length)} mm; Htb={Math.Round(wall.RepresentativeHeightMm)} mm";
                 SetCell(row, 10, geometryNote, dataWrapStyle);
                 ApplyWrapRowHeight(row, geometryNote, 88);
             }
@@ -740,7 +740,7 @@ namespace ShopDrawing.Plugin.UI
             rowIdx += 2;
 
             var panelTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(panelTitleRow, 0, "DIá»„N GIáº¢I DÃ’NG Táº¤M PANEL", sectionStyle);
+            SetCell(panelTitleRow, 0, "DI\u1EC4N GI\u1EA2I D\u00D2NG T\u1EA4M PANEL", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 panelTitleRow,
@@ -751,8 +751,8 @@ namespace ShopDrawing.Plugin.UI
 
             string[] panelHeaders =
             {
-                "STT", "Táº§ng", "KÃ½ Hiá»‡u VÃ¡ch", "Háº¡ng Má»¥c", "á»¨ng Dá»¥ng", "MÃ£ Spec", "NhÃ³m DÃ²ng",
-                "Khá»• Táº¥m (mm)", "DÃ i Táº¥m (mm)", "SL", "DT DÃ²ng (mÂ²)", "DT Cáº¥p (mÂ²)", "DT Hao Há»¥t (mÂ²)", "Ghi ChÃº"
+                "STT", "T\u1EA7ng", "K\u00FD Hi\u1EC7u V\u00E1ch", "H\u1EA1ng M\u1EE5c", "\u1EE8ng D\u1EE5ng", "M\u00E3 Spec", "Nh\u00F3m D\u00F2ng",
+                "Kh\u1ED5 T\u1EA5m (mm)", "D\u00E0i T\u1EA5m (mm)", "SL", "DT D\u00F2ng (m\u00B2)", "DT C\u1EA5p (m\u00B2)", "DT Hao H\u1EE5t (m\u00B2)", "Ghi Ch\u00FA"
             };
 
             var panelHeaderRow = sheet.CreateRow(rowIdx++);
@@ -798,14 +798,14 @@ namespace ShopDrawing.Plugin.UI
                         12,
                         $"IF(LEFT({CellRef(row.RowNum, 6)},3)=\"Hao\",{CellRef(row.RowNum, 10)},0)",
                         computedStyle);
-                    string panelNote = $"Khá»• chuáº©n {wall.PanelWidth} mm; Lá»— má»Ÿ: {wall.TotalOpeningCount}";
+                    string panelNote = $"Kh\u1ED5 chu\u1EA9n {wall.PanelWidth} mm; L\u1ED7 m\u1EDF: {wall.TotalOpeningCount}";
                     SetCell(row, 13, panelNote, dataWrapStyle);
                     ApplyWrapRowHeight(row, panelNote, 80);
                 }
             }
 
             var panelTotalRow = sheet.CreateRow(rowIdx++);
-            SetMergedTextCell(sheet, panelTotalRow, 0, 9, "Tá»”NG PANEL", totalStyle);
+            SetMergedTextCell(sheet, panelTotalRow, 0, 9, "T\u1ED4NG PANEL", totalStyle);
             if (rowIdx > panelDataStart)
             {
                 SetFormulaCell(

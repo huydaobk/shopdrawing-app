@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
@@ -124,7 +124,7 @@ namespace ShopDrawing.Plugin.UI
 
             {
 
-                SetStatus("Chọn vách hoặc trần cần preview CAD.");
+                SetStatus("Chá»n vÃ¡ch hoáº·c tráº§n cáº§n preview CAD.");
 
                 return;
 
@@ -136,836 +136,260 @@ namespace ShopDrawing.Plugin.UI
 
         }
 
+        private enum TenderPopupGeometryMode
+        {
+            None,
+            WallLineChain,
+            WallPolygon,
+            CeilingPolygon
+        }
+
+        private sealed class PopupSegmentRow : INotifyPropertyChanged
+        {
+            private double _lengthMm;
+            private double _heightMm;
+
+            public string? CadHandle { get; set; }
+            public bool IsDraftCadHandle { get; set; }
+            public Autodesk.AutoCAD.Geometry.Point3d? StartPoint { get; set; }
+            public Autodesk.AutoCAD.Geometry.Point3d? EndPoint { get; set; }
+
+            public double LengthMm
+            {
+                get => _lengthMm;
+                set
+                {
+                    if (System.Math.Abs(_lengthMm - value) < 0.01)
+                        return;
+                    _lengthMm = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LengthMm)));
+                }
+            }
+
+            public double HeightMm
+            {
+                get => _heightMm;
+                set
+                {
+                    if (System.Math.Abs(_heightMm - value) < 0.01)
+                        return;
+                    _heightMm = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HeightMm)));
+                }
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+        }
+
+        private sealed class DraftGeometrySession
+        {
+            public TenderPopupGeometryMode Mode { get; set; }
+            public ReferenceGeometry? ReferenceGeometry { get; set; }
+            public List<TenderHeightSegment> Segments { get; set; } = new();
+            public List<TenderHeightSegment> HeightSegmentsDraft { get; set; } = new();
+            public double RepresentativeHeightMm { get; set; }
+            public string LayoutDirection { get; set; } = string.Empty;
+            public List<TenderOpening> Openings { get; set; } = new();
+            public List<TenderOpening> OpeningsDraft { get; set; } = new();
+            public List<double[]>? PolygonVertices { get; set; }
+            public List<string> DraftCadHandles { get; set; } = new();
+            public List<string> CadDraftEntityIds { get; set; } = new();
+            public int PanelWidthMm { get; set; }
+            public string? AppliedGroupId { get; set; }
+            public string SuspensionLayoutDirection { get; set; } = string.Empty;
+            public bool ColdStorageDivideFromMaxSide { get; set; }
+        }
+
+        private sealed class ReferenceGeometry
+        {
+            public List<double[]> BoundaryVertices { get; set; } = new();
+            public List<double[]> DevelopedChainVertices { get; set; } = new();
+            public List<double[]> ReferenceChain { get; set; } = new();
+            public List<double[]> OppositeChain { get; set; } = new();
+            public double[] Origin { get; set; } = new[] { 0.0, 0.0 };
+            public double[] UAxis { get; set; } = new[] { 1.0, 0.0 };
+            public double[] VAxis { get; set; } = new[] { 0.0, 1.0 };
+            public double ReferenceLengthMm { get; set; }
+            public double ReferenceHeightMm { get; set; }
+            public bool IsRectangularLike { get; set; }
+            public TenderPopupGeometryMode GeometryMode { get; set; } = TenderPopupGeometryMode.None;
+        }
+
+        private static bool IsCeilingCategory(string? category)
+        {
+            return string.Equals(UiText.Normalize(category), "Tráº§n", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static TenderPopupGeometryMode ResolvePopupMode(TenderWallRow row)
+        {
+            if (row == null)
+                return TenderPopupGeometryMode.None;
+
+            if (row.PolygonVertices != null && row.PolygonVertices.Count >= 3)
+                return IsCeilingCategory(row.Category) ? TenderPopupGeometryMode.CeilingPolygon : TenderPopupGeometryMode.WallPolygon;
+
+            return TenderPopupGeometryMode.WallLineChain;
+        }
+
+        private bool TryResolveLineEndpointsByHandle(
+            string? cadHandle,
+            out Autodesk.AutoCAD.Geometry.Point3d startPoint,
+            out Autodesk.AutoCAD.Geometry.Point3d endPoint)
+        {
+            startPoint = default;
+            endPoint = default;
+            if (string.IsNullOrWhiteSpace(cadHandle))
+                return false;
+
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            try
+            {
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    if (!long.TryParse(cadHandle, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var rawHandle))
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                    if (!doc.Database.TryGetObjectId(handle, out var objId))
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    if (tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) is not Autodesk.AutoCAD.DatabaseServices.Line line)
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    startPoint = line.StartPoint;
+                    endPoint = line.EndPoint;
+                    tr.Commit();
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
 
 
 private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
         {
-
+            _ = pickArea;
             BeginCadInteraction();
-
             try
-
             {
-
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
                 if (doc == null) return;
 
-                var ed = doc.Editor;
-
-                if (!pickArea)
-
+                var draftRow = targetRow.Clone();
+                if (!TryPromptTenderGeometryPopup(draftRow, isRepick: true, out var popupResult))
                 {
-                    var oldSegmentHandles = (targetRow.HeightSegments ?? new List<TenderHeightSegment>())
-                        .Where(s => s != null && !string.IsNullOrWhiteSpace(s.CadHandle))
-                        .Select(s => s.CadHandle!)
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-                    string? repickCadHandle = null;
-                    double repickLength = targetRow.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
-                    if (repickLength <= 0.5)
-                        repickLength = Math.Max(0, targetRow.Length);
-                    double repickHeight = targetRow.Height;
-                    string repickLayoutDirection = targetRow.LayoutDirection;
-                    List<TenderOpening> repickOpenings = CloneOpenings(targetRow.Openings);
-                    List<double[]>? repickPolygonVertices = null;
-                    List<TenderHeightSegment> repickHeightSegments = (targetRow.HeightSegments ?? new List<TenderHeightSegment>())
-                        .Select(s => new TenderHeightSegment
-                        {
-                            LengthMm = s.LengthMm,
-                            HeightMm = s.HeightMm,
-                            CadHandle = s.CadHandle
-                        })
-                        .ToList();
-
-                    double existingSegmentLength = targetRow.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
-                    double existingReferenceLength = existingSegmentLength > 0.5
-                        ? existingSegmentLength
-                        : Math.Max(0, targetRow.Length);
-                    var repickSeedSegments = BuildRepickSeedSegments(targetRow.HeightSegments, existingReferenceLength, repickLength);
-                    var repickSeedOpenings = BuildRepickSeedOpenings(targetRow.Openings, existingReferenceLength, repickLength);
-                    if (!TryPromptWallSegmentsInput(
-                            totalLengthMm: repickLength,
-                            defaultHeightMm: repickHeight,
-                            initialSegments: repickSeedSegments,
-                            initialOpenings: repickSeedOpenings,
-                            panelWidthMm: targetRow.PanelWidth,
-                            layoutDirection: targetRow.LayoutDirection,
-                            onApplied: null,
-                            out var promptedSegments,
-                            out var promptedHeight,
-                            out var promptedLayoutDirection,
-                            out var promptedOpenings))
-                    {
-                        PluginLogger.Warn($"TenderRepick.PopupCancelled | row={targetRow.Name}");
-                        return;
-                    }
-
-                    repickHeight = promptedHeight;
-                    repickHeightSegments = promptedSegments;
-                    var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
-                    if (promptedLength > 0.5)
-                        repickLength = promptedLength;
-                    repickLayoutDirection = promptedLayoutDirection;
-                    repickOpenings = CloneOpenings(promptedOpenings);
-                    PluginLogger.Info(
-                        $"TenderRepick.PopupApplied | row={targetRow.Name} | seg={DescribeSegments(promptedSegments)} | " +
-                        $"openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
-
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        TryEraseCadEntitiesByHandles(oldSegmentHandles);
-                        targetRow.CadHandle = repickCadHandle;
-                        targetRow.Length = repickLength;
-                        targetRow.Height = repickHeight;
-                        targetRow.HeightSegments = repickHeightSegments;
-                        targetRow.LayoutDirection = repickLayoutDirection;
-                        targetRow.Openings = repickOpenings;
-                        targetRow.PolygonVertices = repickPolygonVertices;
-
-                        SyncWallRowSpecData(targetRow);
-                        targetRow.Refresh();
-                        if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
-                        {
-                            LoadOpeningsForWall(targetRow);
-                            PluginLogger.Info(
-                                $"TenderRepick.OpeningSync | row={targetRow.Name} | rowOpenings={targetRow.Openings.Count} | gridOpenings={_openingRows.Count}");
-                        }
-
-                        SafeRefreshWallGrid();
-                        RefreshFooter();
-                        RefreshPanelBreakdown(targetRow);
-                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
-                        _project.Walls = GetWallModels();
-                        PluginLogger.Info(
-                            $"TenderRepick.Synced | row={targetRow.Name} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
-                            $"seg={DescribeSegments(targetRow.HeightSegments)} | walls={_wallRows.Count}");
-
-                        _lastCadPreviewKey = null;
-                        SetStatus($"Đã cập nhật vách {targetRow.Name}");
-                    }));
-
+                    PluginLogger.Warn($"TenderRepick.PopupCancelled | row={targetRow.Name}");
                     return;
                 }
 
-                string prompt = pickArea
-
-                    ? "\nChọn polyline kín để lấy Dài x Cao:"
-
-                    : "\nChọn Đoạn thẳng hoặc Đa tuyến để lấy chiều dài:";
-
-
-
-                var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions(prompt);
-
-                opt.SetRejectMessage("\nPhải là Đoạn thẳng hoặc Đa tuyến!");
-
-                opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Line), true);
-
-                opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
-
-
-
-                var result = ed.GetEntity(opt);
-
-                if (result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
-
-
-
-                string? cadHandle = null;
-
-                double length = targetRow.Length;
-
-                double height = targetRow.Height;
-
-                string updatedLayoutDirection = targetRow.LayoutDirection;
-
-                List<TenderOpening> updatedOpenings = CloneOpenings(targetRow.Openings);
-
-                List<double[]>? polygonVertices = targetRow.PolygonVertices != null
-
-                    ? new List<double[]>(targetRow.PolygonVertices.Select(v => v.ToArray()))
-
-                    : null;
-
-
-
-                using (var tr = doc.Database.TransactionManager.StartTransaction())
-
+                if (!TryApplyTenderPopupResult(targetRow, popupResult, isRepick: true))
                 {
-
-                    var ent = tr.GetObject(result.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
-
-                    cadHandle = ent.Handle.ToString();
-
-
-
-                    if (ent is Autodesk.AutoCAD.DatabaseServices.Line line)
-
-                    {
-
-                        length = line.Length;
-
-                        if (!pickArea)
-
-                        {
-
-                            height = targetRow.Height;
-
-                            polygonVertices = null;
-
-                        }
-
-                    }
-
-                    else if (ent is Autodesk.AutoCAD.DatabaseServices.Polyline pl)
-
-                    {
-
-                        var vertices = new System.Collections.Generic.List<double[]>();
-
-                        for (int i = 0; i < pl.NumberOfVertices; i++)
-
-                        {
-
-                            var pt = pl.GetPoint2dAt(i);
-
-                            vertices.Add(new[] { pt.X, pt.Y });
-
-                        }
-
-                        if (!pl.Closed)
-
-                        {
-
-                            length = pl.Length;
-
-                            if (!pickArea)
-
-                            {
-
-                                height = targetRow.Height;
-
-                                polygonVertices = null;
-
-                            }
-
-                        }
-
-                        else
-
-                        {
-
-                            double minVx = vertices.Min(v => v[0]);
-
-                            double maxVx = vertices.Max(v => v[0]);
-
-                            double minVy = vertices.Min(v => v[1]);
-
-                            double maxVy = vertices.Max(v => v[1]);
-
-                            length = TryResolvePolygonDevelopedGeometry(
-                                vertices,
-                                out _,
-                                out _,
-                                out var developedLength)
-                                ? developedLength
-                                : maxVx - minVx;
-
-                            height = maxVy - minVy;
-
-                            // Với Pick diện tích: luôn giữ polygon để preview chia tấm
-                            // bám theo scan-line giống logic tính khối lượng, kể cả hình chữ nhật.
-                            polygonVertices = pickArea ? vertices : (IsRectangleByVertices(vertices) ? null : vertices);
-
-                        }
-
-                    }
-
-                    tr.Commit();
-
+                    CleanupDraftCadHandles(popupResult);
+                    return;
                 }
-
-                List<TenderHeightSegment> heightSegments = targetRow.HeightSegments
-                    .Select(s => new TenderHeightSegment
-                    {
-                        LengthMm = s.LengthMm,
-                        HeightMm = s.HeightMm,
-                        CadHandle = s.CadHandle
-                    })
-                    .ToList();
-                string suspensionLayoutDirection = targetRow.SuspensionLayoutDirection;
-
-                bool divideFromMaxSide = targetRow.ColdStorageDivideFromMaxSide;
-
-                if (pickArea && IsSuspendedCeilingRow(targetRow))
-
-                {
-
-                    var draftRow = TenderWallRow.FromModel(targetRow.ToModel(), targetRow.Index);
-
-                    draftRow.CadHandle = cadHandle;
-
-                    draftRow.Length = length;
-
-                    draftRow.Height = height;
-
-                    draftRow.PolygonVertices = polygonVertices != null
-
-                        ? new List<double[]>(polygonVertices.Select(v => v.ToArray()))
-
-                        : null;
-
-
-
-                    if (!TryConfigureSuspendedCeilingDivision(draftRow))
-
-                    {
-
-                        Dispatcher.BeginInvoke(new Action(() => SetStatus("Hãy chọn lại trần sau khi chọn hướng chia phụ kiện.")));
-
-                        return;
-
-                    }
-
-
-
-                    suspensionLayoutDirection = draftRow.SuspensionLayoutDirection;
-
-                    divideFromMaxSide = draftRow.ColdStorageDivideFromMaxSide;
-
-                }
-
-
 
                 Dispatcher.BeginInvoke(new Action(() =>
-
                 {
-
-                    if (pickArea && heightSegments.Count > 0)
-                        height = heightSegments.Max(s => Math.Max(0, s.HeightMm));
-
-                    targetRow.CadHandle = cadHandle;
-
-                    targetRow.Length = length;
-
-                    targetRow.Height = height;
-                    targetRow.HeightSegments = heightSegments;
-                    targetRow.LayoutDirection = updatedLayoutDirection;
-                    targetRow.Openings = updatedOpenings;
-
-                    targetRow.PolygonVertices = polygonVertices;
-
-                    targetRow.SuspensionLayoutDirection = suspensionLayoutDirection;
-
-                    targetRow.ColdStorageDivideFromMaxSide = divideFromMaxSide;
-
+                    ApplyPopupResultToRow(targetRow, popupResult);
                     SyncWallRowSpecData(targetRow);
                     targetRow.Refresh();
                     if (_wallGrid?.SelectedItem is TenderWallRow selectedRow && ReferenceEquals(selectedRow, targetRow))
-                    {
                         LoadOpeningsForWall(targetRow);
-                        PluginLogger.Info(
-                            $"TenderRepick.OpeningSync | row={targetRow.Name} | rowOpenings={targetRow.Openings.Count} | gridOpenings={_openingRows.Count}");
-                    }
-
                     SafeRefreshWallGrid();
-
                     RefreshFooter();
-
                     RefreshPanelBreakdown(targetRow);
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
-                    PluginLogger.Info(
-                        $"TenderRepick.Synced | row={targetRow.Name} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
-                        $"seg={DescribeSegments(targetRow.HeightSegments)} | walls={_wallRows.Count}");
-
                     _lastCadPreviewKey = null;
-
-                    SetStatus($"Đã chọn lại vách {targetRow.Name}");
-
+                    SetStatus($"Da cap nhat {targetRow.Name}");
                 }));
-
             }
-
             catch (Exception ex)
-
             {
-
-                Dispatcher.BeginInvoke(new Action(() => SetStatus($"Lỗi chọn lại: {ex.Message}")));
-
+                Dispatcher.BeginInvoke(new Action(() => SetStatus($"Loi repick: {ex.Message}")));
             }
-
             finally
-
             {
-
                 EndCadInteraction();
-
             }
-
         }
-
-
 
         private void PickFromCad(bool pickArea)
 
         {
-
+            _ = pickArea;
             BeginCadInteraction();
-
             try
-
             {
-
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
                 if (doc == null) return;
 
-                var ed = doc.Editor;
+                var pickTemplate = BuildPickTemplateRow();
+                var popupDraftRow = pickTemplate.Clone();
+                popupDraftRow.Index = _wallRows.Count + 1;
+                popupDraftRow.Name = $"{TenderWall.GetCategoryPrefix(pickTemplate.Category)}-{_wallRows.Count + 1}";
+                if (popupDraftRow.Height <= 0)
+                    popupDraftRow.Height = 3000;
 
-                if (!pickArea)
+                if (!TryPromptTenderGeometryPopup(popupDraftRow, isRepick: false, out var popupResult))
                 {
-                    var template = BuildPickTemplateRow();
-                    var selectedRow = _wallGrid?.SelectedItem as TenderWallRow;
-                    string category = template.Category;
-                    double initialLength = template.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
-                    if (initialLength <= 0)
-                        initialLength = Math.Max(0, selectedRow?.Length ?? 0);
-                    double initialHeight = Math.Max(1, selectedRow?.Height ?? 3000);
-
-                    var popupRow = new TenderWallRow
-                    {
-                        Index = _wallRows.Count + 1,
-                        Category = category,
-                        Floor = template.Floor,
-                        Name = $"{TenderWall.GetCategoryPrefix(category)}-{_wallRows.Count + 1}",
-                        SpecKey = template.SpecKey,
-                        PanelWidth = template.PanelWidth,
-                        PanelThickness = template.PanelThickness,
-                        LayoutDirection = template.LayoutDirection,
-                        Application = template.Application,
-                        CableDropLengthMm = template.CableDropLengthMm,
-                        ColdStorageDivideFromMaxSide = template.ColdStorageDivideFromMaxSide,
-                        SuspensionLayoutDirection = template.SuspensionLayoutDirection,
-                        TopPanelTreatment = template.TopPanelTreatment,
-                        EndPanelTreatment = template.EndPanelTreatment,
-                        BottomPanelTreatment = template.BottomPanelTreatment,
-                        TopEdgeExposed = template.TopEdgeExposed,
-                        BottomEdgeExposed = template.BottomEdgeExposed,
-                        StartEdgeExposed = template.StartEdgeExposed,
-                        EndEdgeExposed = template.EndEdgeExposed,
-                        HeightSegments = template.HeightSegments
-                            ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm, CadHandle = s.CadHandle })
-                            .ToList()
-                            ?? new List<TenderHeightSegment>(),
-                        Openings = new List<TenderOpening>(),
-                        Length = initialLength,
-                        Height = initialHeight
-                    };
-                    bool popupAppliedViaCallback = false;
-
-                    if (!TryPromptWallSegmentsInput(
-                            totalLengthMm: popupRow.Length,
-                            defaultHeightMm: popupRow.Height,
-                            initialSegments: popupRow.HeightSegments,
-                            initialOpenings: popupRow.Openings,
-                            panelWidthMm: popupRow.PanelWidth,
-                            layoutDirection: popupRow.LayoutDirection,
-                            onApplied: (appliedSegments, appliedHeight, appliedLayoutDirection, appliedOpenings) =>
-                            {
-                                popupRow.Height = appliedHeight;
-                                popupRow.HeightSegments = appliedSegments;
-                                popupRow.LayoutDirection = appliedLayoutDirection;
-                                popupRow.Openings = CloneOpenings(appliedOpenings);
-                                popupRow.Length = Math.Max(0, appliedSegments.Sum(s => Math.Max(0, s.LengthMm)));
-                                if (popupRow.Length <= 0)
-                                    popupRow.Length = Math.Max(0, initialLength);
-                                PluginLogger.Info(
-                                    $"TenderPickLength.PopupImmediateApply | row={popupRow.Name} | seg={DescribeSegments(appliedSegments)} | openings={DescribeOpenings(appliedOpenings)}");
-                                popupAppliedViaCallback = true;
-                                applyPopupRow();
-                            },
-                            out var promptedSegments,
-                            out var promptedHeight,
-                            out var promptedLayoutDirection,
-                            out var promptedOpenings))
-                    {
-                        PluginLogger.Warn("TenderPickLength.PopupCancelled");
-                        return;
-                    }
-                    if (popupAppliedViaCallback)
-                    {
-                        PluginLogger.Info($"TenderPickLength.PopupImmediateSyncDone | row={popupRow.Name}");
-                        return;
-                    }
-                    PluginLogger.Warn(
-                        $"TenderPickLength.PopupReturned | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
-
-                    popupRow.Height = promptedHeight;
-                    popupRow.HeightSegments = promptedSegments;
-                    popupRow.LayoutDirection = promptedLayoutDirection;
-                    popupRow.Openings = CloneOpenings(promptedOpenings);
-                    popupRow.Length = Math.Max(0, promptedSegments.Sum(s => Math.Max(0, s.LengthMm)));
-                    if (popupRow.Length <= 0)
-                        popupRow.Length = Math.Max(0, initialLength);
-                    PluginLogger.Info(
-                        $"TenderPickLength.PopupApplied | row={popupRow.Name} | category={popupRow.Category} | app={popupRow.Application} | " +
-                        $"spec={popupRow.SpecKey} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)}");
-                    void applyPopupRow()
-                    {
-                        SyncWallRowSpecData(popupRow);
-                        popupRow.Refresh();
-
-                        _wallRows.Add(popupRow);
-                        ReindexWalls();
-                        if (_wallGrid != null)
-                        {
-                            _wallGrid.SelectedItem = popupRow;
-                            Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(popupRow)), System.Windows.Threading.DispatcherPriority.Background);
-                        }
-                        SafeRefreshWallGrid();
-                        LoadOpeningsForWall(popupRow);
-                        popupRow.Refresh();
-                        PluginLogger.Info(
-                            $"TenderPickLength.OpeningSync | row={popupRow.Name} | rowOpenings={popupRow.Openings.Count} | gridOpenings={_openingRows.Count}");
-                        RefreshFooter();
-                        RefreshPanelBreakdown(popupRow);
-                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
-                        _project.Walls = GetWallModels();
-                        PluginLogger.Info(
-                            $"TenderPickLength.Synced | row={popupRow.Name} | length={popupRow.Length:F0} | height={popupRow.Height:F0} | " +
-                            $"seg={DescribeSegments(popupRow.HeightSegments)} | walls={_wallRows.Count}");
-                        _lastCadPreviewKey = null;
-                        SetStatus($"Đã thêm {popupRow.Name} bằng popup Pick Nhịp.");
-                    }
-
-                    if (Dispatcher.CheckAccess())
-                    {
-                        applyPopupRow();
-                    }
-                    else
-                    {
-                        Dispatcher.Invoke(applyPopupRow);
-                    }
+                    PluginLogger.Warn("TenderPick.PopupCancelled");
                     return;
                 }
 
-
-
-                string prompt = pickArea
-
-                    ? "\nChọn polyline kín để lấy diện tích (chữ nhật hoặc đa giác):"
-
-                    : "\nChọn Đoạn thẳng hoặc Đa tuyến để lấy chiều dài:";
-
-
-
-                var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions(prompt);
-
-                opt.SetRejectMessage("\nPhải là Đoạn thẳng hoặc Đa tuyến!");
-
-                opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Line), true);
-
-                opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
-
-
-
-                var result = ed.GetEntity(opt);
-
-                if (result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
-
-
-
-                TenderWallRow? newRow = null;
-
-                string polygonTag = string.Empty;
-
-
-
-                using (var tr = doc.Database.TransactionManager.StartTransaction())
-
+                if (!TryApplyTenderPopupResult(popupDraftRow, popupResult, isRepick: false))
                 {
-
-                    var ent = tr.GetObject(result.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
-
-                    var template = BuildPickTemplateRow();
-
-                    string category = template.Category;
-
-                    newRow = new TenderWallRow
-
-                    {
-
-                        Index = _wallRows.Count + 1,
-
-                        Category = category,
-
-                        Floor = template.Floor,
-
-                        SpecKey = template.SpecKey,
-
-                        PanelWidth = template.PanelWidth,
-
-                        PanelThickness = template.PanelThickness,
-
-                        LayoutDirection = template.LayoutDirection,
-
-                        Application = template.Application,
-
-                        CableDropLengthMm = template.CableDropLengthMm,
-
-                        ColdStorageDivideFromMaxSide = template.ColdStorageDivideFromMaxSide,
-
-                        SuspensionLayoutDirection = template.SuspensionLayoutDirection,
-
-                        TopPanelTreatment = template.TopPanelTreatment,
-                        EndPanelTreatment = template.EndPanelTreatment,
-                        BottomPanelTreatment = template.BottomPanelTreatment,
-
-                        TopEdgeExposed = template.TopEdgeExposed,
-
-                        BottomEdgeExposed = template.BottomEdgeExposed,
-
-                        StartEdgeExposed = template.StartEdgeExposed,
-
-                        EndEdgeExposed = template.EndEdgeExposed,
-
-                        CadHandle = ent.Handle.ToString()
-
-                    };
-
-
-
-                    if (ent is Autodesk.AutoCAD.DatabaseServices.Line line)
-
-                    {
-
-                        newRow.Length = line.Length;
-
-                        newRow.Name = $"{TenderWall.GetCategoryPrefix(category)}-{_wallRows.Count + 1}";
-
-                    }
-
-                    else if (ent is Autodesk.AutoCAD.DatabaseServices.Polyline pl)
-
-                    {
-
-                        // LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y OCS vertices cÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â§a polyline
-
-                        var vertices = new List<double[]>();
-
-                        for (int i = 0; i < pl.NumberOfVertices; i++)
-
-                        {
-
-                            var pt = pl.GetPoint2dAt(i);
-
-                            vertices.Add(new[] { pt.X, pt.Y });
-
-                        }
-
-
-
-                        // Detect "ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ng" ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â chÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­nh thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â©c (Closed=true) hoÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â·c thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â±c tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿ (vertex cuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“i ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€¹Ã¢â‚¬Â  vertex ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â§u)
-
-                        bool isClosed = pl.Closed;
-
-                        if (!isClosed && vertices.Count >= 4)
-
-                        {
-
-                            var first = vertices[0];
-
-                            var last  = vertices[vertices.Count - 1];
-
-                            double closingDist = Math.Sqrt(
-
-                                Math.Pow(last[0] - first[0], 2) + Math.Pow(last[1] - first[1], 2));
-
-                            isClosed = closingDist < 1.0; // < 1mm = ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ng thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â±c tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿
-
-                        }
-
-
-
-                        if (pickArea && isClosed && vertices.Count >= 3)
-
-                        {
-
-                            // XÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³a vertex trÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¹ng cuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“i (ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ng thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â±c tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿) nÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿u cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³
-
-                            if (!pl.Closed && vertices.Count >= 2)
-
-                            {
-
-                                var first = vertices[0]; var last = vertices[vertices.Count - 1];
-
-                                if (Math.Abs(last[0]-first[0]) < 1 && Math.Abs(last[1]-first[1]) < 1)
-
-                                    vertices.RemoveAt(vertices.Count - 1);
-
-                            }
-
-
-
-                            // TÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­nh bounding box tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â« OCS vertices
-
-                            double minVx = vertices.Min(v => v[0]);
-
-                            double maxVx = vertices.Max(v => v[0]);
-
-                            double minVy = vertices.Min(v => v[1]);
-
-                            double maxVy = vertices.Max(v => v[1]);
-
-                            newRow.Length = TryResolvePolygonDevelopedGeometry(
-                                vertices,
-                                out _,
-                                out _,
-                                out var developedLength)
-                                ? developedLength
-                                : maxVx - minVx;
-
-                            newRow.Height = maxVy - minVy;
-
-
-
-                            // Với Pick diện tích: luôn lưu polygon để preview/tính tấm đi chung 1 nhánh scan-line.
-                            // Tránh lệch giữa hình preview và bảng số lượng ở các hình chữ nhật quay.
-                            newRow.PolygonVertices = vertices;
-
-                        }
-
-                        else
-
-                        {
-
-                            // Polyline hÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€¦Ã‚Â¸ ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ lÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ng chiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Âu dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â i tuyÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿n ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â£i tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥m theo tuyÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿n gÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“c
-
-                            newRow.Length = pl.Length;
-
-                        }
-
-                        newRow.Name = $"{TenderWall.GetCategoryPrefix(category)}-{_wallRows.Count + 1}";
-
-                    }
-
-
-
-                    tr.Commit();
-
-                    polygonTag = newRow.PolygonVertices != null ? " [Polygon]" : " [Rect]";
-
-                    ed.WriteMessage($"\nĐã chọn: {newRow.Name}{polygonTag} | Dài={newRow.Length:F0}mm | Cao={newRow.Height:F0}mm");
-
-                }
-
-                if (newRow != null && !pickArea)
-
-                {
-                    if (!TryPromptWallSegmentsInput(
-                            totalLengthMm: newRow.Length,
-                            defaultHeightMm: newRow.Height,
-                            initialSegments: newRow.HeightSegments,
-                            initialOpenings: newRow.Openings,
-                            panelWidthMm: newRow.PanelWidth,
-                            layoutDirection: newRow.LayoutDirection,
-                            onApplied: null,
-                            out var promptedSegments,
-                            out var promptedHeight,
-                            out var promptedLayoutDirection,
-                            out var promptedOpenings))
-                    {
-                        PluginLogger.Warn($"TenderPickEntity.PopupCancelled | row={newRow.Name}");
-                        return;
-                    }
-                    PluginLogger.Warn(
-                        $"TenderPickEntity.PopupReturned | row={newRow.Name} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)} | layout={promptedLayoutDirection}");
-
-                    newRow.Height = promptedHeight;
-                    newRow.HeightSegments = promptedSegments;
-                    var promptedLength = promptedSegments.Sum(s => Math.Max(0, s.LengthMm));
-                    if (promptedLength > 0.5)
-                        newRow.Length = promptedLength;
-                    newRow.LayoutDirection = promptedLayoutDirection;
-                    newRow.Openings = CloneOpenings(promptedOpenings);
-                    PluginLogger.Info(
-                        $"TenderPickEntity.PopupApplied | row={newRow.Name} | category={newRow.Category} | app={newRow.Application} | " +
-                        $"spec={newRow.SpecKey} | seg={DescribeSegments(promptedSegments)} | openings={DescribeOpenings(promptedOpenings)}");
-
-                    polygonTag = string.IsNullOrWhiteSpace(polygonTag) ? " [Đoạn thẳng]" : polygonTag;
-
-                    ed.WriteMessage($"\nCập nhật chiều cao: {newRow.Height:F0}mm");
-
-                }
-
-
-
-                if (newRow != null
-
-                    && pickArea
-
-                    && IsSuspendedCeilingRow(newRow)
-
-                    && !TryConfigureSuspendedCeilingDivision(newRow))
-
-                {
-
-                    SetStatus("Hãy thêm vùng trần sau khi chọn hướng chia phụ kiện.");
-
+                    CleanupDraftCadHandles(popupResult);
                     return;
-
                 }
 
+                ApplyPopupResultToRow(popupDraftRow, popupResult);
+                SyncWallRowSpecData(popupDraftRow);
+                popupDraftRow.Refresh();
 
-
-                if (newRow != null)
-
+                _wallRows.Add(popupDraftRow);
+                ReindexWalls();
+                if (_wallGrid != null)
                 {
-                    newRow.Refresh();
-                    SyncWallRowSpecData(newRow);
-
-                    _wallRows.Add(newRow);
-                    ReindexWalls();
-
-                    _wallGrid.SelectedItem = newRow;
-                    Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(newRow)), System.Windows.Threading.DispatcherPriority.Background);
-                    SafeRefreshWallGrid();
-                    LoadOpeningsForWall(newRow);
-                    newRow.Refresh();
-                    PluginLogger.Info(
-                        $"TenderPickEntity.OpeningSync | row={newRow.Name} | rowOpenings={newRow.Openings.Count} | gridOpenings={_openingRows.Count}");
-
-                    RefreshFooter();
-
-                    RefreshPanelBreakdown(newRow);
-                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
-                    _project.Walls = GetWallModels();
-                    PluginLogger.Info(
-                        $"TenderPickEntity.Synced | row={newRow.Name} | length={newRow.Length:F0} | height={newRow.Height:F0} | " +
-                        $"seg={DescribeSegments(newRow.HeightSegments)} | walls={_wallRows.Count}");
-
-                    _lastCadPreviewKey = null;
-
+                    _wallGrid.SelectedItem = popupDraftRow;
+                    Dispatcher.BeginInvoke(new Action(() => _wallGrid.ScrollIntoView(popupDraftRow)), System.Windows.Threading.DispatcherPriority.Background);
                 }
-
+                SafeRefreshWallGrid();
+                LoadOpeningsForWall(popupDraftRow);
+                RefreshFooter();
+                RefreshPanelBreakdown(popupDraftRow);
+                RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                _project.Walls = GetWallModels();
+                _lastCadPreviewKey = null;
+                SetStatus($"Da them {popupDraftRow.Name}");
             }
-
-            catch (Exception ex) { SetStatus($"Lỗi pick: {ex.Message}"); }
-
-            finally
-
+            catch (Exception ex)
             {
-
-                EndCadInteraction();
-
+                SetStatus($"Loi pick: {ex.Message}");
             }
-
+            finally
+            {
+                EndCadInteraction();
+            }
         }
-
-
 
         private static bool IsRectangleByVertices(List<double[]> v)
 
@@ -979,7 +403,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                // Vector cÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â§a 2 cÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡nh liÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªn tiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿p
+                // Vector cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§a 2 cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂºÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡nh liÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªn tiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂºÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿p
 
                 var a = v[i];
 
@@ -991,7 +415,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 double bx = c[0] - b[0], by = c[1] - b[1];
 
-                // Dot product: 0 = vuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng gÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³c
+                // Dot product: 0 = vuÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â´ng gÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³c
 
                 double dot = ax * bx + ay * by;
 
@@ -1030,7 +454,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Title = "Nhập chiều cao",
+                    Title = "Nháº­p chiá»u cao",
 
                     Width = 420,
 
@@ -1058,7 +482,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Đã pick chiều dài. Nhập chiều cao để hoàn tất dòng khối lượng:",
+                    Text = "ÄÃ£ pick chiá»u dÃ i. Nháº­p chiá»u cao Ä‘á»ƒ hoÃ n táº¥t dÃ²ng khá»‘i lÆ°á»£ng:",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -1076,7 +500,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Chiều cao (mm)",
+                    Text = "Chiá»u cao (mm)",
 
                     Margin = new Thickness(0, 0, 0, 6),
 
@@ -1108,7 +532,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Ví dụ: 3000",
+                    Text = "VÃ­ dá»¥: 3000",
 
                     Margin = new Thickness(0, 6, 0, 0),
 
@@ -1168,7 +592,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var btnOk = Btn("OK", AccentGreen, Brushes.White, (s, e) => ConfirmAndClose(), 110);
 
-                var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (s, e) =>
+                var btnCancel = Btn("Há»§y", BtnGray, Brushes.White, (s, e) =>
 
                 {
 
@@ -1257,646 +681,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             public event PropertyChangedEventHandler? PropertyChanged;
         }
-
-        private bool TryPromptWallSegmentsInput(
-            double totalLengthMm,
-            double defaultHeightMm,
-            IReadOnlyList<TenderHeightSegment>? initialSegments,
-            IReadOnlyList<TenderOpening>? initialOpenings,
-            int panelWidthMm,
-            string layoutDirection,
-            Action<List<TenderHeightSegment>, double, string, List<TenderOpening>>? onApplied,
-            out List<TenderHeightSegment> segments,
-            out double representativeHeightMm,
-            out string selectedLayoutDirection,
-            out List<TenderOpening> selectedOpenings)
-        {
-            segments = new List<TenderHeightSegment>();
-            representativeHeightMm = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
-            selectedLayoutDirection = string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dọc";
-            selectedOpenings = new List<TenderOpening>();
-            bool dialogAccepted = false;
-            var selectedSegments = new List<TenderHeightSegment>();
-            var pickedOpenings = new List<TenderOpening>();
-            var createdSpanEntityIds = new List<Autodesk.AutoCAD.DatabaseServices.ObjectId>();
-            bool popupRollbackHandled = false;
-            Autodesk.AutoCAD.DatabaseServices.ObjectId popupSpanSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
-            double selectedHeight = representativeHeightMm;
-            double seedLength = initialSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? 0;
-            bool hasLengthReference = totalLengthMm > 0.5 || seedLength > 0.5;
-            double lengthTarget = hasLengthReference
-                ? Math.Max(1, Math.Round(totalLengthMm > 0.5 ? totalLengthMm : seedLength))
-                : 1000;
-            double defaultHeight = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
-            string currentLayoutDirection = selectedLayoutDirection;
-            string selectedDirection = selectedLayoutDirection;
-            var draftOpenings = (initialOpenings ?? Array.Empty<TenderOpening>())
-                .Select(o => new TenderOpening
-                {
-                    Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
-                    Width = Math.Max(1, Math.Round(o.Width)),
-                    Height = Math.Max(1, Math.Round(o.Height)),
-                    BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
-                    CenterStationMm = o.CenterStationMm,
-                    Quantity = Math.Max(1, o.Quantity)
-                })
-                .ToList();
-
-            Dispatcher.Invoke(() =>
-            {
-                Canvas previewCanvas = null!;
-                TextBlock lblNote = null!;
-                ComboBox cboLayoutDirection = null!;
-                TextBlock lblOpeningCount = null!;
-                DataGrid rowGrid = null!;
-                Button btnPickSpan = null!;
-                Button btnPickOpening = null!;
-                Button btnDeleteSpan = null!;
-                Button btnApply = null!;
-                Button btnCancel = null!;
-                var rows = new ObservableCollection<HeightSegmentInputRow>();
-                var seedSegments = WallHeightResolver.Normalize(lengthTarget, defaultHeight, initialSegments);
-                if (seedSegments.Count == 0)
-                {
-                    if (hasLengthReference)
-                    {
-                        rows.Add(new HeightSegmentInputRow { LengthMm = lengthTarget, HeightMm = defaultHeight });
-                    }
-                }
-                else
-                {
-                    foreach (var segment in seedSegments)
-                    {
-                        rows.Add(new HeightSegmentInputRow
-                        {
-                            LengthMm = Math.Round(segment.LengthMm),
-                            HeightMm = Math.Round(segment.HeightMm),
-                            CadHandle = segment.CadHandle
-                        });
-                    }
-                }
-
-                void OnSegmentInputRowChanged(object? sender, PropertyChangedEventArgs args)
-                {
-                    if (args.PropertyName == nameof(HeightSegmentInputRow.LengthMm) ||
-                        args.PropertyName == nameof(HeightSegmentInputRow.HeightMm))
-                    {
-                        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
-                    }
-                }
-
-                rows.CollectionChanged += (_, args) =>
-                {
-                    if (args.NewItems != null)
-                    {
-                        foreach (var item in args.NewItems.OfType<HeightSegmentInputRow>())
-                            item.PropertyChanged += OnSegmentInputRowChanged;
-                    }
-
-                    if (args.OldItems != null)
-                    {
-                        foreach (var item in args.OldItems.OfType<HeightSegmentInputRow>())
-                            item.PropertyChanged -= OnSegmentInputRowChanged;
-                    }
-
-                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
-                };
-
-                foreach (var rowItem in rows)
-                    rowItem.PropertyChanged += OnSegmentInputRowChanged;
-
-                void RebuildCadSpanSplinePreview()
-                {
-                    TryRebuildPickSpanSplinePreview(rows, popupSpanSplineId, out var rebuiltSplineId);
-                    popupSpanSplineId = rebuiltSplineId;
-                }
-
-                void CleanupCadSpanSplinePreview()
-                {
-                    if (popupSpanSplineId.IsNull)
-                        return;
-
-                    TryEraseCadEntities(new[] { popupSpanSplineId });
-                    popupSpanSplineId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
-                }
-
-                void RollbackCreatedSpanEntities()
-                {
-                    if (popupRollbackHandled)
-                        return;
-
-                    popupRollbackHandled = true;
-                    if (createdSpanEntityIds.Count == 0)
-                        return;
-
-                    TryEraseCadEntities(createdSpanEntityIds);
-                    createdSpanEntityIds.Clear();
-                }
-
-                var dlg = new Window
-                {
-                    Title = "Cấu hình cao độ vách theo nhịp",
-                    Width = 860,
-                    Height = 680,
-                    MinWidth = 860,
-                    MinHeight = 680,
-                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                    ResizeMode = ResizeMode.CanResize,
-                    Background = new SolidColorBrush(Color.FromRgb(250, 250, 252)),
-                    Owner = this
-                };
-
-                var root = new Grid { Margin = new Thickness(14) };
-                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                dlg.Content = root;
-
-                var header = new TextBlock
-                {
-                    Text = hasLengthReference
-                        ? $"Chiều dài tham chiếu tuyến: {lengthTarget:F0} mm. Nhập/Pick nhịp độc lập theo thực tế thi công."
-                        : "Chưa có chiều dài tham chiếu. Dùng Pick Nhịp để lấy từng nhịp theo thực tế thi công.",
-                    TextWrapping = TextWrapping.Wrap,
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = FgDark,
-                    Margin = new Thickness(0, 0, 0, 8)
-                };
-                Grid.SetRow(header, 0);
-                root.Children.Add(header);
-
-                var topPanel = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
-                var directionPanel = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 16, 0)
-                };
-                directionPanel.Children.Add(new TextBlock
-                {
-                    Text = "Hướng Chia Tấm:",
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 6, 0),
-                    Foreground = FgDark,
-                    FontWeight = FontWeights.SemiBold
-                });
-                cboLayoutDirection = new ComboBox
-                {
-                    Width = 120,
-                    ItemsSource = new[] { "Dọc", "Ngang" },
-                    SelectedValue = currentLayoutDirection
-                };
-                cboLayoutDirection.SelectionChanged += (_, _) =>
-                {
-                    currentLayoutDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
-                        ? "Ngang"
-                        : "Dọc";
-                    RefreshPreview();
-                };
-                directionPanel.Children.Add(cboLayoutDirection);
-                topPanel.Children.Add(directionPanel);
-                btnPickSpan = Btn("Pick Nhịp", AccentBlue, Brushes.White, (_, _) =>
-                {
-                    dlg.Hide();
-                    try
-                    {
-                        var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-                        if (doc == null)
-                            return;
-
-                        var ed = doc.Editor;
-                        while (true)
-                        {
-                            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đầu nhịp (Enter để kết thúc):")
-                            {
-                                AllowNone = true
-                            };
-                            var p1Result = ed.GetPoint(p1Opt);
-                            if (p1Result.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
-                                break;
-                            if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
-                                break;
-
-                            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm cuối nhịp:");
-                            p2Opt.UseBasePoint = true;
-                            p2Opt.BasePoint = p1Result.Value;
-                            var p2Result = ed.GetPoint(p2Opt);
-                            if (p2Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
-                                break;
-
-                            double lengthMm = Math.Round(p1Result.Value.DistanceTo(p2Result.Value));
-                            if (lengthMm <= 0)
-                                continue;
-
-                            if (!TryPromptWallHeightInput(defaultHeight, out var heightMm) || heightMm <= 0)
-                                break;
-
-                            if (rows.Count == 1
-                                && Math.Abs(rows[0].LengthMm - lengthTarget) < 0.5
-                                && Math.Abs(rows[0].HeightMm - defaultHeight) < 0.5)
-                            {
-                                rows.Clear();
-                            }
-
-                            string? cadHandle = null;
-                            Autodesk.AutoCAD.DatabaseServices.ObjectId createdId = Autodesk.AutoCAD.DatabaseServices.ObjectId.Null;
-                            if (TryCreatePersistentPickSpanLine(p1Result.Value, p2Result.Value, out var createdHandle, out var entityId))
-                            {
-                                cadHandle = createdHandle;
-                                createdId = entityId;
-                            }
-
-                            rows.Add(new HeightSegmentInputRow
-                            {
-                                LengthMm = lengthMm,
-                                HeightMm = Math.Round(heightMm),
-                                CadHandle = cadHandle
-                            });
-                            if (!createdId.IsNull)
-                                createdSpanEntityIds.Add(createdId);
-                        }
-                    }
-                    finally
-                    {
-                        dlg.Show();
-                        dlg.Activate();
-                        if (rowGrid != null && rows.Count > 0)
-                        {
-                            rowGrid.SelectedIndex = rows.Count - 1;
-                            rowGrid.ScrollIntoView(rows[^1]);
-                            rowGrid.Focus();
-                        }
-                        RebuildCadSpanSplinePreview();
-                        RefreshPreview();
-                    }
-                }, 100);
-                topPanel.Children.Add(btnPickSpan);
-                btnPickOpening = Btn("Pick Lỗ Mở", AccentOrange, Brushes.White, (_, _) =>
-                {
-                    dlg.Hide();
-                    try
-                    {
-                        while (TryPickOpeningFromCadForPopup(
-                            rows.Select(r => new TenderHeightSegment
-                            {
-                                LengthMm = Math.Max(0, r.LengthMm),
-                                HeightMm = Math.Max(0, r.HeightMm),
-                                CadHandle = string.IsNullOrWhiteSpace(r.CadHandle) ? null : r.CadHandle
-                            }).ToList(),
-                            out var opening))
-                        {
-                            draftOpenings.Add(opening);
-                        }
-                    }
-                    finally
-                    {
-                        dlg.Show();
-                        dlg.Activate();
-                        lblOpeningCount.Text = $"Lỗ Mở: {draftOpenings.Count}";
-                        RefreshPreview();
-                    }
-                }, 120);
-                topPanel.Children.Add(btnPickOpening);
-                btnDeleteSpan = Btn("Xóa Nhịp", AccentRed, Brushes.White, (_, _) =>
-                {
-                    var selectedRow = rowGrid?.SelectedItem as HeightSegmentInputRow;
-                    if (selectedRow == null)
-                    {
-                        if (rows.Count == 0)
-                        {
-                            lblNote.Text = "Không còn nhịp để xóa.";
-                            lblNote.Foreground = Brushes.Firebrick;
-                            return;
-                        }
-
-                        selectedRow = rows.LastOrDefault();
-                    }
-
-                    if (selectedRow == null)
-                        return;
-
-                    if (!string.IsNullOrWhiteSpace(selectedRow.CadHandle))
-                        TryEraseCadEntitiesByHandles(new[] { selectedRow.CadHandle! });
-
-                    rows.Remove(selectedRow);
-                    if (rowGrid != null && rows.Count > 0)
-                        rowGrid.SelectedIndex = Math.Max(0, Math.Min(rowGrid.SelectedIndex, rows.Count - 1));
-
-                    PluginLogger.Info(
-                        $"TenderPopup.RemoveSpan | remain={rows.Count} | removedHandle={(selectedRow.CadHandle ?? string.Empty)}");
-                    RebuildCadSpanSplinePreview();
-                    RefreshPreview();
-                }, 100);
-                topPanel.Children.Add(btnDeleteSpan);
-                lblOpeningCount = new TextBlock
-                {
-                    Text = $"Lỗ Mở: {draftOpenings.Count}",
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(16, 0, 0, 0),
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = FgDark
-                };
-                topPanel.Children.Add(lblOpeningCount);
-                Grid.SetRow(topPanel, 1);
-                root.Children.Add(topPanel);
-
-                rowGrid = new DataGrid
-                {
-                    AutoGenerateColumns = false,
-                    CanUserAddRows = false,
-                    CanUserDeleteRows = false,
-                    SelectionMode = DataGridSelectionMode.Single,
-                    HeadersVisibility = DataGridHeadersVisibility.Column,
-                    ItemsSource = rows,
-                    Height = 190
-                };
-                rowGrid.Columns.Add(new DataGridTextColumn
-                {
-                    Header = "Dài (mm)",
-                    Binding = new Binding(nameof(HeightSegmentInputRow.LengthMm))
-                    {
-                        StringFormat = "F0",
-                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-                    },
-                    Width = new DataGridLength(1, DataGridLengthUnitType.Star)
-                });
-                rowGrid.Columns.Add(new DataGridTextColumn
-                {
-                    Header = "Cao (mm)",
-                    Binding = new Binding(nameof(HeightSegmentInputRow.HeightMm))
-                    {
-                        StringFormat = "F0",
-                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-                    },
-                    Width = new DataGridLength(1, DataGridLengthUnitType.Star)
-                });
-                rowGrid.CellEditEnding += (_, _) =>
-                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
-                rowGrid.CurrentCellChanged += (_, _) =>
-                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
-                Grid.SetRow(rowGrid, 2);
-                root.Children.Add(rowGrid);
-
-                var previewPanel = new Grid();
-                previewPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                previewPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-                previewPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                Grid.SetRow(previewPanel, 3);
-                root.Children.Add(previewPanel);
-
-                var lblPreviewTitle = new TextBlock
-                {
-                    Text = "Xem trước hình học (trục ngang = chiều dài, trục dọc = cao độ)",
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = FgDark,
-                    Margin = new Thickness(0, 0, 0, 6)
-                };
-                Grid.SetRow(lblPreviewTitle, 0);
-                previewPanel.Children.Add(lblPreviewTitle);
-
-                previewCanvas = new Canvas
-                {
-                    Background = new SolidColorBrush(Color.FromRgb(245, 248, 255)),
-                    Height = 270
-                };
-                Grid.SetRow(previewCanvas, 1);
-                previewPanel.Children.Add(previewCanvas);
-
-                lblNote = new TextBlock
-                {
-                    Foreground = Brushes.Firebrick,
-                    FontWeight = FontWeights.SemiBold,
-                    Margin = new Thickness(0, 6, 0, 0)
-                };
-                Grid.SetRow(lblNote, 2);
-                previewPanel.Children.Add(lblNote);
-
-                var footer = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Margin = new Thickness(0, 10, 0, 0)
-                };
-                Grid.SetRow(footer, 4);
-                root.Children.Add(footer);
-
-                btnCancel = Btn("Hủy", BtnGray, Brushes.White, (_, _) =>
-                {
-                    dialogAccepted = false;
-                    RollbackCreatedSpanEntities();
-                    CleanupCadSpanSplinePreview();
-                    dlg.Close();
-                }, 120);
-                btnApply = Btn("Áp dụng", AccentGreen, Brushes.White, (_, _) =>
-                {
-                    try
-                    {
-                        PluginLogger.Info(
-                            $"TenderPopupApply.Start | lengthTarget={lengthTarget:F0} | defaultHeight={defaultHeight:F0} | " +
-                            $"rows={rows.Count} | panelWidth={panelWidthMm} | layout={currentLayoutDirection} | openingsDraft={draftOpenings.Count}");
-
-                        try { rowGrid.CommitEdit(DataGridEditingUnit.Cell, true); } catch (System.Exception ex)
-                        {
-                            ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-                        }
-                        try { rowGrid.CommitEdit(DataGridEditingUnit.Row, true); } catch (System.Exception ex)
-                        {
-                            ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-                        }
-                        if (CollectionViewSource.GetDefaultView(rowGrid.ItemsSource) is IEditableCollectionView editView)
-                        {
-                            try { if (editView.IsEditingItem) editView.CommitEdit(); } catch (System.Exception ex)
-                            {
-                                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-                            }
-                            try { if (editView.IsAddingNew) editView.CommitNew(); } catch (System.Exception ex)
-                            {
-                                ShopDrawing.Plugin.Core.PluginLogger.Error("Suppressed exception in TenderBomDialog.cs", ex);
-                            }
-                        }
-
-                        if (!BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: true))
-                        {
-                            PluginLogger.Warn($"TenderPopupApply.ValidationFailed | note={note}");
-                            lblNote.Text = note;
-                            lblNote.Foreground = Brushes.Firebrick;
-                            return;
-                        }
-
-                        selectedSegments = normalized;
-                        selectedHeight = selectedSegments.Count > 0
-                            ? selectedSegments.Max(s => s.HeightMm)
-                            : defaultHeight;
-                        selectedDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase)
-                            ? "Ngang"
-                            : "Dọc";
-                        pickedOpenings = draftOpenings
-                            .Select(o => new TenderOpening
-                            {
-                                Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
-                                Width = Math.Max(1, Math.Round(o.Width)),
-                                Height = Math.Max(1, Math.Round(o.Height)),
-                                BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
-                                CenterStationMm = o.CenterStationMm,
-                                Quantity = Math.Max(1, o.Quantity)
-                            })
-                            .ToList();
-                        pickedOpenings = CloneOpenings(pickedOpenings);
-                        dialogAccepted = true;
-                        PluginLogger.Info(
-                            $"TenderPopupApply.Confirmed | direction={selectedDirection} | " +
-                            $"segments={DescribeSegments(selectedSegments)} | openings={DescribeOpenings(pickedOpenings)}");
-                        if (onApplied != null)
-                        {
-                            PluginLogger.Info("TenderPopupApply.CallbackStart");
-                            onApplied(
-                                selectedSegments
-                                    .Select(s => new TenderHeightSegment
-                                    {
-                                        LengthMm = s.LengthMm,
-                                        HeightMm = s.HeightMm,
-                                        CadHandle = s.CadHandle
-                                    })
-                                    .ToList(),
-                                selectedHeight,
-                                selectedDirection,
-                                CloneOpenings(pickedOpenings));
-                            PluginLogger.Info("TenderPopupApply.CallbackDone");
-                        }
-                        CleanupCadSpanSplinePreview();
-                        createdSpanEntityIds.Clear();
-                        dlg.Close();
-                    }
-                    catch (Exception ex)
-                    {
-                        dialogAccepted = false;
-                        PluginLogger.Error("TenderPopupApply.Failed", ex);
-                        lblNote.Text = $"Lỗi áp dụng dữ liệu: {ex.Message}";
-                        lblNote.Foreground = Brushes.Firebrick;
-                    }
-                }, 120);
-
-                footer.Children.Add(btnCancel);
-                footer.Children.Add(btnApply);
-
-                dlg.PreviewKeyDown += (_, e) =>
-                {
-                    bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-                    if (ctrl && e.Key == Key.P)
-                    {
-                        btnPickSpan.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        e.Handled = true;
-                        return;
-                    }
-
-                    if (ctrl && e.Key == Key.O)
-                    {
-                        btnPickOpening.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        e.Handled = true;
-                        return;
-                    }
-
-                    if (e.Key == Key.Delete && rowGrid != null && rowGrid.IsKeyboardFocusWithin)
-                    {
-                        btnDeleteSpan.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        e.Handled = true;
-                        return;
-                    }
-
-                    if (e.Key == Key.Enter && !ctrl)
-                    {
-                        btnApply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        e.Handled = true;
-                        return;
-                    }
-
-                    if (e.Key == Key.Escape)
-                    {
-                        btnCancel.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        e.Handled = true;
-                    }
-                };
-
-                void RefreshPreview()
-                {
-                    BuildNormalizedSegments(rows, lengthTarget, defaultHeight, out var normalized, out var note, autoFillMissing: false);
-                    DrawHeightProfilePreview(previewCanvas, normalized, lengthTarget, panelWidthMm, currentLayoutDirection, draftOpenings);
-
-                    int panelCount = 0;
-                    if (panelWidthMm > 0)
-                    {
-                        double totalLen = normalized.Sum(s => s.LengthMm);
-                        if (string.Equals(currentLayoutDirection, "Dọc", StringComparison.OrdinalIgnoreCase))
-                        {
-                            panelCount = (int)Math.Ceiling(totalLen / panelWidthMm);
-                        }
-                        else
-                        {
-                            double avgH = totalLen > 0 ? normalized.Sum(s => s.LengthMm * s.HeightMm) / totalLen : defaultHeight;
-                            panelCount = (int)Math.Ceiling(avgH / panelWidthMm);
-                        }
-                    }
-
-                    if (string.IsNullOrWhiteSpace(note))
-                    {
-                        lblNote.Foreground = Brushes.DarkGreen;
-                        lblNote.Text = $"Ước tính số tấm sơ bộ: {panelCount} (khổ {panelWidthMm} mm, hướng {currentLayoutDirection})";
-                    }
-                    else
-                    {
-                        lblNote.Foreground = note.StartsWith("Vượt", StringComparison.OrdinalIgnoreCase)
-                            ? Brushes.Firebrick
-                            : new SolidColorBrush(Color.FromRgb(191, 108, 0));
-                        lblNote.Text = $"{note} | Ước tính số tấm: {panelCount}";
-                    }
-                }
-
-                dlg.Loaded += (_, _) => RefreshPreview();
-                dlg.Loaded += (_, _) => RebuildCadSpanSplinePreview();
-                dlg.Loaded += (_, _) =>
-                {
-                    if (rowGrid != null)
-                    {
-                        if (rows.Count > 0)
-                            rowGrid.SelectedIndex = 0;
-                        rowGrid.Focus();
-                    }
-                };
-                dlg.SizeChanged += (_, _) => RefreshPreview();
-                dlg.Closed += (_, _) =>
-                {
-                    if (!dialogAccepted)
-                        RollbackCreatedSpanEntities();
-
-                    CleanupCadSpanSplinePreview();
-                };
-                dlg.ShowDialog();
-            });
-
-            if (dialogAccepted)
-            {
-                segments = selectedSegments
-                    .Select(s => new TenderHeightSegment
-                    {
-                        LengthMm = s.LengthMm,
-                        HeightMm = s.HeightMm,
-                        CadHandle = s.CadHandle
-                    })
-                    .ToList();
-                representativeHeightMm = selectedHeight;
-                selectedLayoutDirection = selectedDirection;
-                selectedOpenings = CloneOpenings(pickedOpenings);
-                PluginLogger.Warn(
-                    $"TenderPopupApply.Return | segments={DescribeSegments(segments)} | openings={DescribeOpenings(selectedOpenings)} | layout={selectedLayoutDirection}");
-                return true;
-            }
-
-            PluginLogger.Warn("TenderPopupApply.ReturnCancelled");
-            return false;
-        }
-
         private static bool BuildNormalizedSegments(
             IEnumerable<HeightSegmentInputRow> rows,
             double totalLengthMm,
@@ -1923,7 +707,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     HeightMm = defaultHeightMm,
                     CadHandle = null
                 });
-                note = "Đang dùng 1 nhịp mặc định toàn tuyến.";
+                note = "Äang dÃ¹ng 1 nhá»‹p máº·c Ä‘á»‹nh toÃ n tuyáº¿n.";
                 return true;
             }
 
@@ -1960,6 +744,1067 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             return $"count={list.Count},qty={qty},area={area:F2}";
         }
 
+        private TenderOpening ToTenderOpeningFromRow(TenderOpeningRow row)
+        {
+            var opening = new TenderOpening
+            {
+                Type = string.IsNullOrWhiteSpace(row.Type) ? TenderOpening.ResolveTypeByBottomElevation(row.BottomElevationMm) : row.Type,
+                Width = Math.Max(1, Math.Round(row.Width)),
+                Height = Math.Max(1, Math.Round(row.Height)),
+                BottomElevationMm = Math.Max(0, Math.Round(row.BottomElevationMm)),
+                StationStartMm = row.StationStartMm,
+                StationEndMm = row.StationEndMm,
+                CenterStationMm = row.CenterStationMm,
+                ResolvedChainRatioStart = row.ResolvedChainRatioStart,
+                ResolvedChainRatioEnd = row.ResolvedChainRatioEnd,
+                Quantity = Math.Max(1, row.Quantity),
+                OpeningPolygon = row.OpeningPolygon?.Select(p => p.ToArray()).ToList()
+            };
+
+            if (opening.StationStartMm >= 0 && opening.StationEndMm >= opening.StationStartMm)
+                opening.CenterStationMm = (opening.StationStartMm + opening.StationEndMm) * 0.5;
+
+            return opening;
+        }
+
+        private bool TryPickClosedPolygonVertices(
+            out List<double[]> vertices,
+            out string cadHandle,
+            out double approximateHeightMm)
+        {
+            vertices = new List<double[]>();
+            cadHandle = string.Empty;
+            approximateHeightMm = 0;
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            var ed = doc.Editor;
+            var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nChá»n polyline kÃ­n:");
+            opt.SetRejectMessage("\nPháº£i lÃ  polyline kÃ­n.");
+            opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
+            var res = ed.GetEntity(opt);
+            if (res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            using (doc.LockDocument())
+            using (var tr = doc.Database.TransactionManager.StartTransaction())
+            {
+                if (tr.GetObject(res.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) is not Autodesk.AutoCAD.DatabaseServices.Polyline polyline
+                    || !polyline.Closed)
+                {
+                    tr.Commit();
+                    return false;
+                }
+
+                vertices = GetPolylineVertices(polyline);
+                cadHandle = polyline.Handle.ToString();
+                approximateHeightMm = Math.Max(0, polyline.GeometricExtents.MaxPoint.Y - polyline.GeometricExtents.MinPoint.Y);
+                tr.Commit();
+                return vertices.Count >= 3;
+            }
+        }
+
+        private bool TryBuildWallReferenceGeometry(List<double[]> polygonVertices, out ReferenceGeometry geometry)
+        {
+            geometry = new ReferenceGeometry();
+            if (!TryResolvePolygonDevelopedGeometry(polygonVertices, out var referenceChain, out var oppositeChain, out var chainLength)
+                || referenceChain.Count < 2
+                || oppositeChain.Count < 2
+                || chainLength <= 1.0)
+            {
+                return false;
+            }
+
+            var ratioSet = new HashSet<double> { 0.0, 1.0 };
+            foreach (double ratio in BuildChainRatios(referenceChain))
+                ratioSet.Add(ratio);
+            foreach (double ratio in BuildChainRatios(oppositeChain))
+                ratioSet.Add(ratio);
+
+            var ratios = ratioSet.OrderBy(x => x).ToList();
+            var bottom = new List<double[]>();
+            var top = new List<double[]>();
+            double maxHeight = 0;
+
+            foreach (double ratio in ratios)
+            {
+                var refPoint = GetPointAlongPolyline(referenceChain, ratio);
+                var oppPoint = GetPointAlongPolyline(oppositeChain, ratio);
+                if (refPoint == null || oppPoint == null)
+                    continue;
+
+                double station = ratio * chainLength;
+                double height = Math.Sqrt(
+                    Math.Pow(oppPoint[0] - refPoint[0], 2) +
+                    Math.Pow(oppPoint[1] - refPoint[1], 2));
+                maxHeight = Math.Max(maxHeight, height);
+                bottom.Add(new[] { station, 0.0 });
+                top.Add(new[] { station, height });
+            }
+
+            if (bottom.Count < 2 || top.Count < 2)
+                return false;
+
+            geometry.ReferenceChain = bottom.Select(v => v.ToArray()).ToList();
+            geometry.OppositeChain = top.Select(v => v.ToArray()).ToList();
+            geometry.DevelopedChainVertices = referenceChain.Select(v => v.ToArray()).ToList();
+            geometry.ReferenceLengthMm = chainLength;
+            geometry.ReferenceHeightMm = maxHeight;
+            geometry.BoundaryVertices = bottom.Concat(top.AsEnumerable().Reverse()).Select(v => v.ToArray()).ToList();
+            geometry.Origin = referenceChain[0].ToArray();
+
+            double ux = 1.0;
+            double uy = 0.0;
+            for (int i = 0; i + 1 < referenceChain.Count; i++)
+            {
+                double dx = referenceChain[i + 1][0] - referenceChain[i][0];
+                double dy = referenceChain[i + 1][1] - referenceChain[i][1];
+                double len = Math.Sqrt(dx * dx + dy * dy);
+                if (len > 1e-6)
+                {
+                    ux = dx / len;
+                    uy = dy / len;
+                    break;
+                }
+            }
+
+            var refAtStart = GetPointAlongPolyline(referenceChain, 0) ?? referenceChain[0];
+            var oppAtStart = GetPointAlongPolyline(oppositeChain, 0) ?? oppositeChain[0];
+            double vx = oppAtStart[0] - refAtStart[0];
+            double vy = oppAtStart[1] - refAtStart[1];
+            double vLen = Math.Sqrt(vx * vx + vy * vy);
+            if (vLen > 1e-6)
+            {
+                vx /= vLen;
+                vy /= vLen;
+            }
+            else
+            {
+                vx = -uy;
+                vy = ux;
+            }
+
+            geometry.UAxis = new[] { ux, uy };
+            geometry.VAxis = new[] { vx, vy };
+            geometry.IsRectangularLike = !HasNonOrthogonalEdges(polygonVertices);
+            geometry.GeometryMode = TenderPopupGeometryMode.WallPolygon;
+            return true;
+        }
+
+        private static IEnumerable<double> BuildChainRatios(IReadOnlyList<double[]> vertices)
+        {
+            if (vertices == null || vertices.Count < 2)
+                yield break;
+
+            double total = GetPolylineLength(vertices.ToList());
+            if (total <= 1.0)
+                yield break;
+
+            double walked = 0;
+            yield return 0.0;
+            for (int i = 0; i + 1 < vertices.Count; i++)
+            {
+                double dx = vertices[i + 1][0] - vertices[i][0];
+                double dy = vertices[i + 1][1] - vertices[i][1];
+                walked += Math.Sqrt(dx * dx + dy * dy);
+                yield return Math.Max(0, Math.Min(1, walked / total));
+            }
+        }
+
+        private void DrawPreviewScanSegments(
+            Canvas canvas,
+            List<double[]> vertices,
+            double pos,
+            bool horizontalLine,
+            Brush brush,
+            double thickness,
+            Func<double[], Point> map)
+        {
+            foreach (var segment in GetScanSegments(vertices, pos, horizontalLine))
+            {
+                var p1 = horizontalLine ? map(new[] { segment.Start, pos }) : map(new[] { pos, segment.Start });
+                var p2 = horizontalLine ? map(new[] { segment.End, pos }) : map(new[] { pos, segment.End });
+                canvas.Children.Add(new System.Windows.Shapes.Line
+                {
+                    X1 = p1.X,
+                    Y1 = p1.Y,
+                    X2 = p2.X,
+                    Y2 = p2.Y,
+                    Stroke = brush,
+                    StrokeThickness = thickness
+                });
+            }
+        }
+
+        private void DrawLocalPolygonPreview(
+            Canvas canvas,
+            List<double[]> vertices,
+            int panelWidthMm,
+            bool horizontalLayout,
+            IReadOnlyList<TenderOpening>? openings,
+            double referenceLengthMm,
+            bool drawOpeningByStation,
+            TenderWallRow row)
+        {
+            canvas.Children.Clear();
+            if (vertices == null || vertices.Count < 3)
+                return;
+
+            double minX = vertices.Min(v => v[0]);
+            double maxX = vertices.Max(v => v[0]);
+            double minY = vertices.Min(v => v[1]);
+            double maxY = vertices.Max(v => v[1]);
+            double width = Math.Max(1, maxX - minX);
+            double height = Math.Max(1, maxY - minY);
+            double margin = 24;
+            double plotW = Math.Max(80, canvas.Width - margin * 2);
+            double plotH = Math.Max(80, canvas.Height - margin * 2);
+            double scale = Math.Min(plotW / width, plotH / height);
+
+            Point Map(double[] v) => new(
+                margin + (v[0] - minX) * scale,
+                margin + plotH - (v[1] - minY) * scale);
+
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var p1 = Map(vertices[i]);
+                var p2 = Map(vertices[(i + 1) % vertices.Count]);
+                canvas.Children.Add(new System.Windows.Shapes.Line
+                {
+                    X1 = p1.X,
+                    Y1 = p1.Y,
+                    X2 = p2.X,
+                    Y2 = p2.Y,
+                    Stroke = Brushes.Black,
+                    StrokeThickness = 1.5
+                });
+            }
+
+            if (panelWidthMm > 0)
+            {
+                double minAxis = horizontalLayout ? minY : minX;
+                double maxAxis = horizontalLayout ? maxY : maxX;
+                for (double pos = minAxis + panelWidthMm; pos < maxAxis - 1.0; pos += panelWidthMm)
+                    DrawPreviewScanSegments(canvas, vertices, pos, horizontalLayout, Brushes.DarkSlateGray, 1.0, Map);
+            }
+
+            if (drawOpeningByStation && openings != null)
+            {
+                foreach (var opening in openings.Where(o => o != null && o.Width > 0 && o.Height > 0))
+                {
+                    double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                    if (left < 0)
+                        continue;
+
+                    double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
+                    double bottom = Math.Max(0, opening.BottomElevationMm);
+                    var p1 = Map(new[] { left, bottom });
+                    var p2 = Map(new[] { right, bottom + opening.Height });
+                    var rect = new System.Windows.Shapes.Rectangle
+                    {
+                        Width = Math.Max(2, Math.Abs(p2.X - p1.X)),
+                        Height = Math.Max(2, Math.Abs(p2.Y - p1.Y)),
+                        Stroke = Brushes.Firebrick,
+                        StrokeThickness = 1.5
+                    };
+                    Canvas.SetLeft(rect, Math.Min(p1.X, p2.X));
+                    Canvas.SetTop(rect, Math.Min(p1.Y, p2.Y));
+                    canvas.Children.Add(rect);
+                }
+            }
+            else if (openings != null)
+            {
+                foreach (var polygonOpening in openings.Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3))
+                {
+                    var points = polygonOpening.OpeningPolygon!.Select(Map).ToList();
+                    for (int i = 0; i < points.Count; i++)
+                    {
+                        var p1 = points[i];
+                        var p2 = points[(i + 1) % points.Count];
+                        canvas.Children.Add(new System.Windows.Shapes.Line
+                        {
+                            X1 = p1.X,
+                            Y1 = p1.Y,
+                            X2 = p2.X,
+                            Y2 = p2.Y,
+                            Stroke = Brushes.Firebrick,
+                            StrokeThickness = 1.5
+                        });
+                    }
+                }
+            }
+
+            if (IsSuspendedCeilingRow(row) && !drawOpeningByStation)
+            {
+                var preview = TenderBomCalculator.GetColdStorageCeilingPreviewData(row.ToModel());
+                if (preview.HasValue)
+                {
+                    bool runAlongX = IsColdStorageRunAlongX(row);
+                    var tPositions = BuildSuspensionLinePositions(vertices, runAlongX, row.ColdStorageDivideFromMaxSide, preview.Value.TSpacingMm, preview.Value.TSpacingMm, preview.Value.TLineCount);
+                    var mushroomPositions = BuildSuspensionLinePositions(vertices, runAlongX, row.ColdStorageDivideFromMaxSide, preview.Value.TSpacingMm, preview.Value.MushroomOffsetMm, preview.Value.MushroomLineCount);
+                    foreach (var pos in tPositions)
+                        DrawPreviewScanSegments(canvas, vertices, pos, runAlongX, Brushes.SteelBlue, 1.5, Map);
+                    foreach (var pos in mushroomPositions)
+                        DrawPreviewScanSegments(canvas, vertices, pos, runAlongX, Brushes.Goldenrod, 1.2, Map);
+                }
+            }
+        }
+
+        private bool TryProjectOpeningPolygon(
+            List<double[]> wallPolygon,
+            List<double[]> openingPolygon,
+            double referenceLengthMm,
+            out TenderOpeningRow opening)
+        {
+            opening = new TenderOpeningRow();
+            if (!TryResolvePolygonDevelopedGeometry(wallPolygon, out var referenceChain, out var oppositeChain, out var chainLength)
+                || chainLength <= 1.0)
+            {
+                return false;
+            }
+
+            var stations = new List<double>();
+            var bottoms = new List<double>();
+            foreach (var vertex in openingPolygon)
+            {
+                var point = new Autodesk.AutoCAD.Geometry.Point3d(vertex[0], vertex[1], 0);
+                if (!TryProjectPointToPolylineChain(point, referenceChain, out var stationAlongChain, out _))
+                    return false;
+
+                double ratio = Math.Max(0, Math.Min(1, stationAlongChain / chainLength));
+                var refPoint = GetPointAlongPolyline(referenceChain, ratio);
+                var oppPoint = GetPointAlongPolyline(oppositeChain, ratio);
+                if (refPoint == null || oppPoint == null)
+                    return false;
+
+                if (!TryGetDirectionAndLength(refPoint, oppPoint, out var direction, out _))
+                    return false;
+
+                double bottom = (vertex[0] - refPoint[0]) * direction[0] + (vertex[1] - refPoint[1]) * direction[1];
+                stations.Add(stationAlongChain * (referenceLengthMm / chainLength));
+                bottoms.Add(bottom);
+            }
+
+            if (stations.Count == 0 || bottoms.Count == 0)
+                return false;
+
+            double start = stations.Min();
+            double end = stations.Max();
+            double bottomMm = Math.Max(0, bottoms.Min());
+            double topMm = bottoms.Max();
+            if (end - start <= 0.5 || topMm - bottomMm <= 0.5)
+                return false;
+
+            opening = new TenderOpeningRow
+            {
+                Type = TenderOpening.ResolveTypeByBottomElevation(bottomMm),
+                Width = Math.Round(end - start),
+                Height = Math.Round(topMm - bottomMm),
+                BottomElevationMm = Math.Round(bottomMm),
+                StationStartMm = Math.Round(start),
+                StationEndMm = Math.Round(end),
+                CenterStationMm = Math.Round((start + end) * 0.5),
+                ResolvedChainRatioStart = Math.Max(0, Math.Min(1, start / Math.Max(1, referenceLengthMm))),
+                ResolvedChainRatioEnd = Math.Max(0, Math.Min(1, end / Math.Max(1, referenceLengthMm))),
+                Quantity = 1,
+                OpeningPolygon = openingPolygon.Select(v => v.ToArray()).ToList()
+            };
+            return true;
+        }
+
+        private bool TryPickOpeningForPopup(
+            TenderPopupGeometryMode mode,
+            IReadOnlyList<PopupSegmentRow> segmentRows,
+            List<double[]>? polygonVertices,
+            double referenceLengthMm,
+            out TenderOpeningRow opening)
+        {
+            opening = new TenderOpeningRow();
+            if (mode == TenderPopupGeometryMode.WallLineChain)
+            {
+                if (!TryPickOpeningFromCadForPopup(
+                        segmentRows.Select(r => new TenderHeightSegment
+                        {
+                            LengthMm = r.LengthMm,
+                            HeightMm = r.HeightMm,
+                            CadHandle = r.CadHandle
+                        }).ToList(),
+                        out var picked))
+                {
+                    return false;
+                }
+
+                opening = new TenderOpeningRow
+                {
+                    Type = picked.Type,
+                    Width = picked.Width,
+                    Height = picked.Height,
+                    BottomElevationMm = picked.BottomElevationMm,
+                    CenterStationMm = picked.CenterStationMm,
+                    StationStartMm = picked.StationStartMm,
+                    StationEndMm = picked.StationEndMm,
+                    ResolvedChainRatioStart = picked.ResolvedChainRatioStart,
+                    ResolvedChainRatioEnd = picked.ResolvedChainRatioEnd,
+                    Quantity = picked.Quantity,
+                    OpeningPolygon = picked.OpeningPolygon?.Select(p => p.ToArray()).ToList()
+                };
+                return true;
+            }
+
+            if (polygonVertices == null || polygonVertices.Count < 3)
+                return false;
+
+            var choice = UiFeedback.AskYesNoCancel("YES = Pick 2 Ä‘iá»ƒm Ä‘á»ƒ láº¥y LT/Rá»™ng, nháº­p Cao + Cao Ä‘á»™ Ä‘Ã¡y\nNO = Pick vÃ¹ng lá»— má»Ÿ", "Pick lá»— má»Ÿ");
+            if (choice == MessageBoxResult.Cancel)
+                return false;
+
+            if (choice == MessageBoxResult.No)
+            {
+                if (!TryPickClosedPolygonVertices(out var openingPolygon, out _, out _))
+                    return false;
+                return TryProjectOpeningPolygon(polygonVertices, openingPolygon, Math.Max(1, referenceLengthMm), out opening);
+            }
+
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            var ed = doc.Editor;
+            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 1 lá»— má»Ÿ (Enter Ä‘á»ƒ káº¿t thÃºc):") { AllowNone = true };
+            var p1Res = ed.GetPoint(p1Opt);
+            if (p1Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 2 lá»— má»Ÿ:");
+            p2Opt.UseBasePoint = true;
+            p2Opt.BasePoint = p1Res.Value;
+            var p2Res = ed.GetPoint(p2Opt);
+            if (p2Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            if (!TryResolveOpeningStationAndWidthFromPolygon(
+                    p1Res.Value,
+                    p2Res.Value,
+                    polygonVertices,
+                    Math.Max(1, referenceLengthMm),
+                    preferAxisProjection: !HasNonOrthogonalEdges(polygonVertices),
+                    stationMm: out var stationStartMm,
+                    projectedWidthMm: out var projectedWidthMm,
+                    chainRatioStart: out var ratioStart,
+                    chainRatioEnd: out var ratioEnd))
+            {
+                return false;
+            }
+
+            var heightOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao lá»— má»Ÿ (mm):")
+            {
+                DefaultValue = 2100,
+                AllowNegative = false,
+                AllowZero = false
+            };
+            var heightRes = ed.GetDouble(heightOpt);
+            if (heightRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao Ä‘á»™ Ä‘Ã¡y lá»— má»Ÿ (mm):")
+            {
+                DefaultValue = 0,
+                AllowNegative = false,
+                AllowZero = true
+            };
+            var bottomRes = ed.GetDouble(bottomOpt);
+            if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            opening = new TenderOpeningRow
+            {
+                Type = TenderOpening.ResolveTypeByBottomElevation(bottomRes.Value),
+                Width = Math.Round(projectedWidthMm),
+                Height = Math.Round(heightRes.Value),
+                BottomElevationMm = Math.Max(0, Math.Round(bottomRes.Value)),
+                StationStartMm = Math.Round(stationStartMm),
+                StationEndMm = Math.Round(stationStartMm + projectedWidthMm),
+                CenterStationMm = Math.Round(stationStartMm + projectedWidthMm * 0.5),
+                ResolvedChainRatioStart = ratioStart,
+                ResolvedChainRatioEnd = ratioEnd,
+                Quantity = 1
+            };
+            return true;
+        }
+
+        private bool TryPromptTenderGeometryPopup(
+            TenderWallRow seedRow,
+            bool isRepick,
+            out DraftGeometrySession result)
+        {
+            result = new DraftGeometrySession();
+            var popupResult = new DraftGeometrySession();
+            popupResult.PanelWidthMm = seedRow.PanelWidth;
+            popupResult.AppliedGroupId = seedRow.AppliedGroupId;
+            bool accepted = false;
+            bool isCeiling = IsCeilingCategory(seedRow.Category);
+            TenderPopupGeometryMode mode = ResolvePopupMode(seedRow);
+            double referenceLengthMm = Math.Max(0, seedRow.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? seedRow.Length);
+            double referenceHeightMm = Math.Max(1, seedRow.Height > 0 ? seedRow.Height : 3000);
+            double previewZoom = 1.0;
+            var polygonVertices = seedRow.PolygonVertices?.Select(v => v.ToArray()).ToList();
+            var segmentRows = new ObservableCollection<PopupSegmentRow>(
+                (seedRow.HeightSegments ?? new List<TenderHeightSegment>()).Select(s =>
+                {
+                    var row = new PopupSegmentRow
+                    {
+                        LengthMm = Math.Round(Math.Max(0, s.LengthMm)),
+                        HeightMm = Math.Round(Math.Max(0, s.HeightMm)),
+                        CadHandle = s.CadHandle,
+                        IsDraftCadHandle = false
+                    };
+                    if (TryResolveLineEndpointsByHandle(s.CadHandle, out var startPt, out var endPt))
+                    {
+                        row.StartPoint = startPt;
+                        row.EndPoint = endPt;
+                    }
+                    return row;
+                }));
+            var openingRows = new ObservableCollection<TenderOpeningRow>(
+                (seedRow.Openings ?? new List<TenderOpening>()).Select(op => new TenderOpeningRow
+                {
+                    Type = op.Type,
+                    Width = op.Width,
+                    Height = op.Height,
+                    BottomElevationMm = op.BottomElevationMm,
+                    CenterStationMm = op.CenterStationMm,
+                    StationStartMm = op.StationStartMm,
+                    StationEndMm = op.StationEndMm,
+                    ResolvedChainRatioStart = op.ResolvedChainRatioStart,
+                    ResolvedChainRatioEnd = op.ResolvedChainRatioEnd,
+                    Quantity = op.Quantity,
+                    OpeningPolygon = op.OpeningPolygon?.Select(p => p.ToArray()).ToList()
+                }));
+
+            Dispatcher.Invoke(() =>
+            {
+                Canvas previewCanvas = null!;
+                ScrollViewer previewScroll = null!;
+                TextBlock lblNote = null!;
+                DataGrid segmentGrid = null!;
+                DataGrid openingGrid = null!;
+                ComboBox cboLayoutDirection = null!;
+                Point? panStart = null;
+                double panStartH = 0;
+                double panStartV = 0;
+
+                void SetZoom(double zoom)
+                {
+                    previewZoom = Math.Max(0.25, Math.Min(5.0, zoom));
+                    previewCanvas.LayoutTransform = new ScaleTransform(previewZoom, previewZoom);
+                }
+
+                void FitPreview()
+                {
+                    double viewportW = Math.Max(1.0, previewScroll?.ViewportWidth ?? 0);
+                    double viewportH = Math.Max(1.0, previewScroll?.ViewportHeight ?? 0);
+                    double contentW = Math.Max(1.0, previewCanvas?.Width ?? 0);
+                    double contentH = Math.Max(1.0, previewCanvas?.Height ?? 0);
+                    if (viewportW <= 1.0 || viewportH <= 1.0)
+                    {
+                        SetZoom(1.0);
+                        return;
+                    }
+
+                    double fitZoom = Math.Min(viewportW / contentW, viewportH / contentH);
+                    SetZoom(fitZoom);
+                    previewScroll.ScrollToHorizontalOffset(0);
+                    previewScroll.ScrollToVerticalOffset(0);
+                }
+
+                void RefreshPreview()
+                {
+                    previewCanvas.Width = 960;
+                    previewCanvas.Height = 480;
+                    previewCanvas.Children.Clear();
+                    string layout = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c";
+
+                    if (mode == TenderPopupGeometryMode.WallLineChain)
+                    {
+                        BuildNormalizedSegments(
+                            segmentRows.Select(r => new HeightSegmentInputRow { LengthMm = r.LengthMm, HeightMm = r.HeightMm, CadHandle = r.CadHandle }),
+                            Math.Max(1, referenceLengthMm),
+                            Math.Max(1, referenceHeightMm),
+                            out var normalized,
+                            out var note,
+                            autoFillMissing: false);
+
+                        referenceLengthMm = Math.Max(1, normalized.Sum(s => Math.Max(0, s.LengthMm)));
+                        DrawHeightProfilePreview(previewCanvas, normalized, referenceLengthMm, seedRow.PanelWidth, layout, openingRows.Select(ToTenderOpeningFromRow).ToList());
+                        lblNote.Text = string.IsNullOrWhiteSpace(note) ? $"Mode: {mode} | DÃ i={referenceLengthMm:F0} mm" : note;
+                        lblNote.Foreground = string.IsNullOrWhiteSpace(note) ? Brushes.DarkGreen : Brushes.DarkGoldenrod;
+                        return;
+                    }
+
+                    if ((mode == TenderPopupGeometryMode.WallPolygon || mode == TenderPopupGeometryMode.CeilingPolygon)
+                        && polygonVertices != null
+                        && polygonVertices.Count >= 3)
+                    {
+                        if (mode == TenderPopupGeometryMode.WallPolygon && TryBuildWallReferenceGeometry(polygonVertices, out var wallReference))
+                        {
+                            referenceLengthMm = wallReference.ReferenceLengthMm;
+                            referenceHeightMm = wallReference.ReferenceHeightMm;
+                            DrawLocalPolygonPreview(previewCanvas, wallReference.BoundaryVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openingRows.Select(ToTenderOpeningFromRow).ToList(), referenceLengthMm, true, seedRow);
+                            lblNote.Text = $"Mode: {mode} | DÃ i={referenceLengthMm:F0} mm | Cao max={referenceHeightMm:F0} mm";
+                            lblNote.Foreground = Brushes.DarkGreen;
+                            return;
+                        }
+
+                        DrawLocalPolygonPreview(previewCanvas, polygonVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), null, 0, false, seedRow);
+                        lblNote.Text = $"Mode: {mode} | BiÃªn dáº¡ng vÃ¹ng: {polygonVertices.Count} Ä‘á»‰nh";
+                        lblNote.Foreground = Brushes.DarkGreen;
+                        return;
+                    }
+
+                    lblNote.Text = isCeiling ? "Chá»n Pick vÃ¹ng Ä‘á»ƒ láº¥y biÃªn dáº¡ng tráº§n." : "Chá»n Pick nhá»‹p hoáº·c Pick vÃ¹ng Ä‘á»ƒ báº¯t Ä‘áº§u.";
+                    lblNote.Foreground = Brushes.Firebrick;
+                }
+
+                var dlg = new Window
+                {
+                    Title = isRepick ? "Pick láº¡i hÃ¬nh há»c Tender" : "Pick hÃ¬nh há»c Tender",
+                    Width = 1180,
+                    Height = 860,
+                    MinWidth = 1100,
+                    MinHeight = 760,
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    ResizeMode = ResizeMode.CanResize,
+                    Background = new SolidColorBrush(Color.FromRgb(250, 250, 252)),
+                    Owner = this
+                };
+
+                var root = new Grid { Margin = new Thickness(14) };
+                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(220) });
+                root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                dlg.Content = root;
+
+                root.Children.Add(new TextBlock
+                {
+                    Text = isCeiling
+                        ? "Tráº§n chá»‰ cho Pick vÃ¹ng. Má»i thao tÃ¡c hÃ¬nh há»c, preview vÃ  apply thá»±c hiá»‡n trong popup nÃ y."
+                        : "VÃ¡ch cho phÃ©p Pick nhá»‹p, Pick vÃ¹ng vÃ  Pick lá»— má»Ÿ. Ãp dá»¥ng xong sáº½ chá»n Ä‘iá»ƒm Ä‘áº·t Ä‘á»ƒ dá»±ng CAD tháº­t.",
+                    TextWrapping = TextWrapping.Wrap,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = FgDark,
+                    Margin = new Thickness(0, 0, 0, 8)
+                });
+
+                var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+                var leftTools = new StackPanel { Orientation = Orientation.Horizontal };
+                var rightTools = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+
+                leftTools.Children.Add(new TextBlock
+                {
+                    Text = "HÆ°á»›ng chia táº¥m:",
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 6, 0),
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = FgDark
+                });
+                cboLayoutDirection = new ComboBox
+                {
+                    Width = 120,
+                    ItemsSource = new[] { "Dá»c", "Ngang" },
+                    SelectedValue = string.Equals(seedRow.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c",
+                    Margin = new Thickness(0, 0, 8, 0)
+                };
+                cboLayoutDirection.SelectionChanged += (_, _) => RefreshPreview();
+                leftTools.Children.Add(cboLayoutDirection);
+
+                var btnPickSpan = Btn("Pick nhá»‹p", AccentBlue, Brushes.White, (_, _) =>
+                {
+                    if (isCeiling)
+                        return;
+
+                    dlg.Hide();
+                    try
+                    {
+                        var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                        if (doc == null)
+                            return;
+                        var ed = doc.Editor;
+                        while (true)
+                        {
+                            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm Ä‘áº§u nhá»‹p (Enter Ä‘á»ƒ káº¿t thÃºc):") { AllowNone = true };
+                            var p1Res = ed.GetPoint(p1Opt);
+                            if (p1Res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None || p1Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                                break;
+                            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm cuá»‘i nhá»‹p:");
+                            p2Opt.UseBasePoint = true;
+                            p2Opt.BasePoint = p1Res.Value;
+                            var p2Res = ed.GetPoint(p2Opt);
+                            if (p2Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                                break;
+
+                            double lengthMm = Math.Round(p1Res.Value.DistanceTo(p2Res.Value));
+                            if (lengthMm <= 0)
+                                continue;
+                            if (!TryPromptWallHeightInput(referenceHeightMm, out var heightMm) || heightMm <= 0)
+                                break;
+
+                            TryCreatePersistentPickSpanLine(p1Res.Value, p2Res.Value, out var handle, out _);
+                            segmentRows.Add(new PopupSegmentRow
+                            {
+                                LengthMm = lengthMm,
+                                HeightMm = Math.Round(heightMm),
+                                CadHandle = string.IsNullOrWhiteSpace(handle) ? null : handle,
+                                IsDraftCadHandle = !string.IsNullOrWhiteSpace(handle),
+                                StartPoint = p1Res.Value,
+                                EndPoint = p2Res.Value
+                            });
+                            mode = TenderPopupGeometryMode.WallLineChain;
+                            polygonVertices = null;
+                        }
+                    }
+                    finally
+                    {
+                        dlg.Show();
+                        dlg.Activate();
+                        RefreshPreview();
+                    }
+                }, 110);
+
+                var btnPickArea = Btn("Pick vÃ¹ng", AccentBlue, Brushes.White, (_, _) =>
+                {
+                    dlg.Hide();
+                    try
+                    {
+                        if (!TryPickClosedPolygonVertices(out var pickedVertices, out _, out var approxHeightMm))
+                            return;
+
+                        polygonVertices = pickedVertices;
+                        referenceHeightMm = Math.Max(1, approxHeightMm > 0 ? approxHeightMm : referenceHeightMm);
+                        mode = isCeiling ? TenderPopupGeometryMode.CeilingPolygon : TenderPopupGeometryMode.WallPolygon;
+
+                        if (isCeiling && IsSuspendedCeilingRow(seedRow))
+                        {
+                            var tempRow = seedRow.Clone();
+                            tempRow.PolygonVertices = polygonVertices.Select(v => v.ToArray()).ToList();
+                            tempRow.LayoutDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c";
+                            if (!TryConfigureSuspendedCeilingDivision(tempRow))
+                            {
+                                polygonVertices = seedRow.PolygonVertices?.Select(v => v.ToArray()).ToList();
+                                mode = ResolvePopupMode(seedRow);
+                                return;
+                            }
+
+                            seedRow.SuspensionLayoutDirection = tempRow.SuspensionLayoutDirection;
+                            seedRow.ColdStorageDivideFromMaxSide = tempRow.ColdStorageDivideFromMaxSide;
+                        }
+                    }
+                    finally
+                    {
+                        dlg.Show();
+                        dlg.Activate();
+                        RefreshPreview();
+                    }
+                }, 110);
+
+                var btnPickOpening = Btn("Pick lá»— má»Ÿ", AccentOrange, Brushes.White, (_, _) =>
+                {
+                    if (isCeiling || mode == TenderPopupGeometryMode.None)
+                        return;
+
+                    dlg.Hide();
+                    try
+                    {
+                        if (TryPickOpeningForPopup(mode, segmentRows.ToList(), polygonVertices, referenceLengthMm, out var opening))
+                            openingRows.Add(opening);
+                    }
+                    finally
+                    {
+                        dlg.Show();
+                        dlg.Activate();
+                        RefreshPreview();
+                    }
+                }, 110);
+
+                var btnDeleteSpan = Btn("XÃ³a nhá»‹p", AccentRed, Brushes.White, (_, _) =>
+                {
+                    var current = segmentGrid?.SelectedItem as PopupSegmentRow ?? segmentRows.LastOrDefault();
+                    if (current == null)
+                        return;
+                    if (current.IsDraftCadHandle && !string.IsNullOrWhiteSpace(current.CadHandle))
+                        TryEraseCadEntitiesByHandles(new[] { current.CadHandle! });
+                    segmentRows.Remove(current);
+                    RefreshPreview();
+                }, 100);
+
+                var btnDeleteOpening = Btn("XÃ³a lá»— má»Ÿ", AccentRed, Brushes.White, (_, _) =>
+                {
+                    var current = openingGrid?.SelectedItem as TenderOpeningRow ?? openingRows.LastOrDefault();
+                    if (current == null)
+                        return;
+                    openingRows.Remove(current);
+                    RefreshPreview();
+                }, 110);
+
+                btnPickSpan.IsEnabled = !isCeiling;
+                btnPickOpening.IsEnabled = !isCeiling;
+                btnDeleteSpan.IsEnabled = !isCeiling;
+                btnDeleteOpening.IsEnabled = !isCeiling;
+                leftTools.Children.Add(btnPickSpan);
+                leftTools.Children.Add(btnPickArea);
+                leftTools.Children.Add(btnPickOpening);
+                leftTools.Children.Add(btnDeleteSpan);
+                leftTools.Children.Add(btnDeleteOpening);
+
+                rightTools.Children.Add(Btn("Fit", BtnGray, Brushes.White, (_, _) => FitPreview(), 72));
+                rightTools.Children.Add(Btn("100%", BtnGray, Brushes.White, (_, _) => SetZoom(1.0), 72));
+                rightTools.Children.Add(Btn("+", BtnGray, Brushes.White, (_, _) => SetZoom(previewZoom * 1.2), 56));
+                rightTools.Children.Add(Btn("-", BtnGray, Brushes.White, (_, _) => SetZoom(previewZoom / 1.2), 56));
+
+                toolbar.Children.Add(leftTools);
+                DockPanel.SetDock(rightTools, Dock.Right);
+                toolbar.Children.Add(rightTools);
+                Grid.SetRow(toolbar, 1);
+                root.Children.Add(toolbar);
+
+                var editorGrid = new Grid();
+                editorGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                editorGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                Grid.SetRow(editorGrid, 2);
+                root.Children.Add(editorGrid);
+
+                segmentGrid = new DataGrid
+                {
+                    AutoGenerateColumns = false,
+                    CanUserAddRows = false,
+                    CanUserDeleteRows = false,
+                    HeadersVisibility = DataGridHeadersVisibility.Column,
+                    ItemsSource = segmentRows
+                };
+                segmentGrid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = "DÃ i (mm)",
+                    Binding = new Binding(nameof(PopupSegmentRow.LengthMm)) { StringFormat = "F0", UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
+                    Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+                });
+                segmentGrid.Columns.Add(new DataGridTextColumn
+                {
+                    Header = "Cao (mm)",
+                    Binding = new Binding(nameof(PopupSegmentRow.HeightMm)) { StringFormat = "F0", UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
+                    Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+                });
+                segmentGrid.CellEditEnding += (_, _) => Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(RefreshPreview));
+                Grid.SetColumn(segmentGrid, 0);
+                editorGrid.Children.Add(segmentGrid);
+
+                openingGrid = new DataGrid
+                {
+                    AutoGenerateColumns = false,
+                    CanUserAddRows = false,
+                    CanUserDeleteRows = false,
+                    HeadersVisibility = DataGridHeadersVisibility.Column,
+                    ItemsSource = openingRows,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "Loáº¡i", Binding = new Binding(nameof(TenderOpeningRow.Type)), Width = new DataGridLength(1.2, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "Rá»™ng", Binding = new Binding(nameof(TenderOpeningRow.Width)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "Cao", Binding = new Binding(nameof(TenderOpeningRow.Height)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "ÄÃ¡y", Binding = new Binding(nameof(TenderOpeningRow.BottomElevationMm)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "LT", Binding = new Binding(nameof(TenderOpeningRow.StationStartMm)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                Grid.SetColumn(openingGrid, 1);
+                editorGrid.Children.Add(openingGrid);
+
+                var previewGrid = new Grid();
+                previewGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                previewGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                previewGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                Grid.SetRow(previewGrid, 3);
+                root.Children.Add(previewGrid);
+
+                previewGrid.Children.Add(new TextBlock
+                {
+                    Text = "Preview Popup",
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = FgDark,
+                    Margin = new Thickness(0, 0, 0, 6)
+                });
+
+                previewScroll = new ScrollViewer
+                {
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    Background = new SolidColorBrush(Color.FromRgb(245, 248, 255))
+                };
+                previewCanvas = new Canvas
+                {
+                    Width = 960,
+                    Height = 480,
+                    Background = new SolidColorBrush(Color.FromRgb(245, 248, 255)),
+                    LayoutTransform = new ScaleTransform(1, 1)
+                };
+                previewCanvas.MouseWheel += (_, e) =>
+                {
+                    SetZoom(previewZoom * (e.Delta > 0 ? 1.1 : 0.9));
+                    e.Handled = true;
+                };
+                previewScroll.PreviewMouseLeftButtonDown += (_, e) =>
+                {
+                    panStart = e.GetPosition(previewScroll);
+                    panStartH = previewScroll.HorizontalOffset;
+                    panStartV = previewScroll.VerticalOffset;
+                    previewScroll.Cursor = Cursors.SizeAll;
+                };
+                previewScroll.PreviewMouseMove += (_, e) =>
+                {
+                    if (!panStart.HasValue || e.LeftButton != MouseButtonState.Pressed)
+                        return;
+                    var current = e.GetPosition(previewScroll);
+                    previewScroll.ScrollToHorizontalOffset(panStartH - (current.X - panStart.Value.X));
+                    previewScroll.ScrollToVerticalOffset(panStartV - (current.Y - panStart.Value.Y));
+                };
+                previewScroll.PreviewMouseLeftButtonUp += (_, _) =>
+                {
+                    panStart = null;
+                    previewScroll.Cursor = Cursors.Arrow;
+                };
+                previewScroll.Content = previewCanvas;
+                Grid.SetRow(previewScroll, 1);
+                previewGrid.Children.Add(previewScroll);
+
+                lblNote = new TextBlock
+                {
+                    Margin = new Thickness(0, 6, 0, 0),
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = Brushes.DarkGreen
+                };
+                Grid.SetRow(lblNote, 2);
+                previewGrid.Children.Add(lblNote);
+
+                var footer = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(0, 10, 0, 0)
+                };
+                Grid.SetRow(footer, 4);
+                root.Children.Add(footer);
+
+                footer.Children.Add(Btn("Há»§y", BtnGray, Brushes.White, (_, _) =>
+                {
+                    accepted = false;
+                    foreach (var draftHandle in segmentRows.Where(r => r.IsDraftCadHandle && !string.IsNullOrWhiteSpace(r.CadHandle)).Select(r => r.CadHandle!).Distinct(StringComparer.OrdinalIgnoreCase))
+                        TryEraseCadEntitiesByHandles(new[] { draftHandle });
+                    dlg.Close();
+                }, 110));
+
+                footer.Children.Add(Btn("Ãp dá»¥ng", AccentGreen, Brushes.White, (_, _) =>
+                {
+                    if (mode == TenderPopupGeometryMode.None)
+                    {
+                        lblNote.Text = "ChÆ°a cÃ³ hÃ¬nh há»c Ä‘á»ƒ Ã¡p dá»¥ng.";
+                        lblNote.Foreground = Brushes.Firebrick;
+                        return;
+                    }
+
+                    string layout = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c";
+                    if (mode == TenderPopupGeometryMode.WallLineChain)
+                    {
+                        if (!BuildNormalizedSegments(
+                                segmentRows.Select(r => new HeightSegmentInputRow { LengthMm = r.LengthMm, HeightMm = r.HeightMm, CadHandle = r.CadHandle }),
+                                Math.Max(1, referenceLengthMm),
+                                Math.Max(1, referenceHeightMm),
+                                out var normalized,
+                                out var note,
+                                autoFillMissing: true))
+                        {
+                            lblNote.Text = note;
+                            lblNote.Foreground = Brushes.Firebrick;
+                            return;
+                        }
+
+                        popupResult.Segments = normalized;
+                        popupResult.RepresentativeHeightMm = normalized.Count > 0 ? normalized.Max(s => s.HeightMm) : referenceHeightMm;
+                    }
+                    else
+                    {
+                        if (polygonVertices == null || polygonVertices.Count < 3)
+                        {
+                            lblNote.Text = "Cáº§n Pick vÃ¹ng trÆ°á»›c khi Ã¡p dá»¥ng.";
+                            lblNote.Foreground = Brushes.Firebrick;
+                            return;
+                        }
+
+                        popupResult.PolygonVertices = polygonVertices.Select(v => v.ToArray()).ToList();
+                        if (mode == TenderPopupGeometryMode.WallPolygon && TryBuildWallReferenceGeometry(popupResult.PolygonVertices, out var wallReference))
+                        {
+                            popupResult.ReferenceGeometry = wallReference;
+                            popupResult.RepresentativeHeightMm = wallReference.ReferenceHeightMm;
+                            popupResult.Segments = new List<TenderHeightSegment>
+                            {
+                                new TenderHeightSegment { LengthMm = wallReference.ReferenceLengthMm, HeightMm = wallReference.ReferenceHeightMm }
+                            };
+                        }
+                    }
+
+                    popupResult.Mode = mode;
+                    popupResult.LayoutDirection = layout;
+                    popupResult.Openings = openingRows.Select(ToTenderOpeningFromRow).ToList();
+                    popupResult.DraftCadHandles = segmentRows.Where(r => r.IsDraftCadHandle && !string.IsNullOrWhiteSpace(r.CadHandle)).Select(r => r.CadHandle!).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    popupResult.CadDraftEntityIds = popupResult.DraftCadHandles.ToList();
+                    popupResult.HeightSegmentsDraft = popupResult.Segments.Select(s => new TenderHeightSegment
+                    {
+                        LengthMm = s.LengthMm,
+                        HeightMm = s.HeightMm,
+                        CadHandle = s.CadHandle
+                    }).ToList();
+                    popupResult.OpeningsDraft = CloneOpenings(popupResult.Openings);
+                    if (popupResult.ReferenceGeometry == null && popupResult.Mode == TenderPopupGeometryMode.WallLineChain)
+                    {
+                        double lineChainLength = popupResult.Segments.Sum(s => Math.Max(0, s.LengthMm));
+                        double lineChainHeight = popupResult.Segments.Count > 0 ? popupResult.Segments.Max(s => Math.Max(0, s.HeightMm)) : 0;
+                        var developedChain = new List<double[]> { new[] { 0.0, 0.0 } };
+                        double chainCursor = 0;
+                        foreach (var seg in popupResult.Segments)
+                        {
+                            chainCursor += Math.Max(0, seg.LengthMm);
+                            developedChain.Add(new[] { chainCursor, 0.0 });
+                        }
+
+                        popupResult.ReferenceGeometry = new ReferenceGeometry
+                        {
+                            GeometryMode = TenderPopupGeometryMode.WallLineChain,
+                            ReferenceLengthMm = lineChainLength,
+                            ReferenceHeightMm = lineChainHeight,
+                            BoundaryVertices = BuildStepBoundaryFromSegments(popupResult.Segments),
+                            DevelopedChainVertices = developedChain,
+                            Origin = new[] { 0.0, 0.0 },
+                            UAxis = new[] { 1.0, 0.0 },
+                            VAxis = new[] { 0.0, 1.0 },
+                            IsRectangularLike = true
+                        };
+                    }
+                    popupResult.SuspensionLayoutDirection = seedRow.SuspensionLayoutDirection;
+                    popupResult.ColdStorageDivideFromMaxSide = seedRow.ColdStorageDivideFromMaxSide;
+                    accepted = true;
+                    dlg.Close();
+                }, 110));
+
+                dlg.Loaded += (_, _) =>
+                {
+                    RefreshPreview();
+                    FitPreview();
+                };
+                dlg.SizeChanged += (_, _) => RefreshPreview();
+                dlg.ShowDialog();
+            });
+
+            if (accepted)
+                result = popupResult;
+            return accepted;
+        }
+
         private static List<TenderHeightSegment> BuildRepickSeedSegments(
             IReadOnlyList<TenderHeightSegment>? sourceSegments,
             double currentLengthMm,
@@ -1971,8 +1816,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 {
                     LengthMm = s.LengthMm,
                     HeightMm = s.HeightMm,
-                    // Repick sang tuyến mới phải cắt liên kết CAD cũ của từng nhịp,
-                    // nếu không timer sync sẽ kéo chiều dài về line cũ.
+                    // Repick sang tuyáº¿n má»›i pháº£i cáº¯t liÃªn káº¿t CAD cÅ© cá»§a tá»«ng nhá»‹p,
+                    // náº¿u khÃ´ng timer sync sáº½ kÃ©o chiá»u dÃ i vá» line cÅ©.
                     CadHandle = null
                 })
                 .ToList();
@@ -2030,6 +1875,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             Math.Round(opening.CenterStationMm * ratio),
                             Math.Round(repickedLengthMm)));
                 }
+                if (opening.StationStartMm >= 0)
+                    opening.StationStartMm = Math.Max(0, Math.Min(Math.Round(opening.StationStartMm * ratio), Math.Round(repickedLengthMm)));
+                if (opening.StationEndMm >= 0)
+                    opening.StationEndMm = Math.Max(0, Math.Min(Math.Round(opening.StationEndMm * ratio), Math.Round(repickedLengthMm)));
             }
 
             return cloned;
@@ -2041,14 +1890,17 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 .Where(o => o != null && o.Width > 0 && o.Height > 0 && o.Quantity > 0)
                 .Select(o => new TenderOpening
                 {
-                    Type = string.IsNullOrWhiteSpace(o.Type) ? "Cửa đi" : o.Type,
+                    Type = string.IsNullOrWhiteSpace(o.Type) ? "Cá»­a Ä‘i" : o.Type,
                     Width = Math.Max(1, Math.Round(o.Width)),
                     Height = Math.Max(1, Math.Round(o.Height)),
                     BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
                     CenterStationMm = o.CenterStationMm,
+                    StationStartMm = o.StationStartMm,
+                    StationEndMm = o.StationEndMm,
                     ResolvedChainRatioStart = o.ResolvedChainRatioStart,
                     ResolvedChainRatioEnd = o.ResolvedChainRatioEnd,
-                    Quantity = Math.Max(1, o.Quantity)
+                    Quantity = Math.Max(1, o.Quantity),
+                    OpeningPolygon = o.OpeningPolygon?.Select(p => p.ToArray()).ToList()
                 })
                 .ToList();
         }
@@ -2175,7 +2027,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return;
             }
 
-            if (string.Equals(layoutDirection, "Dọc", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(layoutDirection, "Dá»c", StringComparison.OrdinalIgnoreCase))
             {
                 for (double boundary = panelWidthMm; boundary < drawingLength - 0.5; boundary += panelWidthMm)
                 {
@@ -2257,7 +2109,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             for (int i = 0; i < count; i++)
             {
                 var opening = valid[i];
-                double stationStartMm = opening.CenterStationMm;
+                double stationStartMm = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
                 if (stationStartMm < 0)
                 {
                     int fallbackIndex = withoutStation.FindIndex(x => ReferenceEquals(x.opening, opening));
@@ -2265,7 +2117,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     stationStartMm = Math.Max(0, ratio * drawingLength - opening.Width * 0.5);
                 }
                 stationStartMm = Math.Max(0, Math.Min(drawingLength, stationStartMm));
-                double stationEndMm = Math.Max(stationStartMm, Math.Min(drawingLength, stationStartMm + opening.Width));
+                double stationEndMm = opening.StationEndMm >= stationStartMm
+                    ? Math.Max(stationStartMm, Math.Min(drawingLength, opening.StationEndMm))
+                    : Math.Max(stationStartMm, Math.Min(drawingLength, stationStartMm + opening.Width));
                 if (stationEndMm - stationStartMm <= 0.5)
                     continue;
 
@@ -2300,7 +2154,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var dimBrush = new SolidColorBrush(Color.FromRgb(34, 90, 160));
                 var tickBrush = dimBrush;
 
-                // Dim định vị theo tuyến: từ đầu vách đến mép lỗ mở.
+                // Dim Ä‘á»‹nh vá»‹ theo tuyáº¿n: tá»« Ä‘áº§u vÃ¡ch Ä‘áº¿n mÃ©p lá»— má»Ÿ.
                 double dimY = Math.Min(bottomY + 12 + (i % 3) * 10, bottomY + Math.Max(6, margin - 2));
                 var dimLt = new System.Windows.Shapes.Line
                 {
@@ -2341,7 +2195,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Canvas.SetTop(ltLabel, Math.Max(0, dimY - 14));
                 canvas.Children.Add(ltLabel);
 
-                // Dim cao độ đáy lỗ mở.
+                // Dim cao Ä‘á»™ Ä‘Ã¡y lá»— má»Ÿ.
                 double dimBottomX = Math.Max(margin + 4, left - 12 - (i % 2) * 8);
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
@@ -2372,7 +2226,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 });
                 var bottomLabel = new TextBlock
                 {
-                    Text = $"Đáy {bottomElevationMm:F0}",
+                    Text = $"ÄÃ¡y {bottomElevationMm:F0}",
                     FontSize = 9,
                     Foreground = dimBrush,
                     Background = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
@@ -2381,7 +2235,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Canvas.SetTop(bottomLabel, Math.Max(margin, (openingBottomY + bottomY) * 0.5 - 7));
                 canvas.Children.Add(bottomLabel);
 
-                // Dim kích thước lỗ mở: rộng + cao.
+                // Dim kÃ­ch thÆ°á»›c lá»— má»Ÿ: rá»™ng + cao.
                 double dimWidthY = Math.Max(margin + 6, top - 12 - (i % 2) * 10);
                 canvas.Children.Add(new System.Windows.Shapes.Line
                 {
@@ -2462,7 +2316,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var lbl = new TextBlock
                 {
-                    Text = $"Lỗ{i + 1}: {opening.Width:F0}x{opening.Height:F0} | LT {stationStartMm:F0} | Đáy {bottomElevationMm:F0}",
+                    Text = $"Lá»—{i + 1}: {opening.Width:F0}x{opening.Height:F0} | LT {stationStartMm:F0} | ÄÃ¡y {bottomElevationMm:F0}",
                     FontSize = 10,
                     Foreground = new SolidColorBrush(Color.FromRgb(128, 20, 20)),
                     Background = new SolidColorBrush(Color.FromArgb(210, 255, 255, 255))
@@ -2498,7 +2352,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
 
             var ed = doc.Editor;
-            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm 1 lỗ mở (Enter để kết thúc):")
+            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 1 lá»— má»Ÿ (Enter Ä‘á»ƒ káº¿t thÃºc):")
             {
                 AllowNone = true
             };
@@ -2508,7 +2362,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
 
-            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm 2 lỗ mở:");
+            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm 2 lá»— má»Ÿ:");
             p2Opt.UseBasePoint = true;
             p2Opt.BasePoint = p1Result.Value;
             var p2Result = ed.GetPoint(p2Opt);
@@ -2531,10 +2385,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 if (projectedWidth > 0)
                     widthMm = Math.Round(projectedWidth);
 
-                ed.WriteMessage($"\nĐịnh vị lỗ mở: LT={stationMm:F0} mm | Rộng={widthMm:F0} mm");
+                ed.WriteMessage($"\nÄá»‹nh vá»‹ lá»— má»Ÿ: LT={stationMm:F0} mm | Rá»™ng={widthMm:F0} mm");
             }
 
-            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao lỗ mở (mm):")
+            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao lá»— má»Ÿ (mm):")
             {
                 DefaultValue = 2100,
                 AllowNegative = false,
@@ -2547,7 +2401,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (heightMm <= 0)
                 return false;
 
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao độ đáy lỗ mở (mm):")
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNháº­p cao Ä‘á»™ Ä‘Ã¡y lá»— má»Ÿ (mm):")
             {
                 DefaultValue = 0,
                 AllowNegative = false,
@@ -2564,9 +2418,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Width = widthMm,
                 Height = heightMm,
                 BottomElevationMm = bottomElevationMm,
+                StationStartMm = stationMm,
+                StationEndMm = stationMm >= 0 ? stationMm + widthMm : -1,
                 CenterStationMm = stationMm,
                 Quantity = 1
             };
+            if (opening.StationStartMm >= 0 && opening.StationEndMm >= opening.StationStartMm)
+                opening.CenterStationMm = opening.StationStartMm + opening.Width * 0.5;
             return true;
         }
 
@@ -2962,7 +2820,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 resolvedStation = Math.Max(0, Math.Min(station1, station2) * scale);
                 resolvedWidth = Math.Max(0, Math.Abs(station2 - station1) * scale);
 
-                // Cache chain ratio để preview dùng trực tiếp, tránh re-resolve chain direction
+                // Cache chain ratio Ä‘á»ƒ preview dÃ¹ng trá»±c tiáº¿p, trÃ¡nh re-resolve chain direction
                 double cl = Math.Max(1.0, chainLength);
                 resolvedRatioStart = Math.Max(0, Math.Min(1, Math.Min(station1, station2) / cl));
                 resolvedRatioEnd = Math.Max(0, Math.Min(1, Math.Max(station1, station2) / cl));
@@ -3263,7 +3121,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
             catch
             {
-                // Không chặn luồng popup khi xóa line tạm lỗi.
+                // KhÃ´ng cháº·n luá»“ng popup khi xÃ³a line táº¡m lá»—i.
             }
         }
 
@@ -3297,7 +3155,422 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             }
             catch
             {
-                // Không chặn luồng repick nếu xóa line cũ thất bại.
+                // KhÃ´ng cháº·n luá»“ng repick náº¿u xÃ³a line cÅ© tháº¥t báº¡i.
+            }
+        }
+
+        private void CleanupDraftCadHandles(DraftGeometrySession result)
+        {
+            if (result == null || result.DraftCadHandles.Count == 0)
+                return;
+
+            TryEraseCadEntitiesByHandles(result.DraftCadHandles);
+        }
+
+        private void DeleteTenderCadArtifacts(TenderWallRow row)
+        {
+            if (row == null)
+                return;
+
+            var handles = new List<string>();
+            if (row.AppliedEntityHandles != null)
+                handles.AddRange(row.AppliedEntityHandles);
+            if (!string.IsNullOrWhiteSpace(row.CadHandle))
+                handles.Add(row.CadHandle!);
+            handles.AddRange((row.HeightSegments ?? new List<TenderHeightSegment>())
+                .Where(s => !string.IsNullOrWhiteSpace(s.CadHandle))
+                .Select(s => s.CadHandle!));
+
+            TryEraseCadEntitiesByHandles(handles);
+            row.AppliedEntityHandles = new List<string>();
+            row.AppliedGroupId = null;
+            row.CadHandle = null;
+        }
+
+        private void ApplyPopupResultToRow(TenderWallRow row, DraftGeometrySession result)
+        {
+            row.DraftGeometryMode = result.Mode.ToString();
+            row.LayoutDirection = result.LayoutDirection;
+            row.Openings = CloneOpenings(result.Openings);
+            row.PolygonVertices = result.PolygonVertices?.Select(v => v.ToArray()).ToList();
+            row.SuspensionLayoutDirection = result.SuspensionLayoutDirection;
+            row.ColdStorageDivideFromMaxSide = result.ColdStorageDivideFromMaxSide;
+
+            if (result.Mode == TenderPopupGeometryMode.WallLineChain)
+            {
+                row.HeightSegments = result.Segments.Select(s => new TenderHeightSegment
+                {
+                    LengthMm = s.LengthMm,
+                    HeightMm = s.HeightMm,
+                    CadHandle = s.CadHandle
+                }).ToList();
+                row.Length = Math.Max(0, row.HeightSegments.Sum(s => Math.Max(0, s.LengthMm)));
+                row.Height = result.RepresentativeHeightMm > 0
+                    ? result.RepresentativeHeightMm
+                    : row.HeightSegments.Max(s => Math.Max(0, s.HeightMm));
+                row.PolygonVertices = null;
+                return;
+            }
+
+            if (result.Mode == TenderPopupGeometryMode.WallPolygon
+                && result.PolygonVertices != null
+                && TryBuildWallReferenceGeometry(result.PolygonVertices, out var wallReference))
+            {
+                row.HeightSegments = new List<TenderHeightSegment>
+                {
+                    new TenderHeightSegment { LengthMm = wallReference.ReferenceLengthMm, HeightMm = wallReference.ReferenceHeightMm }
+                };
+                row.Length = wallReference.ReferenceLengthMm;
+                row.Height = wallReference.ReferenceHeightMm;
+                return;
+            }
+
+            if (result.PolygonVertices != null && result.PolygonVertices.Count >= 3)
+            {
+                double minX = result.PolygonVertices.Min(v => v[0]);
+                double maxX = result.PolygonVertices.Max(v => v[0]);
+                double minY = result.PolygonVertices.Min(v => v[1]);
+                double maxY = result.PolygonVertices.Max(v => v[1]);
+                row.Length = Math.Max(0, maxX - minX);
+                row.Height = Math.Max(0, maxY - minY);
+                row.HeightSegments = new List<TenderHeightSegment>();
+            }
+        }
+
+        private bool TryPromptAppliedGeometryPlacementPoint(
+            TenderPopupGeometryMode mode,
+            out Autodesk.AutoCAD.Geometry.Point3d placementPoint)
+        {
+            placementPoint = default;
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return false;
+
+            string message = mode == TenderPopupGeometryMode.CeilingPolygon
+                ? "\nChá»n Ä‘iá»ƒm Ä‘áº·t hÃ¬nh tráº§n:"
+                : "\nChá»n gÃ³c trÃ¡i dÆ°á»›i Ä‘á»ƒ Ä‘áº·t máº·t Ä‘á»©ng:";
+            var res = doc.Editor.GetPoint(new Autodesk.AutoCAD.EditorInput.PromptPointOptions(message));
+            if (res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                return false;
+
+            placementPoint = res.Value;
+            return true;
+        }
+
+        private bool TryApplyTenderPopupResult(
+            TenderWallRow targetRow,
+            DraftGeometrySession result,
+            bool isRepick)
+        {
+            Autodesk.AutoCAD.Geometry.Point3d placementPoint;
+            if (isRepick && targetRow.AppliedPlacementX.HasValue && targetRow.AppliedPlacementY.HasValue)
+            {
+                var keep = UiFeedback.AskYesNoCancel("Giá»¯ vá»‹ trÃ­ dá»±ng CAD cÅ©?", "Pick láº¡i Tender");
+                if (keep == MessageBoxResult.Cancel)
+                    return false;
+
+                if (keep == MessageBoxResult.Yes)
+                {
+                    placementPoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                        targetRow.AppliedPlacementX.Value,
+                        targetRow.AppliedPlacementY.Value,
+                        targetRow.AppliedPlacementZ ?? 0);
+                }
+                else if (!TryPromptAppliedGeometryPlacementPoint(result.Mode, out placementPoint))
+                {
+                    return false;
+                }
+            }
+            else if (!TryPromptAppliedGeometryPlacementPoint(result.Mode, out placementPoint))
+            {
+                return false;
+            }
+
+            var oldHandles = (targetRow.AppliedEntityHandles ?? new List<string>())
+                .Where(h => !string.IsNullOrWhiteSpace(h))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var drawRow = targetRow.Clone();
+            ApplyPopupResultToRow(drawRow, result);
+
+            if (!TryDrawAppliedTenderGeometry(drawRow, result, placementPoint, out var appliedHandles, out var primaryHandle))
+                return false;
+
+            var newHandleSet = new HashSet<string>(appliedHandles, StringComparer.OrdinalIgnoreCase);
+            TryEraseCadEntitiesByHandles(oldHandles.Where(h => !newHandleSet.Contains(h)));
+
+            targetRow.AppliedEntityHandles = appliedHandles;
+            targetRow.AppliedGroupId = Guid.NewGuid().ToString("N");
+            targetRow.AppliedPlacementX = placementPoint.X;
+            targetRow.AppliedPlacementY = placementPoint.Y;
+            targetRow.AppliedPlacementZ = placementPoint.Z;
+            targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle)
+                ? appliedHandles.FirstOrDefault()
+                : primaryHandle;
+            return true;
+        }
+
+        private static List<double[]> BuildStepBoundaryFromSegments(IReadOnlyList<TenderHeightSegment> segments)
+        {
+            var normalized = (segments ?? Array.Empty<TenderHeightSegment>())
+                .Where(s => s != null && s.LengthMm > 0 && s.HeightMm > 0)
+                .ToList();
+            if (normalized.Count == 0)
+                return new List<double[]>();
+
+            double total = normalized.Sum(s => Math.Max(0, s.LengthMm));
+            var bottom = new List<double[]> { new[] { 0.0, 0.0 }, new[] { total, 0.0 } };
+            var top = new List<double[]>();
+            double cursor = 0;
+            foreach (var segment in normalized)
+            {
+                top.Add(new[] { cursor, segment.HeightMm });
+                cursor += segment.LengthMm;
+                top.Add(new[] { cursor, segment.HeightMm });
+            }
+
+            return bottom.Concat(top.AsEnumerable().Reverse()).ToList();
+        }
+
+        private bool TryDrawAppliedTenderGeometry(
+            TenderWallRow row,
+            DraftGeometrySession result,
+            Autodesk.AutoCAD.Geometry.Point3d origin,
+            out List<string> appliedHandles,
+            out string primaryHandle)
+        {
+            appliedHandles = new List<string>();
+            primaryHandle = string.Empty;
+            var localAppliedHandles = new List<string>();
+            var localPrimaryHandle = string.Empty;
+            Autodesk.AutoCAD.Geometry.Point3d? lineChainAnchorPoint = null;
+            Autodesk.AutoCAD.Geometry.Point3d? lineChainTextPoint = null;
+
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return false;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    var layerId = EnsureHighlightLayer(doc.Database, tr);
+                    var bt = (Autodesk.AutoCAD.DatabaseServices.BlockTable)tr.GetObject(doc.Database.BlockTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
+                    var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(bt[Autodesk.AutoCAD.DatabaseServices.BlockTableRecord.ModelSpace], Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
+
+                    Autodesk.AutoCAD.Geometry.Point3d Map(double[] p) => new(origin.X + p[0], origin.Y + p[1], origin.Z);
+
+                    void Register(Autodesk.AutoCAD.DatabaseServices.Entity entity, bool primary = false)
+                    {
+                        entity.LayerId = layerId;
+                        btr.AppendEntity(entity);
+                        tr.AddNewlyCreatedDBObject(entity, true);
+                        string handle = entity.Handle.ToString();
+                        localAppliedHandles.Add(handle);
+                        if (primary || string.IsNullOrWhiteSpace(localPrimaryHandle))
+                            localPrimaryHandle = handle;
+                    }
+
+                    void AddLine(double[] a, double[] b, short color, Autodesk.AutoCAD.DatabaseServices.LineWeight weight)
+                    {
+                        Register(new Autodesk.AutoCAD.DatabaseServices.Line(Map(a), Map(b))
+                        {
+                            ColorIndex = color,
+                            LineWeight = weight
+                        });
+                    }
+
+                    void AddClosedPolyline(List<double[]> vertices, short color, Autodesk.AutoCAD.DatabaseServices.LineWeight weight, bool primary = false)
+                    {
+                        var pl = new Autodesk.AutoCAD.DatabaseServices.Polyline();
+                        for (int i = 0; i < vertices.Count; i++)
+                            pl.AddVertexAt(i, new Autodesk.AutoCAD.Geometry.Point2d(origin.X + vertices[i][0], origin.Y + vertices[i][1]), 0, 0, 0);
+                        pl.Closed = true;
+                        pl.ColorIndex = color;
+                        pl.LineWeight = weight;
+                        Register(pl, primary);
+                    }
+
+                    void AddText(double[] p, string text, short color, double height)
+                    {
+                        var dbText = new Autodesk.AutoCAD.DatabaseServices.DBText
+                        {
+                            Position = Map(p),
+                            TextString = text,
+                            Height = height,
+                            ColorIndex = color,
+                            TextStyleId = BlockManager.EnsureArialStyle(btr.Database, tr)
+                        };
+                        Register(dbText);
+                    }
+
+                    void AddWorldText(Autodesk.AutoCAD.Geometry.Point3d p, string text, short color, double height)
+                    {
+                        var dbText = new Autodesk.AutoCAD.DatabaseServices.DBText
+                        {
+                            Position = p,
+                            TextString = text,
+                            Height = height,
+                            ColorIndex = color,
+                            TextStyleId = BlockManager.EnsureArialStyle(btr.Database, tr)
+                        };
+                        Register(dbText);
+                    }
+
+                    void AddLeader(Autodesk.AutoCAD.Geometry.Point3d from, Autodesk.AutoCAD.Geometry.Point3d to, short color)
+                    {
+                        var leader = new Autodesk.AutoCAD.DatabaseServices.Leader
+                        {
+                            ColorIndex = color,
+                            HasArrowHead = true,
+                            TextStyleId = BlockManager.EnsureArialStyle(btr.Database, tr)
+                        };
+                        leader.AppendVertex(from);
+                        leader.AppendVertex(to);
+                        Register(leader);
+                    }
+
+                    List<double[]> localVertices;
+                    bool stationOpeningMode = result.Mode != TenderPopupGeometryMode.CeilingPolygon;
+                    if (result.Mode == TenderPopupGeometryMode.WallLineChain)
+                    {
+                        localVertices = BuildStepBoundaryFromSegments(row.HeightSegments);
+                        foreach (var handle in result.Segments
+                                     .Where(s => !string.IsNullOrWhiteSpace(s.CadHandle))
+                                     .Select(s => s.CadHandle!)
+                                     .Distinct(StringComparer.OrdinalIgnoreCase))
+                        {
+                            localAppliedHandles.Add(handle);
+                            if (lineChainAnchorPoint.HasValue)
+                                continue;
+
+                            if (!long.TryParse(handle, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var rawHandle))
+                                continue;
+                            var cadHandle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                            if (!doc.Database.TryGetObjectId(cadHandle, out var objId))
+                                continue;
+                            if (tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) is not Autodesk.AutoCAD.DatabaseServices.Line line)
+                                continue;
+
+                            var mid = new Autodesk.AutoCAD.Geometry.Point3d(
+                                (line.StartPoint.X + line.EndPoint.X) * 0.5,
+                                (line.StartPoint.Y + line.EndPoint.Y) * 0.5,
+                                (line.StartPoint.Z + line.EndPoint.Z) * 0.5);
+                            lineChainAnchorPoint = mid;
+                            var dir = line.EndPoint - line.StartPoint;
+                            lineChainTextPoint = dir.Length > 1.0
+                                ? mid + dir.GetNormal().MultiplyBy(180.0)
+                                : new Autodesk.AutoCAD.Geometry.Point3d(mid.X, mid.Y + 180.0, mid.Z);
+                        }
+                    }
+                    else if (result.Mode == TenderPopupGeometryMode.WallPolygon
+                        && result.PolygonVertices != null
+                        && TryBuildWallReferenceGeometry(result.PolygonVertices, out var reference))
+                    {
+                        localVertices = reference.BoundaryVertices;
+                    }
+                    else if (result.PolygonVertices != null && result.PolygonVertices.Count >= 3)
+                    {
+                        double minX = result.PolygonVertices.Min(v => v[0]);
+                        double minY = result.PolygonVertices.Min(v => v[1]);
+                        localVertices = result.PolygonVertices
+                            .Select(v => new[] { v[0] - minX, v[1] - minY })
+                            .ToList();
+                    }
+                    else
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    if (localVertices.Count < 3)
+                    {
+                        tr.Commit();
+                        return false;
+                    }
+
+                    AddClosedPolyline(localVertices, PreviewBoundaryColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight050, primary: true);
+
+                    bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
+                    double minAxis = horizontal ? localVertices.Min(v => v[1]) : localVertices.Min(v => v[0]);
+                    double maxAxis = horizontal ? localVertices.Max(v => v[1]) : localVertices.Max(v => v[0]);
+                    if (row.PanelWidth > 0)
+                    {
+                        for (double pos = minAxis + row.PanelWidth; pos < maxAxis - 1.0; pos += row.PanelWidth)
+                        {
+                            foreach (var segment in GetScanSegments(localVertices, pos, horizontal))
+                            {
+                                var a = horizontal ? new[] { segment.Start, pos } : new[] { pos, segment.Start };
+                                var b = horizontal ? new[] { segment.End, pos } : new[] { pos, segment.End };
+                                AddLine(a, b, PanelPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight025);
+                            }
+                        }
+                    }
+
+                    if (stationOpeningMode)
+                    {
+                        foreach (var opening in row.Openings.Where(o => o.Width > 0 && o.Height > 0))
+                        {
+                            double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                            if (left < 0)
+                                continue;
+                            double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
+                            double bottom = Math.Max(0, opening.BottomElevationMm);
+                            double top = bottom + opening.Height;
+                            AddLine(new[] { left, bottom }, new[] { right, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                            AddLine(new[] { right, bottom }, new[] { right, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                            AddLine(new[] { right, top }, new[] { left, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                            AddLine(new[] { left, top }, new[] { left, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                            AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | ÄÃ¡y {bottom:F0}", OpeningPreviewTextColorIndex, 120);
+                        }
+                    }
+
+                    if (result.Mode == TenderPopupGeometryMode.CeilingPolygon && IsSuspendedCeilingRow(row))
+                    {
+                        var preview = TenderBomCalculator.GetColdStorageCeilingPreviewData(row.ToModel());
+                        if (preview.HasValue)
+                        {
+                            bool runAlongX = IsColdStorageRunAlongX(row);
+                            foreach (var pos in BuildSuspensionLinePositions(localVertices, runAlongX, row.ColdStorageDivideFromMaxSide, preview.Value.TSpacingMm, preview.Value.TSpacingMm, preview.Value.TLineCount))
+                            {
+                                foreach (var segment in GetScanSegments(localVertices, pos, runAlongX))
+                                    AddLine(runAlongX ? new[] { segment.Start, pos } : new[] { pos, segment.Start }, runAlongX ? new[] { segment.End, pos } : new[] { pos, segment.End }, SuspensionTColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight050);
+                            }
+
+                            foreach (var pos in BuildSuspensionLinePositions(localVertices, runAlongX, row.ColdStorageDivideFromMaxSide, preview.Value.TSpacingMm, preview.Value.MushroomOffsetMm, preview.Value.MushroomLineCount))
+                            {
+                                foreach (var segment in GetScanSegments(localVertices, pos, runAlongX))
+                                    AddLine(runAlongX ? new[] { segment.Start, pos } : new[] { pos, segment.Start }, runAlongX ? new[] { segment.End, pos } : new[] { pos, segment.End }, SuspensionMushroomColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight035);
+                            }
+                        }
+                    }
+
+                    AddText(new[] { 120.0, localVertices.Max(v => v[1]) + 180.0 }, row.Name, PreviewSummaryTextColorIndex, 160.0);
+
+                    if (result.Mode == TenderPopupGeometryMode.WallLineChain && lineChainAnchorPoint.HasValue)
+                    {
+                        AddWorldText(
+                            lineChainTextPoint ?? new Autodesk.AutoCAD.Geometry.Point3d(lineChainAnchorPoint.Value.X, lineChainAnchorPoint.Value.Y + 180.0, lineChainAnchorPoint.Value.Z),
+                            row.Name,
+                            PreviewSummaryTextColorIndex,
+                            140.0);
+
+                        var facadeAttach = Map(new[] { 120.0, localVertices.Max(v => v[1]) + 120.0 });
+                        AddLeader(lineChainAnchorPoint.Value, facadeAttach, PreviewSummaryTextColorIndex);
+                    }
+
+                    tr.Commit();
+                    appliedHandles = localAppliedHandles.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    primaryHandle = localPrimaryHandle;
+                    return appliedHandles.Count > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Error("TenderApplyCad.Failed", ex);
+                return false;
             }
         }
 
@@ -3368,430 +3641,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             row.Refresh();
             return true;
         }
-
-        private void PickOpeningFromCad(bool isElevation, TenderOpeningRow? existingRow)
-
-        {
-
-            if (!(_wallGrid.SelectedItem is TenderWallRow wallRow))
-
-            {
-
-                SetStatus("Chọn vách trước khi chọn lỗ mở từ CAD.");
-
-                return;
-
-            }
-
-
-
-            BeginCadInteraction();
-
-            try
-
-            {
-
-                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
-                if (doc == null) return;
-
-                var ed = doc.Editor;
-
-
-
-                string mode = isElevation ? "MẶT ĐỨNG" : "MẶT BẰNG";
-
-                ed.WriteMessage($"\n=== CHỌN LỖ MỞ ({mode}) ===");
-
-
-
-                var p1Result = ed.GetPoint(new Autodesk.AutoCAD.EditorInput.PromptPointOptions(
-
-                    "\nChọn điểm 1 của lỗ mở:"));
-
-                if (p1Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
-
-
-
-                var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions(
-
-                    "\nChọn điểm 2 của lỗ mở:");
-
-                p2Opt.UseBasePoint = true;
-
-                p2Opt.BasePoint = p1Result.Value;
-
-                var p2Result = ed.GetPoint(p2Opt);
-
-                if (p2Result.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
-
-
-
-                var p1 = p1Result.Value;
-
-                var p2 = p2Result.Value;
-
-
-
-                double dx = Math.Abs(p2.X - p1.X);
-
-                double dy = Math.Abs(p2.Y - p1.Y);
-
-
-
-                double widthMm;
-
-                double heightMm;
-
-
-
-                if (isElevation)
-
-                {
-
-                    double dim1 = Math.Round(dx);
-
-                    double dim2 = Math.Round(dy);
-
-                    widthMm = Math.Min(dim1, dim2);
-
-                    heightMm = Math.Max(dim1, dim2);
-
-                    ed.WriteMessage($"\nMặt đứng: Rộng={widthMm:F0}mm | Cao={heightMm:F0}mm");
-
-                }
-
-                else
-
-                {
-
-                    widthMm = Math.Round(Math.Sqrt(dx * dx + dy * dy));
-
-                    ed.WriteMessage($"\nMặt bằng: Rộng={widthMm:F0}mm");
-
-
-
-                    var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions(
-
-                        "\nNhập chiều cao lỗ mở (mm):");
-
-                    hOpt.DefaultValue = 2500;
-
-                    hOpt.AllowNegative = false;
-
-                    hOpt.AllowZero = false;
-
-                    var hResult = ed.GetDouble(hOpt);
-
-                    if (hResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) return;
-
-                    heightMm = Math.Round(hResult.Value);
-
-                    ed.WriteMessage($" | Cao={heightMm:F0}mm");
-
-                }
-
-
-
-                double finalW = widthMm;
-
-                double finalH = heightMm;
-                double finalBottom = Math.Max(0, Math.Round(existingRow?.BottomElevationMm ?? 0));
-                double finalStation = Math.Round(existingRow?.CenterStationMm ?? -1);
-                double finalChainRatioStart = existingRow?.ResolvedChainRatioStart ?? -1;
-                double finalChainRatioEnd = existingRow?.ResolvedChainRatioEnd ?? -1;
-                if (!isElevation && TryResolveOpeningStationAndWidthFromWallGeometry(
-                    p1,
-                    p2,
-                    wallRow,
-                    out var detectedStation,
-                    out var projectedWidth,
-                    out var detectedRatioStart,
-                    out var detectedRatioEnd))
-                {
-                    finalStation = Math.Round(detectedStation);
-                    finalChainRatioStart = detectedRatioStart;
-                    finalChainRatioEnd = detectedRatioEnd;
-                    if (projectedWidth > 0)
-                        finalW = Math.Round(projectedWidth);
-
-                    ed.WriteMessage($" | LT={finalStation:F0}mm | Rộng={finalW:F0}mm");
-                }
-
-                if (isElevation)
-                {
-                    if (!TryResolveBottomElevationForElevationPick(ed, finalBottom, out finalBottom))
-                        return;
-                }
-                else
-                {
-                    if (!TryPromptBottomElevationManual(ed, finalBottom, out finalBottom))
-                        return;
-                }
-
-                bool confirmed = false;
-
-
-
-                Dispatcher.Invoke(() =>
-
-                {
-
-                    var dlg = new Window
-
-                    {
-
-                    Title = "Xác nhận lỗ mở",
-
-                        Width = 320,
-
-                        Height = 180,
-
-                        WindowStartupLocation = WindowStartupLocation.CenterScreen,
-
-                        ResizeMode = ResizeMode.NoResize,
-
-                        Background = new SolidColorBrush(Color.FromRgb(250, 250, 252))
-
-                    };
-
-
-
-                    var sp = new StackPanel { Margin = new Thickness(16) };
-
-
-
-                    var lblInfo = new TextBlock
-
-                    {
-
-                        Text = $"Rộng: {finalW:F0} mm\nCao:  {finalH:F0} mm\nĐáy: {finalBottom:F0} mm\nLT:   {(finalStation >= 0 ? finalStation.ToString("F0") : "N/A")} mm",
-
-                        FontSize = 15,
-
-                        FontWeight = FontWeights.SemiBold,
-
-                        Margin = new Thickness(0, 0, 0, 12)
-
-                    };
-
-                    sp.Children.Add(lblInfo);
-
-
-
-                    var btnBar = new StackPanel { Orientation = Orientation.Horizontal };
-
-
-
-                    var btnSwap = Btn("Đổi chiều", AccentOrange, Brushes.White, (s2, e2) =>
-
-                    {
-
-                        double tmp = finalW;
-
-                        finalW = finalH;
-
-                        finalH = tmp;
-
-                        lblInfo.Text = $"Rộng: {finalW:F0} mm\nCao:  {finalH:F0} mm\nĐáy: {finalBottom:F0} mm\nLT:   {(finalStation >= 0 ? finalStation.ToString("F0") : "N/A")} mm";
-
-                    });
-
-                    btnBar.Children.Add(btnSwap);
-
-
-
-                    var btnOk = Btn("OK", AccentGreen, Brushes.White, (s2, e2) =>
-
-                    {
-
-                        confirmed = true;
-
-                        dlg.Close();
-
-                    });
-
-                    btnBar.Children.Add(btnOk);
-
-
-
-                    var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (s2, e2) => dlg.Close());
-
-                    btnBar.Children.Add(btnCancel);
-
-
-
-                    sp.Children.Add(btnBar);
-
-                    dlg.Content = sp;
-
-                    dlg.ShowDialog();
-
-                });
-
-
-
-                if (!confirmed) return;
-
-
-
-                Dispatcher.BeginInvoke(new Action(() =>
-
-                {
-
-                    if (existingRow != null)
-
-                    {
-
-                        existingRow.Width = finalW;
-
-                        existingRow.Height = finalH;
-                        existingRow.BottomElevationMm = finalBottom;
-                        existingRow.CenterStationMm = finalStation;
-                        existingRow.ResolvedChainRatioStart = finalChainRatioStart;
-                        existingRow.ResolvedChainRatioEnd = finalChainRatioEnd;
-
-                        existingRow.Type = TenderOpening.ResolveTypeByBottomElevation(finalBottom);
-
-                        existingRow.Refresh();
-
-                    }
-
-                    else
-
-                    {
-
-                        var openingRow = new TenderOpeningRow
-
-                        {
-
-                            Type = TenderOpening.ResolveTypeByBottomElevation(finalBottom),
-
-                            Width = finalW,
-
-                            Height = finalH,
-
-                            BottomElevationMm = finalBottom,
-                            CenterStationMm = finalStation,
-                            ResolvedChainRatioStart = finalChainRatioStart,
-                            ResolvedChainRatioEnd = finalChainRatioEnd,
-
-                            Quantity = 1
-
-                        };
-
-                        _openingRows.Add(openingRow);
-
-                    }
-
-
-
-                    if (_wallGrid.SelectedItem is TenderWallRow selectedWall)
-
-                    {
-
-                        selectedWall.SyncOpenings(_openingRows);
-
-                        selectedWall.Refresh();
-
-                    }
-
-
-
-                    SafeRefreshWallGrid();
-
-                    RefreshFooter();
-
-                    string action = existingRow != null ? "Cập nhật" : "Đã thêm";
-
-                    var ltText = finalStation >= 0 ? $" | LT {finalStation:F0} mm" : string.Empty;
-                    SetStatus($"{action} lỗ mở {finalW:F0}x{finalH:F0} mm | Đáy {finalBottom:F0} mm{ltText}");
-
-                }));
-
-            }
-
-            catch (Exception ex)
-
-            {
-
-                SetStatus($"Lỗi chọn lỗ mở: {ex.Message}");
-
-            }
-
-            finally
-
-            {
-
-                EndCadInteraction();
-
-            }
-
-        }
-
-        private static bool TryPromptBottomElevationManual(
-            Autodesk.AutoCAD.EditorInput.Editor ed,
-            double defaultBottomMm,
-            out double bottomElevationMm)
-        {
-            bottomElevationMm = Math.Max(0, Math.Round(defaultBottomMm));
-
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions(
-                $"\nNhập cao độ đáy lỗ mở (mm) <{bottomElevationMm:F0}>:");
-
-            bottomOpt.DefaultValue = bottomElevationMm;
-            bottomOpt.AllowNegative = false;
-            bottomOpt.AllowZero = true;
-
-            var bottomResult = ed.GetDouble(bottomOpt);
-            if (bottomResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
-                return false;
-
-            bottomElevationMm = Math.Max(0, Math.Round(bottomResult.Value));
-            return true;
-        }
-
-        private bool TryResolveBottomElevationForElevationPick(
-            Autodesk.AutoCAD.EditorInput.Editor ed,
-            double currentBottomMm,
-            out double bottomElevationMm)
-        {
-            bottomElevationMm = Math.Max(0, Math.Round(currentBottomMm));
-
-            var basePointOpt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions(
-                $"\nChọn điểm mốc cao độ đáy hoặc [Nhap] <Enter={bottomElevationMm:F0}>:");
-            basePointOpt.AllowNone = true;
-            basePointOpt.Keywords.Add("Nhap");
-
-            var basePointResult = ed.GetPoint(basePointOpt);
-            if (basePointResult.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
-            {
-                ed.WriteMessage($"\nGiữ cao độ đáy lỗ mở = {bottomElevationMm:F0} mm.");
-                return true;
-            }
-
-            if (basePointResult.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.Keyword)
-                return TryPromptBottomElevationManual(ed, bottomElevationMm, out bottomElevationMm);
-
-            if (basePointResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
-                return false;
-
-            var bottomPointOpt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đáy lỗ mở:");
-            bottomPointOpt.UseBasePoint = true;
-            bottomPointOpt.BasePoint = basePointResult.Value;
-
-            var bottomPointResult = ed.GetPoint(bottomPointOpt);
-            if (bottomPointResult.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
-                return false;
-
-            bottomElevationMm = Math.Max(0, Math.Round(basePointResult.Value.DistanceTo(bottomPointResult.Value)));
-            ed.WriteMessage($"\nCao độ đáy lỗ mở (pick 2 điểm) = {bottomElevationMm:F0} mm");
-            return true;
-        }
-
-
-
         private void ClearHighlight()
+
 
         {
 
@@ -4054,7 +3905,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
 
-                if (doc == null) { SetStatus("Cảnh báo: Không tìm thấy document"); return; }
+                if (doc == null) { SetStatus("Cáº£nh bÃ¡o: KhÃ´ng tÃ¬m tháº¥y document"); return; }
 
 
 
@@ -4070,7 +3921,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     {
 
-                SetStatus("Cảnh báo: đối tượng không tồn tại hoặc đã bị thay đổi.");
+                SetStatus("Cáº£nh bÃ¡o: Ä‘á»‘i tÆ°á»£ng khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ thay Ä‘á»•i.");
 
                         tr.Commit(); return;
 
@@ -4100,7 +3951,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             }
 
-            catch (Exception ex) { SetStatus($"Cảnh báo: Highlight {ex.Message}"); }
+            catch (Exception ex) { SetStatus($"Cáº£nh bÃ¡o: Highlight {ex.Message}"); }
 
         }
 
@@ -4122,7 +3973,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
 
-                if (doc == null) { SetStatus("Cảnh báo: Không tìm thấy document"); return; }
+                if (doc == null) { SetStatus("Cáº£nh bÃ¡o: KhÃ´ng tÃ¬m tháº¥y document"); return; }
 
 
 
@@ -4138,7 +3989,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     {
 
-                SetStatus("Cảnh báo: đối tượng không tồn tại hoặc đã bị thay đổi.");
+                SetStatus("Cáº£nh bÃ¡o: Ä‘á»‘i tÆ°á»£ng khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ thay Ä‘á»•i.");
 
                         tr.Commit(); return;
 
@@ -4186,7 +4037,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             }
 
-            catch (Exception ex) { SetStatus($"Cảnh báo: Highlight {ex.Message}"); }
+            catch (Exception ex) { SetStatus($"Cáº£nh bÃ¡o: Highlight {ex.Message}"); }
 
         }
 
@@ -4195,81 +4046,109 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         private void ShowCadPreview(TenderWallRow row, bool force = false)
 
         {
+            var handles = new List<string>();
+            if (row.AppliedEntityHandles != null)
+                handles.AddRange(row.AppliedEntityHandles.Where(h => !string.IsNullOrWhiteSpace(h)));
+            if (!string.IsNullOrWhiteSpace(row.CadHandle))
+                handles.Add(row.CadHandle!);
+            handles.AddRange((row.HeightSegments ?? new List<TenderHeightSegment>())
+                .Where(s => !string.IsNullOrWhiteSpace(s.CadHandle))
+                .Select(s => s.CadHandle!));
 
-            string previewKey = BuildCadPreviewKey(row);
-            bool bypassPreviewCache = row.PolygonVertices != null && row.PolygonVertices.Count >= 3;
+            handles = handles
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            if (!force
-
-                && !bypassPreviewCache
-                && (_highlightedSourceEntityIds.Count > 0
-
-                    || _previewEntityIds.Count > 0
-
-                    || _transientPreviewEntities.Count > 0)
-
-                && string.Equals(_lastCadPreviewKey, previewKey, StringComparison.Ordinal))
-
+            if (handles.Count > 0)
             {
+                HighlightCadHandles(handles, focusView: force);
+                _lastCadPreviewKey = BuildCadPreviewKey(row);
+                SetStatus($"Vi tri: {row.Name}");
+                return;
+            }
 
+            ClearHighlight();
+            _lastCadPreviewKey = null;
+            SetStatus($"Dong {row.Name} chua co hinh CAD da dung.");
+        }
+
+        private void HighlightCadHandles(IEnumerable<string> handles, bool focusView)
+        {
+            if (_isEditingCell || _suspendCadOperations)
                 return;
 
-            }
-
-
-
-            if ((EnableTenderCadOverlayPreview || IsSuspendedCeilingRow(row))
-
-                && TryDrawColdStorageCeilingPreview(row, force))
-
-            {
-
-                _lastCadPreviewKey = previewKey;
-
-                SetStatus($"Vùng tính khối lượng: {row.Name} | Xem trước tuyến treo");
-
+            ClearHighlight();
+            var handleList = (handles ?? Enumerable.Empty<string>())
+                .Where(h => !string.IsNullOrWhiteSpace(h))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (handleList.Count == 0)
                 return;
 
-            }
-
-
-
-            if (TryShowRowRegionPreview(row))
-
+            try
             {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (doc == null)
+                    return;
 
-                _lastCadPreviewKey = previewKey;
+                Autodesk.AutoCAD.DatabaseServices.Extents3d? extents = null;
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    foreach (string handleStr in handleList)
+                    {
+                        if (!long.TryParse(handleStr, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var rawHandle))
+                            continue;
+                        var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(rawHandle);
+                        if (!doc.Database.TryGetObjectId(handle, out var objId))
+                            continue;
+                        if (tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) is not Autodesk.AutoCAD.DatabaseServices.Entity ent)
+                            continue;
 
-                SetStatus($"Vùng tính khối lượng: {row.Name}");
+                        ent.Highlight();
+                        _highlightedSourceEntityIds.Add(objId);
+                        try
+                        {
+                            var currentExt = ent.GeometricExtents;
+                            if (!extents.HasValue)
+                            {
+                                extents = currentExt;
+                            }
+                            else
+                            {
+                                extents = new Autodesk.AutoCAD.DatabaseServices.Extents3d(
+                                    new Autodesk.AutoCAD.Geometry.Point3d(
+                                        Math.Min(extents.Value.MinPoint.X, currentExt.MinPoint.X),
+                                        Math.Min(extents.Value.MinPoint.Y, currentExt.MinPoint.Y),
+                                        Math.Min(extents.Value.MinPoint.Z, currentExt.MinPoint.Z)),
+                                    new Autodesk.AutoCAD.Geometry.Point3d(
+                                        Math.Max(extents.Value.MaxPoint.X, currentExt.MaxPoint.X),
+                                        Math.Max(extents.Value.MaxPoint.Y, currentExt.MaxPoint.Y),
+                                        Math.Max(extents.Value.MaxPoint.Z, currentExt.MaxPoint.Z)));
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    tr.Commit();
+                }
 
-                return;
-
+                if (focusView && extents.HasValue)
+                {
+                    var view = doc.Editor.GetCurrentView();
+                    view.CenterPoint = new Autodesk.AutoCAD.Geometry.Point2d(
+                        (extents.Value.MinPoint.X + extents.Value.MaxPoint.X) * 0.5,
+                        (extents.Value.MinPoint.Y + extents.Value.MaxPoint.Y) * 0.5);
+                    view.Width = Math.Max(1000, (extents.Value.MaxPoint.X - extents.Value.MinPoint.X) * 1.2);
+                    view.Height = Math.Max(1000, (extents.Value.MaxPoint.Y - extents.Value.MinPoint.Y) * 1.2);
+                    doc.Editor.SetCurrentView(view);
+                }
             }
-
-
-
-            if (!string.IsNullOrEmpty(row.CadHandle))
-
+            catch (Exception ex)
             {
-
-                HighlightEntity(row.CadHandle);
-
-                _lastCadPreviewKey = previewKey;
-
-                SetStatus($"Vị trí: {row.Name}");
-
+                SetStatus($"Cáº£nh bÃ¡o: Highlight {ex.Message}");
             }
-
-            else
-
-            {
-
-                ClearHighlight();
-
-                _lastCadPreviewKey = null;
-
-            }
-
         }
 
 
@@ -4492,7 +4371,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                SetStatus($"Highlight vùng: {ex.Message}");
+                SetStatus($"Highlight vÃ¹ng: {ex.Message}");
 
                 return false;
 
@@ -4782,7 +4661,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                SetStatus($"Lỗi preview trần: {ex.Message}");
+                SetStatus($"Lá»—i preview tráº§n: {ex.Message}");
 
                 return false;
 
@@ -4842,7 +4721,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Title = "Chọn hướng chia phụ kiện trần",
+                    Title = "Chá»n hÆ°á»›ng chia phá»¥ kiá»‡n tráº§n",
 
                     Width = 480,
 
@@ -4868,7 +4747,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Chọn hướng chia phụ kiện và tuyến treo cho vùng trần đang pick:",
+                    Text = "Chá»n hÆ°á»›ng chia phá»¥ kiá»‡n vÃ  tuyáº¿n treo cho vÃ¹ng tráº§n Ä‘ang pick:",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -4886,7 +4765,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Hướng này độc lập với hướng chia tấm trong cột Hướng. Dọc/Ngang ở đây chỉ áp dụng cho tuyến phụ kiện trần.",
+                    Text = "HÆ°á»›ng nÃ y Ä‘á»™c láº­p vá»›i hÆ°á»›ng chia táº¥m trong cá»™t HÆ°á»›ng. Dá»c/Ngang á»Ÿ Ä‘Ã¢y chá»‰ Ã¡p dá»¥ng cho tuyáº¿n phá»¥ kiá»‡n tráº§n.",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -4912,11 +4791,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                buttonBar.Children.Add(Btn("Dọc", AccentBlue, Brushes.White, (s, e) =>
+                buttonBar.Children.Add(Btn("Dá»c", AccentBlue, Brushes.White, (s, e) =>
 
                 {
 
-                    result = "Dọc";
+                    result = "Dá»c";
 
                     dlg.Close();
 
@@ -4940,7 +4819,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (s, e) =>
+                var btnCancel = Btn("Há»§y", BtnGray, Brushes.White, (s, e) =>
 
                 {
 
@@ -4986,11 +4865,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             {
 
-                string primaryLabel = runAlongX ? "Từ cạnh dưới" : "Từ cạnh trái";
+                string primaryLabel = runAlongX ? "Tá»« cáº¡nh dÆ°á»›i" : "Tá»« cáº¡nh trÃ¡i";
 
-                string secondaryLabel = runAlongX ? "Từ cạnh trên" : "Từ cạnh phải";
+                string secondaryLabel = runAlongX ? "Tá»« cáº¡nh trÃªn" : "Tá»« cáº¡nh pháº£i";
 
-                string axisText = runAlongX ? "theo bề rộng đứng" : "theo bề rộng ngang";
+                string axisText = runAlongX ? "theo bá» rá»™ng Ä‘á»©ng" : "theo bá» rá»™ng ngang";
 
 
 
@@ -4998,7 +4877,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Title = "Chọn phương chia tuyến treo",
+                    Title = "Chá»n phÆ°Æ¡ng chia tuyáº¿n treo",
 
                     Width = 480,
 
@@ -5024,7 +4903,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = $"Vùng pick sẽ chia tuyến treo {axisText}. Chọn cạnh gốc để bắt đầu chia nhịp:",
+                    Text = $"VÃ¹ng pick sáº½ chia tuyáº¿n treo {axisText}. Chá»n cáº¡nh gá»‘c Ä‘á»ƒ báº¯t Ä‘áº§u chia nhá»‹p:",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -5042,7 +4921,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 {
 
-                    Text = "Lựa chọn này chỉ xác định cạnh bắt đầu chia tuyến treo, không thay đổi hướng chia tấm panel trong bảng.",
+                    Text = "Lá»±a chá»n nÃ y chá»‰ xÃ¡c Ä‘á»‹nh cáº¡nh báº¯t Ä‘áº§u chia tuyáº¿n treo, khÃ´ng thay Ä‘á»•i hÆ°á»›ng chia táº¥m panel trong báº£ng.",
 
                     TextWrapping = TextWrapping.Wrap,
 
@@ -5096,7 +4975,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
 
 
-                var btnCancel = Btn("Hủy", BtnGray, Brushes.White, (s, e) =>
+                var btnCancel = Btn("Há»§y", BtnGray, Brushes.White, (s, e) =>
 
                 {
 
@@ -5521,3 +5400,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
     }
 
 }
+
+
+
+
+

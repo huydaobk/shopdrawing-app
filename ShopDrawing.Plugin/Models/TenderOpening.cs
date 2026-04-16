@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ShopDrawing.Plugin.Models
 {
     public class TenderOpening
@@ -17,6 +19,10 @@ namespace ShopDrawing.Plugin.Models
         /// <summary>Lý trình tham chiếu opening theo tuyến vách (mm, từ đầu tuyến). -1 = chưa xác định.</summary>
         public double CenterStationMm { get; set; } = -1;
 
+        public double StationStartMm { get; set; } = -1;
+
+        public double StationEndMm { get; set; } = -1;
+
         /// <summary>
         /// Tỷ lệ vị trí mép trái opening trên polygon reference chain (0.0 → 1.0).
         /// Được tính khi pick opening từ polygon để đảm bảo preview render cùng vị trí.
@@ -32,6 +38,8 @@ namespace ShopDrawing.Plugin.Models
 
         /// <summary>So luong opening cung kich thuoc</summary>
         public int Quantity { get; set; } = 1;
+
+        public List<double[]>? OpeningPolygon { get; set; }
 
         public bool IsDoor => Type == "Cửa đi";
         public bool IsNonDoor => !IsDoor;

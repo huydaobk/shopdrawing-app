@@ -697,15 +697,21 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                     && string.Equals(resolvedCategory, "Vách", StringComparison.OrdinalIgnoreCase);
                 bool shouldAutoSelectRoofGp = isExterior
                     && string.Equals(resolvedCategory, "Mái", StringComparison.OrdinalIgnoreCase);
+                bool isCleanroomOrColdStorage =
+                    string.Equals(selectedApplication, "Phòng sạch", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(selectedApplication, "Kho lạnh", StringComparison.OrdinalIgnoreCase);
 
                 string currentSpec = UiText.Normalize(_pickSpecPreset.SelectedItem as string);
                 string[] allSpecs = GetAllSpecPresetOptions();
                 string[] isoparSpecs = GetIsoparSpecPresetOptions();
                 string[] gpRoofSpecs = GetGpRoofSpecPresetOptions();
+                string[] nonGpSpecs = GetNonGpSpecPresetOptions();
                 string[] allowedSpecs = shouldAutoSelectIsopar && isoparSpecs.Length > 0
                     ? isoparSpecs
                     : shouldAutoSelectRoofGp && gpRoofSpecs.Length > 0
                         ? gpRoofSpecs
+                        : isCleanroomOrColdStorage && nonGpSpecs.Length > 0
+                            ? nonGpSpecs
                         : allSpecs;
 
                 _pickSpecPreset.ItemsSource = allowedSpecs;
@@ -765,15 +771,32 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         private string[] GetGpRoofSpecPresetOptions()
         {
             return _project.Specs
-                .Where(spec =>
-                    string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP3", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP5", StringComparison.OrdinalIgnoreCase)
-                    || (spec.Key ?? string.Empty).IndexOf("GP3", StringComparison.OrdinalIgnoreCase) >= 0
-                    || (spec.Key ?? string.Empty).IndexOf("GP5", StringComparison.OrdinalIgnoreCase) >= 0)
+                .Where(IsGpRoofSpec)
                 .Select(spec => UiText.Normalize(spec.Key))
                 .Where(key => !string.IsNullOrWhiteSpace(key))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+        }
+
+        private string[] GetNonGpSpecPresetOptions()
+        {
+            return _project.Specs
+                .Where(spec => !IsGpRoofSpec(spec))
+                .Select(spec => UiText.Normalize(spec.Key))
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        private static bool IsGpRoofSpec(PanelSpec spec)
+        {
+            if (spec == null)
+                return false;
+
+            return string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP3", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((spec.PanelType ?? string.Empty).Trim(), "GP5", StringComparison.OrdinalIgnoreCase)
+                || (spec.Key ?? string.Empty).IndexOf("GP3", StringComparison.OrdinalIgnoreCase) >= 0
+                || (spec.Key ?? string.Empty).IndexOf("GP5", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private string ResolvePreferredSpecForExteriorWall(string? fallbackSpecKey)
@@ -1723,13 +1746,17 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 return;
 
             double drawingLength = Math.Max(1.0, row.Length);
-            if (TryResolveOpeningPreviewChains(
+            bool preferAxisProjection = !HasNonOrthogonalEdges(vertices);
+
+            if (!preferAxisProjection
+                && TryResolveOpeningPreviewChains(
                     vertices,
                     drawingLength,
-                    out var referenceChain,
-                    out var oppositeChain,
+                    out var chainA,
+                    out var chainB,
                     out _))
             {
+                NormalizeOpeningPreviewChains(chainA, chainB, out var referenceChain, out var oppositeChain);
                 AddOpeningCadPreviewOnDevelopedChains(
                     referenceChain,
                     oppositeChain,
@@ -2126,8 +2153,82 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
             referenceChain = useA ? chosenA : chosenB;
             oppositeChain = useA ? chosenB : chosenA;
+            NormalizeOpeningPreviewChains(referenceChain, oppositeChain, out referenceChain, out oppositeChain);
             chainLengthMm = GetPolylineLength(referenceChain);
             return chainLengthMm > 1.0;
+        }
+
+        private static void NormalizeOpeningPreviewChains(
+            List<double[]> chainA,
+            List<double[]> chainB,
+            out List<double[]> referenceChain,
+            out List<double[]> oppositeChain)
+        {
+            referenceChain = chainA ?? new List<double[]>();
+            oppositeChain = chainB ?? new List<double[]>();
+            if (referenceChain.Count < 2 || oppositeChain.Count < 2)
+                return;
+
+            var allPoints = referenceChain.Concat(oppositeChain).ToList();
+            double minX = allPoints.Min(v => v[0]);
+            double maxX = allPoints.Max(v => v[0]);
+            double minY = allPoints.Min(v => v[1]);
+            double maxY = allPoints.Max(v => v[1]);
+            bool stationAlongX = (maxX - minX) >= (maxY - minY);
+
+            double avgA = stationAlongX
+                ? referenceChain.Average(v => v[1])
+                : referenceChain.Average(v => v[0]);
+            double avgB = stationAlongX
+                ? oppositeChain.Average(v => v[1])
+                : oppositeChain.Average(v => v[0]);
+
+            if (avgB < avgA)
+            {
+                var temp = referenceChain;
+                referenceChain = oppositeChain;
+                oppositeChain = temp;
+            }
+
+            double direct = DistanceSquared(referenceChain[0], oppositeChain[0])
+                          + DistanceSquared(referenceChain[^1], oppositeChain[^1]);
+            double reversed = DistanceSquared(referenceChain[0], oppositeChain[^1])
+                            + DistanceSquared(referenceChain[^1], oppositeChain[0]);
+            if (reversed < direct)
+            {
+                oppositeChain = oppositeChain
+                    .AsEnumerable()
+                    .Reverse()
+                    .Select(v => v.ToArray())
+                    .ToList();
+            }
+
+            bool reverseReferenceDirection = stationAlongX
+                ? referenceChain[^1][0] < referenceChain[0][0]
+                : referenceChain[^1][1] < referenceChain[0][1];
+            if (reverseReferenceDirection)
+            {
+                referenceChain = referenceChain
+                    .AsEnumerable()
+                    .Reverse()
+                    .Select(v => v.ToArray())
+                    .ToList();
+                oppositeChain = oppositeChain
+                    .AsEnumerable()
+                    .Reverse()
+                    .Select(v => v.ToArray())
+                    .ToList();
+            }
+        }
+
+        private static double DistanceSquared(double[] a, double[] b)
+        {
+            if (a == null || b == null || a.Length < 2 || b.Length < 2)
+                return double.MaxValue;
+
+            double dx = a[0] - b[0];
+            double dy = a[1] - b[1];
+            return dx * dx + dy * dy;
         }
 
         private static bool TryGetDirectionAndLength(
@@ -2191,7 +2292,7 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             if (vertices == null || vertices.Count < 2)
                 return false;
 
-            const double tolerance = 1e-3;
+            const double tolerance = 1.0;
             int count = vertices.Count;
             for (int i = 0; i < count; i++)
             {

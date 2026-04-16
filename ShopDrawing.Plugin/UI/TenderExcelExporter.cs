@@ -697,7 +697,7 @@ namespace ShopDrawing.Plugin.UI
                 sheet,
                 geometryTitleRow,
                 0,
-                13,
+                10,
                 geometryTitleRow.GetCell(0)?.StringCellValue ?? string.Empty,
                 sectionStyle);
 

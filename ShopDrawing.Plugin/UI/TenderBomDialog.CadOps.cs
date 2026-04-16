@@ -4022,6 +4022,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Dispatcher.Invoke(() =>
                     {
                         targetRow.HeightSegments = segmentRows;
+                        targetRow.Length = Math.Max(0, segmentRows.Sum(s => Math.Max(0, s.LengthMm)));
+                        targetRow.Height = Math.Max(0, segmentRows.Max(s => Math.Max(0, s.HeightMm)));
+                        targetRow.DraftGeometryMode = "WallLineChain";
+                        targetRow.PolygonVertices = null;
                         SyncWallRowSpecData(targetRow);
                         targetRow.Refresh();
                         SafeRefreshWallGrid();
@@ -4084,13 +4088,30 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             Dispatcher.Invoke(() =>
                             {
                                 targetRow.PolygonVertices = vertices.Select(v => v.ToArray()).ToList();
-                                targetRow.HeightSegments = new List<TenderHeightSegment>(); // clear spans
+                                targetRow.DraftGeometryMode = "WallPolygon";
+                                if (targetRow.PolygonVertices != null && targetRow.PolygonVertices.Count >= 3)
+                                {
+                                    double minX = targetRow.PolygonVertices.Min(v => v[0]);
+                                    double maxX = targetRow.PolygonVertices.Max(v => v[0]);
+                                    double minY = targetRow.PolygonVertices.Min(v => v[1]);
+                                    double maxY = targetRow.PolygonVertices.Max(v => v[1]);
+                                    targetRow.Length = Math.Max(0, maxX - minX);
+                                    targetRow.Height = Math.Max(0, maxY - minY);
+                                    targetRow.HeightSegments = new List<TenderHeightSegment>
+                                    {
+                                        new TenderHeightSegment { LengthMm = targetRow.Length, HeightMm = targetRow.Height }
+                                    };
+                                }
+                                else
+                                {
+                                    targetRow.HeightSegments = new List<TenderHeightSegment>();
+                                }
                                 SyncWallRowSpecData(targetRow);
                                 targetRow.Refresh();
                                 SafeRefreshWallGrid();
                                 RefreshFooter();
                                 RefreshPanelBreakdown(targetRow);
-                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                                RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                                 SetStatus($"Đã pick vùng cho {targetRow.Name}.");
                             });
                         }

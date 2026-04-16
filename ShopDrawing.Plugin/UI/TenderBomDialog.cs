@@ -925,6 +925,12 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         private void SafeRefreshWallGrid()
         {
             CommitPendingGridEdits(_wallGrid);
+            
+            if (_wallGrid?.SelectedItem is TenderWallRow row)
+            {
+                RefreshPanelBreakdown(row);
+                UpdateLiveCanvasPreview(row);
+            }
         }
 
         private bool CommitPendingGridEdits(DataGrid? grid)

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
@@ -262,6 +262,7 @@ namespace ShopDrawing.Plugin.UI
                     RefreshPanelBreakdown(row);
 
                     RequestCadPreview(row);
+                    UpdateLiveCanvasPreview(row);
 
                 }
 

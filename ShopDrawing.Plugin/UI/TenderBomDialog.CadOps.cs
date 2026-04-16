@@ -300,10 +300,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     return;
                 }
 
-                if (!TryApplyTenderPopupResult(targetRow, popupResult, isRepick: true))
+                // Đồng bộ dữ liệu popup vào bảng bất kể CAD có dựng thành công hay không.
+                ApplyPopupResultToRow(targetRow, popupResult);
+
+                bool cadApplied = TryApplyTenderPopupResult(targetRow, popupResult, isRepick: true);
+                if (!cadApplied)
                 {
                     CleanupDraftCadHandles(popupResult);
-                    return;
                 }
 
                 Dispatcher.Invoke(new Action(() =>
@@ -319,8 +322,18 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
                     _lastCadPreviewKey = null;
-                    SetStatus($"\u0110\u00e3 c\u1eadp nh\u1eadt {targetRow.Name}");
+
+                    if (!cadApplied)
+                    {
+                        SetStatus($"Đã giữ dữ liệu {targetRow.Name}; không cập nhật CAD do hủy/lỗi vẽ.");
+                    }
+                    else
+                    {
+                        SetStatus($"\u0110\u00e3 c\u1eadp nh\u1eadt {targetRow.Name}");
+                    }
                 }));
+
+                if (!cadApplied) return;
             }
             catch (Exception ex)
             {

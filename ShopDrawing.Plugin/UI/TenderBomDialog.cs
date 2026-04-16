@@ -1746,17 +1746,12 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 return;
 
             double drawingLength = Math.Max(1.0, row.Length);
-            bool preferAxisProjection = !HasNonOrthogonalEdges(vertices);
-
-            if (!preferAxisProjection
-                && TryResolveOpeningPreviewChains(
+            if (TryResolvePolygonDevelopedGeometry(
                     vertices,
-                    drawingLength,
-                    out var chainA,
-                    out var chainB,
+                    out var referenceChain,
+                    out var oppositeChain,
                     out _))
             {
-                NormalizeOpeningPreviewChains(chainA, chainB, out var referenceChain, out var oppositeChain);
                 AddOpeningCadPreviewOnDevelopedChains(
                     referenceChain,
                     oppositeChain,
@@ -2156,6 +2151,51 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
             NormalizeOpeningPreviewChains(referenceChain, oppositeChain, out referenceChain, out oppositeChain);
             chainLengthMm = GetPolylineLength(referenceChain);
             return chainLengthMm > 1.0;
+        }
+
+        private static bool TryResolvePolygonDevelopedGeometry(
+            IReadOnlyList<double[]> vertices,
+            out List<double[]> referenceChain,
+            out List<double[]> oppositeChain,
+            out double chainLengthMm)
+        {
+            referenceChain = new List<double[]>();
+            oppositeChain = new List<double[]>();
+            chainLengthMm = 0;
+
+            if (vertices == null || vertices.Count < 3)
+                return false;
+
+            var polygon = vertices
+                .Where(v => v != null && v.Length >= 2)
+                .Select(v => v.ToArray())
+                .ToList();
+            if (polygon.Count < 3)
+                return false;
+
+            double minX = polygon.Min(v => v[0]);
+            double maxX = polygon.Max(v => v[0]);
+            double minY = polygon.Min(v => v[1]);
+            double maxY = polygon.Max(v => v[1]);
+            double spanX = Math.Max(1.0, maxX - minX);
+            double spanY = Math.Max(1.0, maxY - minY);
+
+            bool stationAlongY = spanY > spanX;
+            if (TryBuildDevelopedChains(polygon, horizontal: stationAlongY, out var primaryChainA, out var primaryChainB))
+            {
+                NormalizeOpeningPreviewChains(primaryChainA, primaryChainB, out referenceChain, out oppositeChain);
+                chainLengthMm = GetPolylineLength(referenceChain);
+                if (chainLengthMm > 1.0)
+                    return true;
+            }
+
+            double estimatedLength = Math.Max(1.0, Math.Max(spanX, spanY));
+            return TryResolveOpeningPreviewChains(
+                polygon,
+                estimatedLength,
+                out referenceChain,
+                out oppositeChain,
+                out chainLengthMm);
         }
 
         private static void NormalizeOpeningPreviewChains(

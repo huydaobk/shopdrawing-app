@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,24 +11,34 @@ using ShopDrawing.Plugin.Models;
 namespace ShopDrawing.Plugin.UI
 {
     /// <summary>
-    /// Xuất bảng khối lượng đấu thầu ra Excel.
+    /// Xuáº¥t báº£ng khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u ra Excel.
     /// </summary>
     public class TenderExcelExporter
     {
         private const int TenderSheetMaxColumnIndex = 17;
-        private const int TenderPanelSummaryMaxColumnIndex = 12;
+        private const int TenderPanelSummaryMaxColumnIndex = 10;
         private const int BasisSheetMaxColumnIndex = 16;
         private const int SpecSheetMaxColumnIndex = 18;
         private const int PanelExplainSheetMaxColumnIndex = 13;
+        private const string TenderSheetName = "Khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u";
+        private const string PanelExplainSheetName = "Diá»…n giáº£i panel & lá»— má»Ÿ";
+        private const string BasisSheetName = "CÆ¡ sá»Ÿ tÃ­nh phá»¥ kiá»‡n riÃªng";
+        private const string SpecSheetName = "Quáº£n lÃ½ Spec";
 
         public void Export(TenderProject project, string filePath)
         {
             var workbook = new XSSFWorkbook();
 
-            var tenderSheet = workbook.CreateSheet("Khối lượng đấu thầu");
-            var basisSheet = workbook.CreateSheet("Cơ sở tính phụ kiện riêng");
-            var specSheet = workbook.CreateSheet("Quản lý Spec");
-            var panelExplainSheet = workbook.CreateSheet("Diễn giải panel & lỗ mở");
+            var tenderSheet = workbook.CreateSheet(TenderSheetName);
+            var panelExplainSheet = workbook.CreateSheet(PanelExplainSheetName);
+            var basisSheet = workbook.CreateSheet(BasisSheetName);
+            var specSheet = workbook.CreateSheet(SpecSheetName);
+
+            // Chá»‘t thá»© tá»± sheet: Khá»‘i lÆ°á»£ng Ä‘áº¥u tháº§u -> Diá»…n giáº£i -> CÆ¡ sá»Ÿ -> Spec.
+            workbook.SetSheetOrder(TenderSheetName, 0);
+            workbook.SetSheetOrder(PanelExplainSheetName, 1);
+            workbook.SetSheetOrder(BasisSheetName, 2);
+            workbook.SetSheetOrder(SpecSheetName, 3);
 
             var titleStyle = CreateTitleStyle(workbook);
             var infoStyle = CreateInfoStyle(workbook);
@@ -36,7 +46,9 @@ namespace ShopDrawing.Plugin.UI
             var dataStyle = CreateDataStyle(workbook);
             var dataWrapStyle = CreateWrappedDataStyle(workbook, dataStyle);
             var computedStyle = CreateComputedStyle(workbook, dataStyle);
+            var computedIntegerStyle = CreateComputedIntegerStyle(workbook, dataStyle);
             var totalStyle = CreateTotalStyle(workbook, dataStyle);
+            var totalIntegerStyle = CreateTotalIntegerStyle(workbook, dataStyle);
 
             var panelSectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.DarkBlue.Index);
             var accessorySummarySectionStyle = CreateColoredSectionStyle(workbook, IndexedColors.DarkGreen.Index);
@@ -45,7 +57,7 @@ namespace ShopDrawing.Plugin.UI
 
             int tenderRowIdx = WriteSheetHeader(
                 tenderSheet,
-                $"BẢNG KHỐI LƯỢNG ĐẤU THẦU - {project.ProjectName}",
+                $"Báº¢NG KHá»I LÆ¯á»¢NG Äáº¤U THáº¦U - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -76,7 +88,7 @@ namespace ShopDrawing.Plugin.UI
 
             int basisRowIdx = WriteSheetHeader(
                 basisSheet,
-                $"CƠ SỞ TÍNH PHỤ KIỆN - {project.ProjectName}",
+                $"CÆ  Sá»ž TÃNH PHá»¤ KIá»†N - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -113,7 +125,9 @@ namespace ShopDrawing.Plugin.UI
                 dataStyle,
                 dataWrapStyle,
                 computedStyle,
+                computedIntegerStyle,
                 totalStyle,
+                totalIntegerStyle,
                 panelSectionStyle);
 
             AutoSizeSheet(tenderSheet, TenderSheetMaxColumnIndex);
@@ -154,8 +168,8 @@ namespace ShopDrawing.Plugin.UI
             SetMergedTextCell(sheet, titleRow, 0, maxColumnIndex, title, titleStyle);
 
             var infoRow = sheet.CreateRow(rowIdx++);
-            SetCell(infoRow, 0, $"Khách hàng: {customerName}", infoStyle);
-            SetCell(infoRow, Math.Min(5, maxColumnIndex), $"Ngày xuất: {DateTime.Now:dd/MM/yyyy}", infoStyle);
+            SetCell(infoRow, 0, $"KhÃ¡ch hÃ ng: {customerName}", infoStyle);
+            SetCell(infoRow, Math.Min(5, maxColumnIndex), $"NgÃ y xuáº¥t: {DateTime.Now:dd/MM/yyyy}", infoStyle);
 
             rowIdx++;
             return rowIdx;
@@ -176,7 +190,7 @@ namespace ShopDrawing.Plugin.UI
             var rows = calculator.CalculatePanelSummary(project.Walls);
 
             var sectionRow = sheet.CreateRow(rowIdx++);
-            SetCell(sectionRow, 0, "TỔNG HỢP KHỐI LƯỢNG TẤM THEO TẦNG + SPEC", sectionStyle);
+            SetCell(sectionRow, 0, "Tá»”NG Há»¢P KHá»I LÆ¯á»¢NG Táº¤M THEO Táº¦NG + SPEC", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 sectionRow,
@@ -187,9 +201,9 @@ namespace ShopDrawing.Plugin.UI
 
             string[] headers =
             {
-                "STT", "Tầng", "Hạng mục", "Mã spec", "Số vùng", "Tổng dài (m)", "Cao TB (mm)",
-                "DT vách (m²)", "DT lỗ mở (m²)", "DT net (m²)",
-                "DT dự kiến cấp (m²)", "Khối lượng hao hụt tổng (m²)", "Hao hụt (%)"
+                "STT", "Táº§ng", "Háº¡ng má»¥c", "MÃ£ spec", "Sá»‘ vÃ¹ng",
+                "DT hÃ¬nh há»c (mÂ²)", "DT lá»— má»Ÿ (mÂ²)", "DT net (mÂ²)",
+                "DT dá»± kiáº¿n cáº¥p (mÂ²)", "Khá»‘i lÆ°á»£ng hao há»¥t tá»•ng (mÂ²)", "Hao há»¥t (%)"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -200,7 +214,7 @@ namespace ShopDrawing.Plugin.UI
 
             int dataStartRowIndex = rowIdx;
             int stt = 1;
-            const string panelExplainSheetRef = "'Diễn giải panel & lỗ mở'";
+            const string panelExplainSheetRef = "'Diá»…n giáº£i panel & lá»— má»Ÿ'";
             foreach (var row in rows)
             {
                 var excelRow = sheet.CreateRow(rowIdx++);
@@ -210,69 +224,69 @@ namespace ShopDrawing.Plugin.UI
                 SetCell(excelRow, col++, row.Category, dataStyle);
                 SetCell(excelRow, col++, row.SpecKey, dataStyle);
                 SetCell(excelRow, col++, row.WallCount, dataStyle);
-                SetCell(excelRow, col++, row.TotalLengthM, computedStyle);
-                SetCell(excelRow, col++, row.HeightMm, computedStyle);
-                SetCell(excelRow, col++, row.WallAreaM2, computedStyle);
                 string floorRef = CellRef(excelRow.RowNum, 1);
                 string categoryRef = CellRef(excelRow.RowNum, 2);
                 string specRef = CellRef(excelRow.RowNum, 3);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Cửa đi\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Cửa sổ\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Lỗ kỹ thuật\")",
+                    $"SUMIFS({panelExplainSheetRef}!$I:$I,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"ThÃ´ng sá»‘\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"MAX(0,{CellRef(excelRow.RowNum, 7)}-{CellRef(excelRow.RowNum, 8)})",
+                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Cá»­a Ä‘i\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Cá»­a sá»•\")+SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Lá»— ká»¹ thuáº­t\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Nguyên\")+SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Giảm*\")",
+                    $"MAX(0,{CellRef(excelRow.RowNum, 5)}-{CellRef(excelRow.RowNum, 6)})",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Hao hụt*\")",
+                    $"SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"NguyÃªn\")+SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Giáº£m*\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"IF({CellRef(excelRow.RowNum, 10)}>0,{CellRef(excelRow.RowNum, 11)}/{CellRef(excelRow.RowNum, 10)}*100,0)",
+                    $"SUMIFS({panelExplainSheetRef}!$M:$M,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Hao há»¥t*\")",
+                    computedStyle);
+                SetFormulaCell(
+                    excelRow,
+                    col++,
+                    $"IF({CellRef(excelRow.RowNum, 8)}>0,{CellRef(excelRow.RowNum, 9)}/{CellRef(excelRow.RowNum, 8)}*100,0)",
                     computedStyle);
             }
 
             int dataEndRowIndex = rowIdx - 1;
             var totalRow = sheet.CreateRow(rowIdx++);
-            SetCell(totalRow, 3, "TỔNG CỘNG:", totalStyle);
+            SetCell(totalRow, 3, "Tá»”NG Cá»˜NG:", totalStyle);
             if (rows.Count > 0)
             {
                 SetFormulaCell(totalRow, 4, $"SUM({CellRef(dataStartRowIndex, 4)}:{CellRef(dataEndRowIndex, 4)})", totalStyle);
                 SetFormulaCell(totalRow, 5, $"SUM({CellRef(dataStartRowIndex, 5)}:{CellRef(dataEndRowIndex, 5)})", totalStyle);
+                SetFormulaCell(totalRow, 6, $"SUM({CellRef(dataStartRowIndex, 6)}:{CellRef(dataEndRowIndex, 6)})", totalStyle);
                 SetFormulaCell(totalRow, 7, $"SUM({CellRef(dataStartRowIndex, 7)}:{CellRef(dataEndRowIndex, 7)})", totalStyle);
                 SetFormulaCell(totalRow, 8, $"SUM({CellRef(dataStartRowIndex, 8)}:{CellRef(dataEndRowIndex, 8)})", totalStyle);
                 SetFormulaCell(totalRow, 9, $"SUM({CellRef(dataStartRowIndex, 9)}:{CellRef(dataEndRowIndex, 9)})", totalStyle);
-                SetFormulaCell(totalRow, 10, $"SUM({CellRef(dataStartRowIndex, 10)}:{CellRef(dataEndRowIndex, 10)})", totalStyle);
-                SetFormulaCell(totalRow, 11, $"SUM({CellRef(dataStartRowIndex, 11)}:{CellRef(dataEndRowIndex, 11)})", totalStyle);
-                SetFormulaCell(totalRow, 12, $"IF({CellRef(totalRow.RowNum, 10)}>0,{CellRef(totalRow.RowNum, 11)}/{CellRef(totalRow.RowNum, 10)}*100,0)", totalStyle);
+                SetFormulaCell(totalRow, 10, $"IF({CellRef(totalRow.RowNum, 8)}>0,{CellRef(totalRow.RowNum, 9)}/{CellRef(totalRow.RowNum, 8)}*100,0)", totalStyle);
             }
             else
             {
                 SetCell(totalRow, 4, 0, totalStyle);
                 SetCell(totalRow, 5, 0, totalStyle);
+                SetCell(totalRow, 6, 0, totalStyle);
                 SetCell(totalRow, 7, 0, totalStyle);
                 SetCell(totalRow, 8, 0, totalStyle);
                 SetCell(totalRow, 9, 0, totalStyle);
                 SetCell(totalRow, 10, 0, totalStyle);
-                SetCell(totalRow, 11, 0, totalStyle);
-                SetCell(totalRow, 12, 0, totalStyle);
             }
 
             rowIdx++;
 
             var supplyTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(supplyTitleRow, 0, "TỔNG KHỐI LƯỢNG PANEL CẤP DỰ KIẾN", sectionStyle);
+            SetCell(supplyTitleRow, 0, "Tá»”NG KHá»I LÆ¯á»¢NG PANEL Cáº¤P Dá»° KIáº¾N", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 supplyTitleRow,
@@ -283,17 +297,17 @@ namespace ShopDrawing.Plugin.UI
 
             var supplyHeaderRow = sheet.CreateRow(rowIdx++);
             SetCell(supplyHeaderRow, 0, "STT", headerStyle);
-            SetCell(supplyHeaderRow, 1, "Chỉ tiêu", headerStyle);
-            SetCell(supplyHeaderRow, 2, "Giá trị", headerStyle);
-            SetMergedTextCell(sheet, supplyHeaderRow, 3, 8, "Ghi chú", headerStyle);
+            SetCell(supplyHeaderRow, 1, "Chá»‰ tiÃªu", headerStyle);
+            SetCell(supplyHeaderRow, 2, "GiÃ¡ trá»‹", headerStyle);
+            SetMergedTextCell(sheet, supplyHeaderRow, 3, 8, "Ghi chÃº", headerStyle);
 
-            string totalOrderedRef = CellRef(totalRow.RowNum, 10);
-            string totalWasteRef = CellRef(totalRow.RowNum, 11);
+            string totalOrderedRef = CellRef(totalRow.RowNum, 8);
+            string totalWasteRef = CellRef(totalRow.RowNum, 9);
             var supplyRows = new (string Label, string Formula, string Note)[]
             {
-                ("Tổng diện tích dự kiến phải cấp (m²)", totalOrderedRef, "Diện tích panel quy đổi theo tổng số tấm nguyên cần cấp."),
-                ("Khối lượng hao hụt tổng (m²)", totalWasteRef, "Bao gồm phần cắt bỏ tấm cuối và phần diện tích panel bị vướng vào lỗ mở."),
-                ("Tỷ lệ hao hụt tổng (%)", $"IF({totalOrderedRef}>0,{totalWasteRef}/{totalOrderedRef}*100,0)", "Tỷ lệ hao hụt = Khối lượng hao hụt tổng / Tổng diện tích dự kiến phải cấp.")
+                ("Tá»•ng diá»‡n tÃ­ch dá»± kiáº¿n pháº£i cáº¥p (mÂ²)", totalOrderedRef, "Diá»‡n tÃ­ch panel quy Ä‘á»•i theo tá»•ng sá»‘ táº¥m nguyÃªn cáº§n cáº¥p."),
+                ("Khá»‘i lÆ°á»£ng hao há»¥t tá»•ng (mÂ²)", totalWasteRef, "Bao gá»“m pháº§n cáº¯t bá» táº¥m cuá»‘i vÃ  pháº§n diá»‡n tÃ­ch panel bá»‹ vÆ°á»›ng vÃ o lá»— má»Ÿ."),
+                ("Tá»· lá»‡ hao há»¥t tá»•ng (%)", $"IF({totalOrderedRef}>0,{totalWasteRef}/{totalOrderedRef}*100,0)", "Tá»· lá»‡ hao há»¥t = Khá»‘i lÆ°á»£ng hao há»¥t tá»•ng / Tá»•ng diá»‡n tÃ­ch dá»± kiáº¿n pháº£i cáº¥p.")
             };
 
             for (int i = 0; i < supplyRows.Length; i++)
@@ -324,7 +338,7 @@ namespace ShopDrawing.Plugin.UI
             var report = calculator.CalculateAccessoryReport(project.Walls, project.Accessories);
 
             var titleRow = sheet.CreateRow(rowIdx++);
-            SetCell(titleRow, 0, "CƠ SỞ TÍNH PHỤ KIỆN", sectionStyle);
+            SetCell(titleRow, 0, "CÆ  Sá»ž TÃNH PHá»¤ KIá»†N", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 titleRow,
@@ -335,9 +349,9 @@ namespace ShopDrawing.Plugin.UI
 
             string[] headers =
             {
-                "STT", "Tầng", "Hạng mục", "Ký hiệu vách", "Ứng dụng", "Mã spec",
-                "Phụ kiện", "Vật liệu", "Đơn vị", "Vị trí", "Quy tắc tính", "Cơ sở tính", "Giá trị cơ sở",
-                "Hệ số", "Khối lượng tự động", "Vị trí / Phạm vi", "Thông số chính"
+                "STT", "Táº§ng", "Háº¡ng má»¥c", "KÃ½ hiá»‡u vÃ¡ch", "á»¨ng dá»¥ng", "MÃ£ spec",
+                "Phá»¥ kiá»‡n", "Váº­t liá»‡u", "ÄÆ¡n vá»‹", "Vá»‹ trÃ­", "Quy táº¯c tÃ­nh", "CÆ¡ sá»Ÿ tÃ­nh", "GiÃ¡ trá»‹ cÆ¡ sá»Ÿ",
+                "Há»‡ sá»‘", "Khá»‘i lÆ°á»£ng tá»± Ä‘á»™ng", "Vá»‹ trÃ­ / Pháº¡m vi", "ThÃ´ng sá»‘ chÃ­nh"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -393,7 +407,7 @@ namespace ShopDrawing.Plugin.UI
             var summary = calculator.CalculateAccessorySummary(project.Walls, project.Accessories);
 
             var titleRow = sheet.CreateRow(rowIdx++);
-            SetCell(titleRow, 0, "TỔNG HỢP PHỤ KIỆN ĐẤU THẦU", sectionStyle);
+            SetCell(titleRow, 0, "Tá»”NG Há»¢P PHá»¤ KIá»†N Äáº¤U THáº¦U", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 titleRow,
@@ -404,9 +418,9 @@ namespace ShopDrawing.Plugin.UI
 
             string[] headers =
             {
-                "STT", "Phạm vi hạng mục", "Ứng dụng", "Mã spec", "Phụ kiện", "Vật liệu", "Vị trí", "Đơn vị",
-                "Quy tắc tính", "Cơ sở tính", "Giá trị cơ sở", "Hệ số", "Hao hụt (%)",
-                "Khối lượng tự động", "Điều chỉnh", "Khối lượng chốt", "Vị trí / Phạm vi", "Thông số chính"
+                "STT", "Pháº¡m vi háº¡ng má»¥c", "á»¨ng dá»¥ng", "MÃ£ spec", "Phá»¥ kiá»‡n", "Váº­t liá»‡u", "Vá»‹ trÃ­", "ÄÆ¡n vá»‹",
+                "Quy táº¯c tÃ­nh", "CÆ¡ sá»Ÿ tÃ­nh", "GiÃ¡ trá»‹ cÆ¡ sá»Ÿ", "Há»‡ sá»‘", "Hao há»¥t (%)",
+                "Khá»‘i lÆ°á»£ng tá»± Ä‘á»™ng", "Äiá»u chá»‰nh", "Khá»‘i lÆ°á»£ng chá»‘t", "Vá»‹ trÃ­ / Pháº¡m vi", "ThÃ´ng sá»‘ chÃ­nh"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -416,7 +430,7 @@ namespace ShopDrawing.Plugin.UI
             }
 
             int stt = 1;
-            const string basisSheetRef = "'Cơ sở tính phụ kiện riêng'";
+            const string basisSheetRef = "'CÆ¡ sá»Ÿ tÃ­nh phá»¥ kiá»‡n riÃªng'";
             foreach (var row in summary)
             {
                 var noteParts = SplitDisplayNote(row.Note);
@@ -479,7 +493,7 @@ namespace ShopDrawing.Plugin.UI
         {
             int rowIdx = WriteSheetHeader(
                 sheet,
-                $"BẢNG QUẢN LÝ SPEC - {project.ProjectName}",
+                $"Báº¢NG QUáº¢N LÃ SPEC - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -492,7 +506,7 @@ namespace ShopDrawing.Plugin.UI
             var bottomHeaderStyle = CreateSubHeaderStyle(workbook, IndexedColors.LightGreen.Index);
 
             var sectionRow = sheet.CreateRow(rowIdx++);
-            SetCell(sectionRow, 0, "DANH SÁCH SPEC DỰ ÁN", sectionStyle);
+            SetCell(sectionRow, 0, "DANH SÃCH SPEC Dá»° ÃN", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 sectionRow,
@@ -502,18 +516,18 @@ namespace ShopDrawing.Plugin.UI
                 sectionStyle);
 
             var groupRow = sheet.CreateRow(rowIdx++);
-            SetCell(groupRow, 0, "THÔNG TIN CHUNG", specGroupStyle);
-            SetCell(groupRow, 9, "MẶT TRÊN", topGroupStyle);
-            SetCell(groupRow, 14, "MẶT DƯỚI", bottomGroupStyle);
+            SetCell(groupRow, 0, "THÃ”NG TIN CHUNG", specGroupStyle);
+            SetCell(groupRow, 9, "Máº¶T TRÃŠN", topGroupStyle);
+            SetCell(groupRow, 14, "Máº¶T DÆ¯á»šI", bottomGroupStyle);
             SetMergedTextCell(sheet, groupRow, 0, 8, groupRow.GetCell(0)?.StringCellValue ?? string.Empty, specGroupStyle);
             SetMergedTextCell(sheet, groupRow, 9, 13, groupRow.GetCell(9)?.StringCellValue ?? string.Empty, topGroupStyle);
             SetMergedTextCell(sheet, groupRow, 14, 18, groupRow.GetCell(14)?.StringCellValue ?? string.Empty, bottomGroupStyle);
 
             string[] headers =
             {
-                "STT", "Mã spec", "Mã ký hiệu", "Khổ tấm (mm)", "Loại panel", "Tỷ trọng", "Chiều dày (mm)", "Chống cháy", "FM",
-                "Màu mặt trên", "Vật liệu mặt trên", "Độ mạ mặt trên", "Dày tôn mặt trên (mm)", "Profile mặt trên",
-                "Màu mặt dưới", "Vật liệu mặt dưới", "Độ mạ mặt dưới", "Dày tôn mặt dưới (mm)", "Profile mặt dưới"
+                "STT", "MÃ£ spec", "MÃ£ kÃ½ hiá»‡u", "Khá»• táº¥m (mm)", "Loáº¡i panel", "Tá»· trá»ng", "Chiá»u dÃ y (mm)", "Chá»‘ng chÃ¡y", "FM",
+                "MÃ u máº·t trÃªn", "Váº­t liá»‡u máº·t trÃªn", "Äá»™ máº¡ máº·t trÃªn", "DÃ y tÃ´n máº·t trÃªn (mm)", "Profile máº·t trÃªn",
+                "MÃ u máº·t dÆ°á»›i", "Váº­t liá»‡u máº·t dÆ°á»›i", "Äá»™ máº¡ máº·t dÆ°á»›i", "DÃ y tÃ´n máº·t dÆ°á»›i (mm)", "Profile máº·t dÆ°á»›i"
             };
 
             var headerRow = sheet.CreateRow(rowIdx++);
@@ -542,7 +556,7 @@ namespace ShopDrawing.Plugin.UI
                 SetCell(row, col++, spec.Density, dataStyle);
                 SetCell(row, col++, spec.Thickness, dataStyle);
                 SetCell(row, col++, spec.FireRating, dataStyle);
-                SetCell(row, col++, spec.FmApproved ? "Có" : "Không", dataStyle);
+                SetCell(row, col++, spec.FmApproved ? "CÃ³" : "KhÃ´ng", dataStyle);
                 SetCell(row, col++, spec.FacingColor, dataStyle);
                 SetCell(row, col++, spec.TopFacing, dataStyle);
                 SetCell(row, col++, spec.TopCoating, dataStyle);
@@ -556,7 +570,7 @@ namespace ShopDrawing.Plugin.UI
             }
 
             var totalRow = sheet.CreateRow(rowIdx++);
-            SetCell(totalRow, 1, "TỔNG SỐ SPEC:", totalStyle);
+            SetCell(totalRow, 1, "Tá»”NG Sá» SPEC:", totalStyle);
             SetCell(totalRow, 2, project.Specs.Count, totalStyle);
         }
 
@@ -569,12 +583,14 @@ namespace ShopDrawing.Plugin.UI
             ICellStyle dataStyle,
             ICellStyle dataWrapStyle,
             ICellStyle computedStyle,
+            ICellStyle computedIntegerStyle,
             ICellStyle totalStyle,
+            ICellStyle totalIntegerStyle,
             ICellStyle sectionStyle)
         {
             int rowIdx = WriteSheetHeader(
                 sheet,
-                $"DIỄN GIẢI KHỐI LƯỢNG PANEL & LỖ MỞ - {project.ProjectName}",
+                $"DIá»„N GIáº¢I KHá»I LÆ¯á»¢NG PANEL & Lá»– Má»ž - {project.ProjectName}",
                 project.CustomerName,
                 titleStyle,
                 infoStyle,
@@ -586,7 +602,7 @@ namespace ShopDrawing.Plugin.UI
                 .ToList();
 
             var openingTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(openingTitleRow, 0, "DIỄN GIẢI LỖ MỞ THEO VÁCH", sectionStyle);
+            SetCell(openingTitleRow, 0, "DIá»„N GIáº¢I Lá»– Má»ž THEO VÃCH", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 openingTitleRow,
@@ -597,11 +613,12 @@ namespace ShopDrawing.Plugin.UI
 
             string[] openingHeaders =
             {
-                "STT", "Tầng", "Ký Hiệu Vách", "Hạng Mục", "Ứng Dụng", "Mã Spec", "Loại Lỗ Mở",
-                "Lý Trình LT (mm)", "Rộng (mm)", "Cao (mm)", "Cao Độ Đáy (mm)", "SL", "DT Lỗ Mở (m²)", "Ghi Chú"
+                "STT", "Táº§ng", "KÃ½ Hiá»‡u VÃ¡ch", "Háº¡ng Má»¥c", "á»¨ng Dá»¥ng", "MÃ£ Spec", "Loáº¡i Lá»— Má»Ÿ",
+                "LÃ½ TrÃ¬nh LT (mm)", "Rá»™ng (mm)", "Cao (mm)", "Cao Äá»™ ÄÃ¡y (mm)", "SL", "DT Lá»— Má»Ÿ (mÂ²)", "Ghi ChÃº"
             };
 
             var openingHeaderRow = sheet.CreateRow(rowIdx++);
+            openingHeaderRow.HeightInPoints = 24f;
             for (int i = 0; i < openingHeaders.Length; i++)
             {
                 SetCell(openingHeaderRow, i, openingHeaders[i], headerStyle);
@@ -626,14 +643,14 @@ namespace ShopDrawing.Plugin.UI
                     SetCell(row, 5, wall.SpecKey, dataStyle);
                     SetCell(row, 6, opening.Type, dataStyle);
                     if (opening.CenterStationMm >= 0)
-                        SetCell(row, 7, Math.Round(opening.CenterStationMm), computedStyle);
+                        SetCell(row, 7, Math.Round(opening.CenterStationMm), computedIntegerStyle);
                     else
-                        SetCell(row, 7, "Chưa xác định", dataStyle);
+                        SetCell(row, 7, "ChÆ°a xÃ¡c Ä‘á»‹nh", dataStyle);
 
-                    SetCell(row, 8, Math.Round(opening.Width), computedStyle);
-                    SetCell(row, 9, Math.Round(opening.Height), computedStyle);
-                    SetCell(row, 10, Math.Round(opening.BottomElevationMm), computedStyle);
-                    SetCell(row, 11, Math.Max(1, opening.Quantity), computedStyle);
+                    SetCell(row, 8, Math.Round(opening.Width), computedIntegerStyle);
+                    SetCell(row, 9, Math.Round(opening.Height), computedIntegerStyle);
+                    SetCell(row, 10, Math.Round(opening.BottomElevationMm), computedIntegerStyle);
+                    SetCell(row, 11, Math.Max(1, opening.Quantity), computedIntegerStyle);
                     SetFormulaCell(
                         row,
                         12,
@@ -641,22 +658,22 @@ namespace ShopDrawing.Plugin.UI
                         computedStyle);
 
                     string openingNote = opening.CenterStationMm >= 0
-                        ? $"Vách {wall.Name}: LT {Math.Round(opening.CenterStationMm)} mm"
-                        : $"Vách {wall.Name}: chưa có LT";
+                        ? $"VÃ¡ch {wall.Name}: LT {Math.Round(opening.CenterStationMm)} mm"
+                        : $"VÃ¡ch {wall.Name}: chÆ°a cÃ³ LT";
                     SetCell(row, 13, openingNote, dataWrapStyle);
                     ApplyWrapRowHeight(row, openingNote, 80);
                 }
             }
 
             var openingTotalRow = sheet.CreateRow(rowIdx++);
-            SetMergedTextCell(sheet, openingTotalRow, 0, 10, "TỔNG LỖ MỞ", totalStyle);
+            SetMergedTextCell(sheet, openingTotalRow, 0, 10, "Tá»”NG Lá»– Má»ž", totalStyle);
             if (rowIdx > openingDataStart)
             {
                 SetFormulaCell(
                     openingTotalRow,
                     11,
                     $"SUM({CellRef(openingDataStart, 11)}:{CellRef(rowIdx - 2, 11)})",
-                    totalStyle);
+                    totalIntegerStyle);
                 SetFormulaCell(
                     openingTotalRow,
                     12,
@@ -665,7 +682,7 @@ namespace ShopDrawing.Plugin.UI
             }
             else
             {
-                SetCell(openingTotalRow, 11, 0, totalStyle);
+                SetCell(openingTotalRow, 11, 0, totalIntegerStyle);
                 SetCell(openingTotalRow, 12, 0, totalStyle);
             }
 
@@ -673,8 +690,56 @@ namespace ShopDrawing.Plugin.UI
 
             rowIdx += 2;
 
+            var geometryTitleRow = sheet.CreateRow(rowIdx++);
+            SetCell(geometryTitleRow, 0, "THÃ”NG Sá» HÃŒNH Há»ŒC VÃCH / Máº¢NG TRáº¦N", sectionStyle);
+            SetMergedTextCell(
+                sheet,
+                geometryTitleRow,
+                0,
+                13,
+                geometryTitleRow.GetCell(0)?.StringCellValue ?? string.Empty,
+                sectionStyle);
+
+            string[] geometryHeaders =
+            {
+                "STT", "Táº§ng", "KÃ½ Hiá»‡u VÃ¡ch", "Háº¡ng Má»¥c", "á»¨ng Dá»¥ng", "MÃ£ Spec", "NhÃ³m DÃ²ng",
+                "DÃ i Máº£ng (mm)", "Cao TB (mm)", "DT HÃ¬nh Há»c (mÂ²)", "Ghi ChÃº"
+            };
+
+            var geometryHeaderRow = sheet.CreateRow(rowIdx++);
+            geometryHeaderRow.HeightInPoints = 24f;
+            for (int i = 0; i < geometryHeaders.Length; i++)
+            {
+                SetCell(geometryHeaderRow, i, geometryHeaders[i], headerStyle);
+            }
+
+            int geometryStt = 1;
+            foreach (var wall in orderedWalls)
+            {
+                var row = sheet.CreateRow(rowIdx++);
+                SetCell(row, 0, geometryStt++, dataStyle);
+                SetCell(row, 1, wall.Floor, dataStyle);
+                SetCell(row, 2, wall.Name, dataStyle);
+                SetCell(row, 3, wall.Category, dataStyle);
+                SetCell(row, 4, wall.Application, dataStyle);
+                SetCell(row, 5, wall.SpecKey, dataStyle);
+                SetCell(row, 6, "ThÃ´ng sá»‘", dataStyle);
+                SetCell(row, 7, Math.Round(wall.Length), computedIntegerStyle);
+                SetCell(row, 8, Math.Round(wall.RepresentativeHeightMm), computedIntegerStyle);
+                SetFormulaCell(
+                    row,
+                    9,
+                    $"{CellRef(row.RowNum, 7)}*{CellRef(row.RowNum, 8)}/1000000",
+                    computedStyle);
+                string geometryNote = $"KÃ­ch thÆ°á»›c hÃ¬nh há»c: L={Math.Round(wall.Length)} mm; Htb={Math.Round(wall.RepresentativeHeightMm)} mm";
+                SetCell(row, 10, geometryNote, dataWrapStyle);
+                ApplyWrapRowHeight(row, geometryNote, 88);
+            }
+
+            rowIdx += 2;
+
             var panelTitleRow = sheet.CreateRow(rowIdx++);
-            SetCell(panelTitleRow, 0, "DIỄN GIẢI DÒNG TẤM PANEL", sectionStyle);
+            SetCell(panelTitleRow, 0, "DIá»„N GIáº¢I DÃ’NG Táº¤M PANEL", sectionStyle);
             SetMergedTextCell(
                 sheet,
                 panelTitleRow,
@@ -685,11 +750,12 @@ namespace ShopDrawing.Plugin.UI
 
             string[] panelHeaders =
             {
-                "STT", "Tầng", "Ký Hiệu Vách", "Hạng Mục", "Ứng Dụng", "Mã Spec", "Nhóm Dòng",
-                "Khổ Tấm (mm)", "Dài Tấm (mm)", "SL", "DT Dòng (m²)", "DT Cấp (m²)", "DT Hao Hụt (m²)", "Ghi Chú"
+                "STT", "Táº§ng", "KÃ½ Hiá»‡u VÃ¡ch", "Háº¡ng Má»¥c", "á»¨ng Dá»¥ng", "MÃ£ Spec", "NhÃ³m DÃ²ng",
+                "Khá»• Táº¥m (mm)", "DÃ i Táº¥m (mm)", "SL", "DT DÃ²ng (mÂ²)", "DT Cáº¥p (mÂ²)", "DT Hao Há»¥t (mÂ²)", "Ghi ChÃº"
             };
 
             var panelHeaderRow = sheet.CreateRow(rowIdx++);
+            panelHeaderRow.HeightInPoints = 24f;
             for (int i = 0; i < panelHeaders.Length; i++)
             {
                 SetCell(panelHeaderRow, i, panelHeaders[i], headerStyle);
@@ -713,9 +779,9 @@ namespace ShopDrawing.Plugin.UI
                     SetCell(row, 4, wall.Application, dataStyle);
                     SetCell(row, 5, wall.SpecKey, dataStyle);
                     SetCell(row, 6, entry.Label, dataStyle);
-                    SetCell(row, 7, entry.WidthMm, computedStyle);
-                    SetCell(row, 8, entry.LengthMm, computedStyle);
-                    SetCell(row, 9, entry.Count, computedStyle);
+                    SetCell(row, 7, entry.WidthMm, computedIntegerStyle);
+                    SetCell(row, 8, entry.LengthMm, computedIntegerStyle);
+                    SetCell(row, 9, entry.Count, computedIntegerStyle);
                     SetFormulaCell(
                         row,
                         10,
@@ -724,22 +790,21 @@ namespace ShopDrawing.Plugin.UI
                     SetFormulaCell(
                         row,
                         11,
-                        $"IF(LEFT({CellRef(row.RowNum, 6)},6)=\"Hao hụt\",0,{CellRef(row.RowNum, 10)})",
+                        $"IF(LEFT({CellRef(row.RowNum, 6)},3)=\"Hao\",0,{CellRef(row.RowNum, 10)})",
                         computedStyle);
                     SetFormulaCell(
                         row,
                         12,
-                        $"IF(LEFT({CellRef(row.RowNum, 6)},6)=\"Hao hụt\",{CellRef(row.RowNum, 10)},0)",
+                        $"IF(LEFT({CellRef(row.RowNum, 6)},3)=\"Hao\",{CellRef(row.RowNum, 10)},0)",
                         computedStyle);
-
-                    string panelNote = $"Khổ chuẩn {wall.PanelWidth} mm; Lỗ mở: {wall.TotalOpeningCount}";
+                    string panelNote = $"Khá»• chuáº©n {wall.PanelWidth} mm; Lá»— má»Ÿ: {wall.TotalOpeningCount}";
                     SetCell(row, 13, panelNote, dataWrapStyle);
                     ApplyWrapRowHeight(row, panelNote, 80);
                 }
             }
 
             var panelTotalRow = sheet.CreateRow(rowIdx++);
-            SetMergedTextCell(sheet, panelTotalRow, 0, 9, "TỔNG PANEL", totalStyle);
+            SetMergedTextCell(sheet, panelTotalRow, 0, 9, "Tá»”NG PANEL", totalStyle);
             if (rowIdx > panelDataStart)
             {
                 SetFormulaCell(
@@ -818,7 +883,7 @@ namespace ShopDrawing.Plugin.UI
         {
             int[] widths =
             {
-                6, 12, 14, 12, 12, 12, 18, 14, 11, 11, 14, 8, 14, 40
+                6, 10, 13, 11, 10, 12, 16, 15, 14, 11, 13, 7, 12, 42
             };
 
             ApplyColumnWidths(sheet, widths);
@@ -1054,6 +1119,20 @@ namespace ShopDrawing.Plugin.UI
             return style;
         }
 
+        private static ICellStyle CreateComputedIntegerStyle(IWorkbook workbook, ICellStyle baseStyle)
+        {
+            var style = workbook.CreateCellStyle();
+            style.CloneStyleFrom(baseStyle);
+
+            var font = workbook.CreateFont();
+            font.Color = NPOI.HSSF.Util.HSSFColor.Blue.Index;
+            style.SetFont(font);
+
+            style.Alignment = HorizontalAlignment.Right;
+            style.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0");
+            return style;
+        }
+
         private static ICellStyle CreateTotalStyle(IWorkbook workbook, ICellStyle baseStyle)
         {
             var style = workbook.CreateCellStyle();
@@ -1068,6 +1147,23 @@ namespace ShopDrawing.Plugin.UI
             style.BorderTop = BorderStyle.Medium;
             style.BorderBottom = BorderStyle.Medium;
             style.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.00");
+            return style;
+        }
+
+        private static ICellStyle CreateTotalIntegerStyle(IWorkbook workbook, ICellStyle baseStyle)
+        {
+            var style = workbook.CreateCellStyle();
+            style.CloneStyleFrom(baseStyle);
+
+            var font = workbook.CreateFont();
+            font.IsBold = true;
+            font.FontHeightInPoints = 10;
+            style.SetFont(font);
+
+            style.Alignment = HorizontalAlignment.Right;
+            style.BorderTop = BorderStyle.Medium;
+            style.BorderBottom = BorderStyle.Medium;
+            style.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0");
             return style;
         }
 

@@ -365,7 +365,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                             double maxVy = vertices.Max(v => v[1]);
 
-                            length = maxVx - minVx;
+                            length = TryResolvePolygonDevelopedGeometry(
+                                vertices,
+                                out _,
+                                out _,
+                                out var developedLength)
+                                ? developedLength
+                                : maxVx - minVx;
 
                             height = maxVy - minVy;
 
@@ -814,7 +820,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                             double maxVy = vertices.Max(v => v[1]);
 
-                            newRow.Length = maxVx - minVx;
+                            newRow.Length = TryResolvePolygonDevelopedGeometry(
+                                vertices,
+                                out _,
+                                out _,
+                                out var developedLength)
+                                ? developedLength
+                                : maxVx - minVx;
 
                             newRow.Height = maxVy - minVy;
 
@@ -2709,6 +2721,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     pickPoint2,
                     wallRow.PolygonVertices,
                     Math.Max(1.0, wallRow.Length),
+                    preferAxisProjection: !HasNonOrthogonalEdges(wallRow.PolygonVertices),
                     out stationMm,
                     out projectedWidthMm))
             {
@@ -2773,6 +2786,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 pickPoint2,
                                 vertices,
                                 Math.Max(1.0, wallRow.Length),
+                                preferAxisProjection: !HasNonOrthogonalEdges(vertices),
                                 out stationMm,
                                 out projectedWidthMm);
                         }
@@ -2892,6 +2906,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
             IReadOnlyList<double[]> polygonVertices,
             double referenceLengthMm,
+            bool preferAxisProjection,
             out double stationMm,
             out double projectedWidthMm)
         {
@@ -2902,44 +2917,81 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             double lengthRef = Math.Max(1.0, referenceLengthMm);
             var polygon = polygonVertices.Select(v => v.ToArray()).ToList();
-            if (TryResolveOpeningPreviewChains(
-                    polygon,
-                    lengthRef,
-                    out var referenceChain,
-                    out _,
-                    out var chainLength)
-                && TryProjectPointToPolylineChain(pickPoint1, referenceChain, out var station1, out _)
-                && TryProjectPointToPolylineChain(pickPoint2, referenceChain, out var station2, out _))
+
+            bool TryResolveByDevelopedChain(
+                out double resolvedStation,
+                out double resolvedWidth)
             {
+                resolvedStation = -1;
+                resolvedWidth = 0;
+
+                if (!TryResolvePolygonDevelopedGeometry(
+                        polygon,
+                        out var referenceChain,
+                        out _,
+                        out var chainLength))
+                {
+                    return false;
+                }
+
+                if (!TryProjectPointToPolylineChain(pickPoint1, referenceChain, out var station1, out _)
+                    || !TryProjectPointToPolylineChain(pickPoint2, referenceChain, out var station2, out _))
+                {
+                    return false;
+                }
+
                 double scale = lengthRef / Math.Max(1.0, chainLength);
-                stationMm = Math.Max(0, Math.Min(station1, station2) * scale);
-                projectedWidthMm = Math.Max(0, Math.Abs(station2 - station1) * scale);
-                if (projectedWidthMm > 0.5)
-                    return true;
+                resolvedStation = Math.Max(0, Math.Min(station1, station2) * scale);
+                resolvedWidth = Math.Max(0, Math.Abs(station2 - station1) * scale);
+                return resolvedWidth > 0.5;
             }
 
-            double minX = polygonVertices.Min(v => v[0]);
-            double maxX = polygonVertices.Max(v => v[0]);
-            double minY = polygonVertices.Min(v => v[1]);
-            double maxY = polygonVertices.Max(v => v[1]);
-            double spanX = Math.Max(1.0, maxX - minX);
-            double spanY = Math.Max(1.0, maxY - minY);
-            bool stationAlongX = spanX >= spanY;
-            double axisMin = stationAlongX ? minX : minY;
-            double axisMax = stationAlongX ? maxX : maxY;
-            double axisSpan = Math.Max(1.0, axisMax - axisMin);
+            bool TryResolveByAxisProjection(
+                out double resolvedStation,
+                out double resolvedWidth)
+            {
+                resolvedStation = -1;
+                resolvedWidth = 0;
 
-            double axis1 = stationAlongX ? pickPoint1.X : pickPoint1.Y;
-            double axis2 = stationAlongX ? pickPoint2.X : pickPoint2.Y;
-            double axisStart = Math.Max(axisMin, Math.Min(axisMax, Math.Min(axis1, axis2)));
-            double axisEnd = Math.Max(axisMin, Math.Min(axisMax, Math.Max(axis1, axis2)));
-            double axisWidth = Math.Max(0, axisEnd - axisStart);
-            if (axisWidth <= 0.5)
-                return false;
+                double minX = polygonVertices.Min(v => v[0]);
+                double maxX = polygonVertices.Max(v => v[0]);
+                double minY = polygonVertices.Min(v => v[1]);
+                double maxY = polygonVertices.Max(v => v[1]);
+                double spanX = Math.Max(1.0, maxX - minX);
+                double spanY = Math.Max(1.0, maxY - minY);
+                bool stationAlongX = spanX >= spanY;
+                double axisMin = stationAlongX ? minX : minY;
+                double axisMax = stationAlongX ? maxX : maxY;
+                double axisSpan = Math.Max(1.0, axisMax - axisMin);
 
-            stationMm = ((axisStart - axisMin) / axisSpan) * lengthRef;
-            projectedWidthMm = (axisWidth / axisSpan) * lengthRef;
-            return projectedWidthMm > 0.5;
+                double axis1 = stationAlongX ? pickPoint1.X : pickPoint1.Y;
+                double axis2 = stationAlongX ? pickPoint2.X : pickPoint2.Y;
+                double axisStart = Math.Max(axisMin, Math.Min(axisMax, Math.Min(axis1, axis2)));
+                double axisEnd = Math.Max(axisMin, Math.Min(axisMax, Math.Max(axis1, axis2)));
+                double axisWidth = Math.Max(0, axisEnd - axisStart);
+                if (axisWidth <= 0.5)
+                    return false;
+
+                resolvedStation = ((axisStart - axisMin) / axisSpan) * lengthRef;
+                resolvedWidth = (axisWidth / axisSpan) * lengthRef;
+                return resolvedWidth > 0.5;
+            }
+
+            if (TryResolveByDevelopedChain(out var developedStation, out var developedWidth))
+            {
+                stationMm = developedStation;
+                projectedWidthMm = developedWidth;
+                return true;
+            }
+
+            if (TryResolveByAxisProjection(out var fallbackStation, out var fallbackWidth))
+            {
+                stationMm = fallbackStation;
+                projectedWidthMm = fallbackWidth;
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryProjectPointToPolylineChain(

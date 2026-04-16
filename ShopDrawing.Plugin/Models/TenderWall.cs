@@ -447,22 +447,69 @@ namespace ShopDrawing.Plugin.Models
 
                     if (cappedForThisOp > 0 && reducedSpan > 0)
                     {
-                        double key = Math.Round(reducedSpan);
-                        if (reducedGroups.ContainsKey(key))
-                            reducedGroups[key] += cappedForThisOp;
-                        else
-                            reducedGroups[key] = cappedForThisOp;
+                        var overlapBands = ResolveOpeningDivisionOverlapBands(op).ToList();
+                        bool hasFullBandCut = overlapBands.Any(w => w >= PanelWidth - 1.0);
+                        bool appliedFullBandSplit = false;
+
+                        if (hasFullBandCut
+                            && TryResolveFullBandSplitLengths(op, out var seg1Length, out var seg2Length))
+                        {
+                            AddReducedPiece(seg1Length, cappedForThisOp);
+                            AddReducedPiece(seg2Length, cappedForThisOp);
+                            appliedFullBandSplit = true;
+                        }
+
+                        if (!appliedFullBandSplit)
+                        {
+                            AddReducedPiece(reducedSpan, cappedForThisOp);
+                        }
 
                         totalReducedPanels += cappedForThisOp;
                         remainingReduciblePanels -= cappedForThisOp;
 
                         if (opSpanDim > 1)
                         {
-                            var wasteKey = (Width: Math.Round((double)PanelWidth), Length: Math.Round(opSpanDim));
-                            if (openingWasteGroups.ContainsKey(wasteKey))
-                                openingWasteGroups[wasteKey] += cappedForThisOp;
+                            int openingQty = Math.Max(1, op.Quantity);
+                            if (overlapBands.Count == 0)
+                            {
+                                double fallbackWidth = Math.Round(Math.Min(PanelWidth, Math.Max(1, opDivDim)));
+                                if (fallbackWidth < PanelWidth - 1.0)
+                                {
+                                    var wasteKey = (Width: fallbackWidth, Length: Math.Round(opSpanDim));
+                                    if (openingWasteGroups.ContainsKey(wasteKey))
+                                        openingWasteGroups[wasteKey] += cappedForThisOp;
+                                    else
+                                        openingWasteGroups[wasteKey] = cappedForThisOp;
+                                }
+                            }
                             else
-                                openingWasteGroups[wasteKey] = cappedForThisOp;
+                            {
+                                foreach (var bandWidth in overlapBands)
+                                {
+                                    // Cắt trọn bề rộng dải panel => không tính là hao hụt.
+                                    if (bandWidth >= PanelWidth - 1.0)
+                                        continue;
+
+                                    var wasteKey = (Width: bandWidth, Length: Math.Round(opSpanDim));
+                                    int addCount = openingQty;
+                                    if (openingWasteGroups.ContainsKey(wasteKey))
+                                        openingWasteGroups[wasteKey] += addCount;
+                                    else
+                                        openingWasteGroups[wasteKey] = addCount;
+                                }
+                            }
+                        }
+
+                        void AddReducedPiece(double pieceLength, int count)
+                        {
+                            double roundedLength = Math.Round(pieceLength);
+                            if (roundedLength <= 1.0 || count <= 0)
+                                return;
+
+                            if (reducedGroups.ContainsKey(roundedLength))
+                                reducedGroups[roundedLength] += count;
+                            else
+                                reducedGroups[roundedLength] = count;
                         }
                     }
                 }
@@ -577,7 +624,9 @@ namespace ShopDrawing.Plugin.Models
                         continue;
 
                     removedArea += overlapDiv * overlapSpan;
-                    AddWaste(overlapDiv, overlapSpan, openingWasteGroups);
+                    // Cắt trọn bề rộng dải panel (kể cả dải cuối không đủ khổ) không tính hao hụt.
+                    if (overlapDiv < installedDiv - 1.0)
+                        AddWaste(overlapDiv, overlapSpan, openingWasteGroups);
                 }
 
                 double nominalArea = PanelWidth * PanelSpan;
@@ -736,11 +785,15 @@ namespace ShopDrawing.Plugin.Models
                     if (cutHeight <= 0)
                         continue;
 
-                    var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
-                    if (openingWasteGroups.ContainsKey(wasteKey))
-                        openingWasteGroups[wasteKey]++;
-                    else
-                        openingWasteGroups[wasteKey] = 1;
+                    // Cắt trọn bề rộng dải panel không tính hao hụt.
+                    if (overlapWidth < stripWidth - 1.0)
+                    {
+                        var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
+                        if (openingWasteGroups.ContainsKey(wasteKey))
+                            openingWasteGroups[wasteKey]++;
+                        else
+                            openingWasteGroups[wasteKey] = 1;
+                    }
                 }
 
             }
@@ -824,6 +877,87 @@ namespace ShopDrawing.Plugin.Models
             }
 
             return ranges;
+        }
+
+        private IEnumerable<double> ResolveOpeningDivisionOverlapBands(TenderOpening opening)
+        {
+            if (opening == null || PanelWidth <= 0 || DivisionSpan <= 0)
+                yield break;
+
+            if (LayoutDirection == "Ngang")
+            {
+                double start = Math.Max(0, opening.BottomElevationMm);
+                double end = Math.Max(start, Math.Min(DivisionSpan, start + Math.Max(0, opening.Height)));
+                foreach (var width in BuildOverlapBands(start, end))
+                    yield return width;
+                yield break;
+            }
+
+            if (opening.CenterStationMm < 0)
+                yield break;
+
+            double startAlongLength = Math.Max(0, opening.CenterStationMm - opening.Width / 2.0);
+            double endAlongLength = Math.Max(startAlongLength, Math.Min(DivisionSpan, startAlongLength + Math.Max(0, opening.Width)));
+            foreach (var width in BuildOverlapBands(startAlongLength, endAlongLength))
+                yield return width;
+        }
+
+        private bool TryResolveFullBandSplitLengths(
+            TenderOpening opening,
+            out double firstPieceLengthMm,
+            out double secondPieceLengthMm)
+        {
+            firstPieceLengthMm = 0;
+            secondPieceLengthMm = 0;
+
+            if (opening == null || PanelSpan <= 0)
+                return false;
+
+            double spanStart;
+            double spanEnd;
+
+            if (LayoutDirection == "Ngang")
+            {
+                if (opening.CenterStationMm < 0 || opening.Width <= 0)
+                    return false;
+
+                double rawStart = opening.CenterStationMm - opening.Width / 2.0;
+                spanStart = Math.Max(0, Math.Min(PanelSpan, rawStart));
+                spanEnd = Math.Max(spanStart, Math.Min(PanelSpan, rawStart + opening.Width));
+            }
+            else
+            {
+                if (opening.Height <= 0)
+                    return false;
+
+                spanStart = Math.Max(0, Math.Min(PanelSpan, opening.BottomElevationMm));
+                spanEnd = Math.Max(spanStart, Math.Min(PanelSpan, spanStart + opening.Height));
+            }
+
+            if (spanEnd - spanStart <= 1.0)
+                return false;
+
+            firstPieceLengthMm = Math.Max(0, spanStart);
+            secondPieceLengthMm = Math.Max(0, PanelSpan - spanEnd);
+            return true;
+        }
+
+        private IEnumerable<double> BuildOverlapBands(double start, double end)
+        {
+            if (end - start <= 1.0)
+                yield break;
+
+            int firstStrip = Math.Max(0, (int)Math.Floor(start / PanelWidth));
+            int lastStrip = Math.Max(firstStrip, (int)Math.Ceiling(end / PanelWidth) - 1);
+            for (int strip = firstStrip; strip <= lastStrip; strip++)
+            {
+                double stripStart = strip * PanelWidth;
+                double stripEnd = Math.Min((strip + 1) * PanelWidth, DivisionSpan);
+                double overlap = Math.Max(0, Math.Min(stripEnd, end) - Math.Max(stripStart, start));
+                double rounded = Math.Round(overlap);
+                if (rounded > 0)
+                    yield return rounded;
+            }
         }
 
         public double OrderedAreaM2

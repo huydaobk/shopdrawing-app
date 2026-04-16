@@ -21,10 +21,10 @@ namespace ShopDrawing.Plugin.UI
         private const int SpecSheetMaxColumnIndex = 18;
         private const int PanelExplainSheetMaxColumnIndex = 13;
         // Keep sheet names ASCII + short to avoid NPOI validation issues on some encodings/locales.
-        private const string TenderSheetName = "Khoi luong dau thau";
-        private const string PanelExplainSheetName = "Dien giai panel lo mo";
-        private const string BasisSheetName = "Co so phu kien";
-        private const string SpecSheetName = "Quan ly spec";
+        private const string TenderSheetName = "\u004B\u0068\u1ED1\u0069 \u006C\u01B0\u1EE3\u006E\u0067 \u0111\u1EA5\u0075 \u0074\u0068\u1EA7\u0075";
+        private const string PanelExplainSheetName = "\u0044\u0069\u1EC5\u006E \u0067\u0069\u1EA3\u0069 \u0070\u0061\u006E\u0065\u006C";
+        private const string BasisSheetName = "\u0043\u01A1 \u0073\u1EDF \u0070\u0068\u1EE5 \u006B\u0069\u1EC7\u006E";
+        private const string SpecSheetName = "\u0051\u0075\u1EA3\u006E \u006C\u00FD \u0073\u0070\u0065\u0063";
 
         public void Export(TenderProject project, string filePath)
         {

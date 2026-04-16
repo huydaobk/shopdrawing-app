@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
@@ -2046,6 +2046,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Height = Math.Max(1, Math.Round(o.Height)),
                     BottomElevationMm = Math.Max(0, Math.Round(o.BottomElevationMm)),
                     CenterStationMm = o.CenterStationMm,
+                    ResolvedChainRatioStart = o.ResolvedChainRatioStart,
+                    ResolvedChainRatioEnd = o.ResolvedChainRatioEnd,
                     Quantity = Math.Max(1, o.Quantity)
                 })
                 .ToList();
@@ -2697,10 +2699,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             Autodesk.AutoCAD.Geometry.Point3d pickPoint2,
             TenderWallRow wallRow,
             out double stationMm,
-            out double projectedWidthMm)
+            out double projectedWidthMm,
+            out double chainRatioStart,
+            out double chainRatioEnd)
         {
             stationMm = -1;
             projectedWidthMm = 0;
+            chainRatioStart = -1;
+            chainRatioEnd = -1;
             if (wallRow == null)
                 return false;
 
@@ -2722,8 +2728,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     wallRow.PolygonVertices,
                     Math.Max(1.0, wallRow.Length),
                     preferAxisProjection: !HasNonOrthogonalEdges(wallRow.PolygonVertices),
-                    out stationMm,
-                    out projectedWidthMm))
+                    stationMm: out stationMm,
+                    projectedWidthMm: out projectedWidthMm,
+                    chainRatioStart: out chainRatioStart,
+                    chainRatioEnd: out chainRatioEnd))
             {
                 return true;
             }
@@ -2787,8 +2795,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 vertices,
                                 Math.Max(1.0, wallRow.Length),
                                 preferAxisProjection: !HasNonOrthogonalEdges(vertices),
-                                out stationMm,
-                                out projectedWidthMm);
+                                stationMm: out stationMm,
+                                projectedWidthMm: out projectedWidthMm,
+                                chainRatioStart: out chainRatioStart,
+                                chainRatioEnd: out chainRatioEnd);
                         }
                         else if (vertices.Count >= 2)
                         {
@@ -2908,10 +2918,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             double referenceLengthMm,
             bool preferAxisProjection,
             out double stationMm,
-            out double projectedWidthMm)
+            out double projectedWidthMm,
+            out double chainRatioStart,
+            out double chainRatioEnd)
         {
             stationMm = -1;
             projectedWidthMm = 0;
+            chainRatioStart = -1;
+            chainRatioEnd = -1;
             if (polygonVertices == null || polygonVertices.Count < 3)
                 return false;
 
@@ -2920,10 +2934,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
             bool TryResolveByDevelopedChain(
                 out double resolvedStation,
-                out double resolvedWidth)
+                out double resolvedWidth,
+                out double resolvedRatioStart,
+                out double resolvedRatioEnd)
             {
                 resolvedStation = -1;
                 resolvedWidth = 0;
+                resolvedRatioStart = -1;
+                resolvedRatioEnd = -1;
 
                 if (!TryResolvePolygonDevelopedGeometry(
                         polygon,
@@ -2943,6 +2961,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double scale = lengthRef / Math.Max(1.0, chainLength);
                 resolvedStation = Math.Max(0, Math.Min(station1, station2) * scale);
                 resolvedWidth = Math.Max(0, Math.Abs(station2 - station1) * scale);
+
+                // Cache chain ratio để preview dùng trực tiếp, tránh re-resolve chain direction
+                double cl = Math.Max(1.0, chainLength);
+                resolvedRatioStart = Math.Max(0, Math.Min(1, Math.Min(station1, station2) / cl));
+                resolvedRatioEnd = Math.Max(0, Math.Min(1, Math.Max(station1, station2) / cl));
+
                 return resolvedWidth > 0.5;
             }
 
@@ -2977,10 +3001,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return resolvedWidth > 0.5;
             }
 
-            if (TryResolveByDevelopedChain(out var developedStation, out var developedWidth))
+            if (TryResolveByDevelopedChain(out var developedStation, out var developedWidth,
+                    out var devRatioStart, out var devRatioEnd))
             {
                 stationMm = developedStation;
                 projectedWidthMm = developedWidth;
+                chainRatioStart = devRatioStart;
+                chainRatioEnd = devRatioEnd;
                 return true;
             }
 
@@ -2988,6 +3015,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 stationMm = fallbackStation;
                 projectedWidthMm = fallbackWidth;
+                // chainRatioStart/End remain -1 for axis projection fallback
                 return true;
             }
 
@@ -3470,14 +3498,20 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double finalH = heightMm;
                 double finalBottom = Math.Max(0, Math.Round(existingRow?.BottomElevationMm ?? 0));
                 double finalStation = Math.Round(existingRow?.CenterStationMm ?? -1);
+                double finalChainRatioStart = existingRow?.ResolvedChainRatioStart ?? -1;
+                double finalChainRatioEnd = existingRow?.ResolvedChainRatioEnd ?? -1;
                 if (!isElevation && TryResolveOpeningStationAndWidthFromWallGeometry(
                     p1,
                     p2,
                     wallRow,
                     out var detectedStation,
-                    out var projectedWidth))
+                    out var projectedWidth,
+                    out var detectedRatioStart,
+                    out var detectedRatioEnd))
                 {
                     finalStation = Math.Round(detectedStation);
+                    finalChainRatioStart = detectedRatioStart;
+                    finalChainRatioEnd = detectedRatioEnd;
                     if (projectedWidth > 0)
                         finalW = Math.Round(projectedWidth);
 
@@ -3614,6 +3648,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         existingRow.Height = finalH;
                         existingRow.BottomElevationMm = finalBottom;
                         existingRow.CenterStationMm = finalStation;
+                        existingRow.ResolvedChainRatioStart = finalChainRatioStart;
+                        existingRow.ResolvedChainRatioEnd = finalChainRatioEnd;
 
                         existingRow.Type = TenderOpening.ResolveTypeByBottomElevation(finalBottom);
 
@@ -3637,6 +3673,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                             BottomElevationMm = finalBottom,
                             CenterStationMm = finalStation,
+                            ResolvedChainRatioStart = finalChainRatioStart,
+                            ResolvedChainRatioEnd = finalChainRatioEnd,
 
                             Quantity = 1
 

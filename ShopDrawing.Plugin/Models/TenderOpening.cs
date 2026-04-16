@@ -17,6 +17,19 @@ namespace ShopDrawing.Plugin.Models
         /// <summary>Lý trình tham chiếu opening theo tuyến vách (mm, từ đầu tuyến). -1 = chưa xác định.</summary>
         public double CenterStationMm { get; set; } = -1;
 
+        /// <summary>
+        /// Tỷ lệ vị trí mép trái opening trên polygon reference chain (0.0 → 1.0).
+        /// Được tính khi pick opening từ polygon để đảm bảo preview render cùng vị trí.
+        /// -1 = chưa xác định (fallback dùng CenterStationMm).
+        /// </summary>
+        public double ResolvedChainRatioStart { get; set; } = -1;
+
+        /// <summary>
+        /// Tỷ lệ vị trí mép phải opening trên polygon reference chain (0.0 → 1.0).
+        /// -1 = chưa xác định.
+        /// </summary>
+        public double ResolvedChainRatioEnd { get; set; } = -1;
+
         /// <summary>So luong opening cung kich thuoc</summary>
         public int Quantity { get; set; } = 1;
 

@@ -231,7 +231,7 @@ namespace ShopDrawing.Plugin.UI
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"SUMIFS({panelExplainSheetRef}!$I:$I,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Th\u00F4ng s\u1ED1\")",
+                    $"SUMIFS({panelExplainSheetRef}!$J:$J,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Th\u00F4ng s\u1ED1\")",
                     computedStyle);
                 SetFormulaCell(
                     excelRow,

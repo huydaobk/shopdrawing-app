@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -1903,22 +1903,34 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
 
             foreach (var opening in expandedOpenings)
             {
-                bool useFallback = opening.CenterStationMm < 0;
-                int currentFallback = useFallback ? fallbackIndex++ : -1;
+                double ratioStart, ratioEnd;
 
-                if (!TryResolveOpeningStation(
-                        opening,
-                        currentFallback,
-                        missingStations,
-                        drawingLength,
-                        out var stationStartMm,
-                        out var stationEndMm))
+                // Ưu tiên dùng chain ratio đã cache từ lúc pick (đảm bảo đồng bộ chain direction)
+                if (opening.ResolvedChainRatioStart >= 0 && opening.ResolvedChainRatioEnd >= 0)
                 {
-                    continue;
+                    ratioStart = Math.Max(0, Math.Min(1, opening.ResolvedChainRatioStart));
+                    ratioEnd = Math.Max(0, Math.Min(1, opening.ResolvedChainRatioEnd));
                 }
+                else
+                {
+                    // Fallback: tính ratio từ CenterStationMm (cho opening được nhập tay hoặc legacy)
+                    bool useFallback = opening.CenterStationMm < 0;
+                    int currentFallback = useFallback ? fallbackIndex++ : -1;
 
-                double ratioStart = Math.Max(0, Math.Min(1, stationStartMm / drawingLength));
-                double ratioEnd = Math.Max(0, Math.Min(1, stationEndMm / drawingLength));
+                    if (!TryResolveOpeningStation(
+                            opening,
+                            currentFallback,
+                            missingStations,
+                            drawingLength,
+                            out var stationStartMmTmp,
+                            out var stationEndMmTmp))
+                    {
+                        continue;
+                    }
+
+                    ratioStart = Math.Max(0, Math.Min(1, stationStartMmTmp / drawingLength));
+                    ratioEnd = Math.Max(0, Math.Min(1, stationEndMmTmp / drawingLength));
+                }
 
                 var referenceStart = GetPointAlongPolyline(referenceChain, ratioStart);
                 var referenceEnd = GetPointAlongPolyline(referenceChain, ratioEnd);
@@ -1933,6 +1945,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     continue;
                 }
 
+                double stationStartMm = ratioStart * drawingLength;
+                double stationEndMm = ratioEnd * drawingLength;
                 double stationCenterMm = (stationStartMm + stationEndMm) * 0.5;
                 double segmentHeightMm = Math.Max(1.0, GetHeightAt(stationCenterMm, heightSegments, drawingLength));
                 double localHeightMm = Math.Max(1.0, Math.Min(segmentHeightMm, Math.Min(localHeightStart, localHeightEnd)));
@@ -3166,6 +3180,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                     Height = op.Height,
                     BottomElevationMm = op.BottomElevationMm,
                     CenterStationMm = op.CenterStationMm,
+                    ResolvedChainRatioStart = op.ResolvedChainRatioStart,
+                    ResolvedChainRatioEnd = op.ResolvedChainRatioEnd,
                     Quantity = op.Quantity
                 });
         }
@@ -3894,6 +3910,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
                 Height = r.Height,
                 BottomElevationMm = Math.Max(0, r.BottomElevationMm),
                 CenterStationMm = r.CenterStationMm,
+                ResolvedChainRatioStart = r.ResolvedChainRatioStart,
+                ResolvedChainRatioEnd = r.ResolvedChainRatioEnd,
                 Quantity = r.Quantity
             }).ToList();
         }
@@ -3990,6 +4008,8 @@ private void OnDeleteOpening(object sender, RoutedEventArgs e)
         public double Height { get; set; }
         public double BottomElevationMm { get; set; }
         public double CenterStationMm { get; set; } = -1;
+        public double ResolvedChainRatioStart { get; set; } = -1;
+        public double ResolvedChainRatioEnd { get; set; } = -1;
         public int Quantity { get; set; } = 1;
 
         public string TotalAreaDisplay => (Width * Height * Quantity / 1_000_000.0).ToString("F2");

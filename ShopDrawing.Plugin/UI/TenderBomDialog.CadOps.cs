@@ -1323,7 +1323,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     previewCanvas.Width = 960;
                     previewCanvas.Height = 480;
                     previewCanvas.Children.Clear();
-                    string layout = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c";
+                    string layout = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "D\u1ecdc";
 
                     if (mode == TenderPopupGeometryMode.WallLineChain)
                     {
@@ -1337,7 +1337,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                         referenceLengthMm = Math.Max(1, normalized.Sum(s => Math.Max(0, s.LengthMm)));
                         DrawHeightProfilePreview(previewCanvas, normalized, referenceLengthMm, seedRow.PanelWidth, layout, openingRows.Select(ToTenderOpeningFromRow).ToList());
-                        lblNote.Text = string.IsNullOrWhiteSpace(note) ? $"Mode: {mode} | DÃ i={referenceLengthMm:F0} mm" : note;
+                        lblNote.Text = string.IsNullOrWhiteSpace(note) ? $"Mode: {mode} | D\u00e0i={referenceLengthMm:F0} mm" : note;
                         lblNote.Foreground = string.IsNullOrWhiteSpace(note) ? Brushes.DarkGreen : Brushes.DarkGoldenrod;
                         return;
                     }
@@ -1351,24 +1351,24 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             referenceLengthMm = wallReference.ReferenceLengthMm;
                             referenceHeightMm = wallReference.ReferenceHeightMm;
                             DrawLocalPolygonPreview(previewCanvas, wallReference.BoundaryVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openingRows.Select(ToTenderOpeningFromRow).ToList(), referenceLengthMm, true, seedRow);
-                            lblNote.Text = $"Mode: {mode} | DÃ i={referenceLengthMm:F0} mm | Cao max={referenceHeightMm:F0} mm";
+                            lblNote.Text = $"Mode: {mode} | D\u00e0i={referenceLengthMm:F0} mm | Cao max={referenceHeightMm:F0} mm";
                             lblNote.Foreground = Brushes.DarkGreen;
                             return;
                         }
 
                         DrawLocalPolygonPreview(previewCanvas, polygonVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), null, 0, false, seedRow);
-                        lblNote.Text = $"Mode: {mode} | BiÃªn dáº¡ng vÃ¹ng: {polygonVertices.Count} Ä‘á»‰nh";
+                        lblNote.Text = $"Mode: {mode} | Bi\u00ean d\u1ea1ng v\u00f9ng: {polygonVertices.Count} \u0111\u1ec9nh";
                         lblNote.Foreground = Brushes.DarkGreen;
                         return;
                     }
 
-                    lblNote.Text = isCeiling ? "Chá»n Pick vÃ¹ng Ä‘á»ƒ láº¥y biÃªn dáº¡ng tráº§n." : "Chá»n Pick nhá»‹p hoáº·c Pick vÃ¹ng Ä‘á»ƒ báº¯t Ä‘áº§u.";
+                    lblNote.Text = isCeiling ? "Ch\u1ecdn Pick v\u00f9ng \u0111\u1ec3 l\u1ea5y bi\u00ean d\u1ea1ng tr\u1ea7n." : "Ch\u1ecdn Pick nh\u1ecbp ho\u1eb7c Pick v\u00f9ng \u0111\u1ec3 b\u1eaft \u0111\u1ea7u.";
                     lblNote.Foreground = Brushes.Firebrick;
                 }
 
                 var dlg = new Window
                 {
-                    Title = isRepick ? "Pick láº¡i hÃ¬nh há»c Tender" : "Pick hÃ¬nh há»c Tender",
+                    Title = isRepick ? "Pick l\u1ea1i h\u00ecnh h\u1ecdc Tender" : "Pick h\u00ecnh h\u1ecdc Tender",
                     Width = 1180,
                     Height = 860,
                     MinWidth = 1100,
@@ -1390,8 +1390,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 root.Children.Add(new TextBlock
                 {
                     Text = isCeiling
-                        ? "Tráº§n chá»‰ cho Pick vÃ¹ng. Má»i thao tÃ¡c hÃ¬nh há»c, preview vÃ  apply thá»±c hiá»‡n trong popup nÃ y."
-                        : "VÃ¡ch cho phÃ©p Pick nhá»‹p, Pick vÃ¹ng vÃ  Pick lá»— má»Ÿ. Ãp dá»¥ng xong sáº½ chá»n Ä‘iá»ƒm Ä‘áº·t Ä‘á»ƒ dá»±ng CAD tháº­t.",
+                        ? "Tr\u1ea7n ch\u1ec9 cho Pick v\u00f9ng. M\u1ecdi thao t\u00e1c h\u00ecnh h\u1ecdc, preview v\u00e0 apply th\u1ef1c hi\u1ec7n trong popup n\u00e0y."
+                        : "V\u00e1ch cho ph\u00e9p Pick nh\u1ecbp, Pick v\u00f9ng v\u00e0 Pick l\u1ed7 m\u1edf. \u00c1p d\u1ee5ng xong s\u1ebd ch\u1ecdn \u0111i\u1ec3m \u0111\u1eb7t \u0111\u1ec3 d\u1ef1ng CAD th\u1eadt.",
                     TextWrapping = TextWrapping.Wrap,
                     FontWeight = FontWeights.SemiBold,
                     Foreground = FgDark,
@@ -1404,7 +1404,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 leftTools.Children.Add(new TextBlock
                 {
-                    Text = "HÆ°á»›ng chia táº¥m:",
+                    Text = "H\u01b0\u1edbng chia t\u1ea5m:",
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(0, 0, 6, 0),
                     FontWeight = FontWeights.SemiBold,
@@ -1413,14 +1413,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 cboLayoutDirection = new ComboBox
                 {
                     Width = 120,
-                    ItemsSource = new[] { "Dá»c", "Ngang" },
-                    SelectedValue = string.Equals(seedRow.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c",
+                    ItemsSource = new[] { "D\u1ecdc", "Ngang" },
+                    SelectedValue = string.Equals(seedRow.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "D\u1ecdc",
                     Margin = new Thickness(0, 0, 8, 0)
                 };
                 cboLayoutDirection.SelectionChanged += (_, _) => RefreshPreview();
                 leftTools.Children.Add(cboLayoutDirection);
 
-                var btnPickSpan = Btn("Pick nhá»‹p", AccentBlue, Brushes.White, (_, _) =>
+                var btnPickSpan = Btn("Pick nh\u1ecbp", AccentBlue, Brushes.White, (_, _) =>
                 {
                     if (isCeiling)
                         return;
@@ -1434,11 +1434,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         var ed = doc.Editor;
                         while (true)
                         {
-                            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm Ä‘áº§u nhá»‹p (Enter Ä‘á»ƒ káº¿t thÃºc):") { AllowNone = true };
+                            var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nCh\u1ecdn \u0111i\u1ec3m \u0111\u1ea7u nh\u1ecbp (Enter \u0111\u1ec3 k\u1ebft th\u00fac):") { AllowNone = true };
                             var p1Res = ed.GetPoint(p1Opt);
                             if (p1Res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None || p1Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                                 break;
-                            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChá»n Ä‘iá»ƒm cuá»‘i nhá»‹p:");
+                            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nCh\u1ecdn \u0111i\u1ec3m cu\u1ed1i nh\u1ecbp:");
                             p2Opt.UseBasePoint = true;
                             p2Opt.BasePoint = p1Res.Value;
                             var p2Res = ed.GetPoint(p2Opt);
@@ -1473,7 +1473,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                 }, 110);
 
-                var btnPickArea = Btn("Pick vÃ¹ng", AccentBlue, Brushes.White, (_, _) =>
+                var btnPickArea = Btn("Pick v\u00f9ng", AccentBlue, Brushes.White, (_, _) =>
                 {
                     dlg.Hide();
                     try
@@ -1489,7 +1489,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         {
                             var tempRow = seedRow.Clone();
                             tempRow.PolygonVertices = polygonVertices.Select(v => v.ToArray()).ToList();
-                            tempRow.LayoutDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c";
+                            tempRow.LayoutDirection = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "D\u1ecdc";
                             if (!TryConfigureSuspendedCeilingDivision(tempRow))
                             {
                                 polygonVertices = seedRow.PolygonVertices?.Select(v => v.ToArray()).ToList();
@@ -1509,7 +1509,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                 }, 110);
 
-                var btnPickOpening = Btn("Pick lá»— má»Ÿ", AccentOrange, Brushes.White, (_, _) =>
+                var btnPickOpening = Btn("Pick l\u1ed7 m\u1edf", AccentOrange, Brushes.White, (_, _) =>
                 {
                     if (isCeiling || mode == TenderPopupGeometryMode.None)
                         return;
@@ -1528,7 +1528,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                 }, 110);
 
-                var btnDeleteSpan = Btn("XÃ³a nhá»‹p", AccentRed, Brushes.White, (_, _) =>
+                var btnDeleteSpan = Btn("X\u00f3a nh\u1ecbp", AccentRed, Brushes.White, (_, _) =>
                 {
                     var current = segmentGrid?.SelectedItem as PopupSegmentRow ?? segmentRows.LastOrDefault();
                     if (current == null)
@@ -1539,7 +1539,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshPreview();
                 }, 100);
 
-                var btnDeleteOpening = Btn("XÃ³a lá»— má»Ÿ", AccentRed, Brushes.White, (_, _) =>
+                var btnDeleteOpening = Btn("X\u00f3a l\u1ed7 m\u1edf", AccentRed, Brushes.White, (_, _) =>
                 {
                     var current = openingGrid?.SelectedItem as TenderOpeningRow ?? openingRows.LastOrDefault();
                     if (current == null)
@@ -1585,7 +1585,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 };
                 segmentGrid.Columns.Add(new DataGridTextColumn
                 {
-                    Header = "DÃ i (mm)",
+                    Header = "D\u00e0i (mm)",
                     Binding = new Binding(nameof(PopupSegmentRow.LengthMm)) { StringFormat = "F0", UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
                     Width = new DataGridLength(1, DataGridLengthUnitType.Star)
                 });
@@ -1608,10 +1608,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     ItemsSource = openingRows,
                     Margin = new Thickness(8, 0, 0, 0)
                 };
-                openingGrid.Columns.Add(new DataGridTextColumn { Header = "Loáº¡i", Binding = new Binding(nameof(TenderOpeningRow.Type)), Width = new DataGridLength(1.2, DataGridLengthUnitType.Star) });
-                openingGrid.Columns.Add(new DataGridTextColumn { Header = "Rá»™ng", Binding = new Binding(nameof(TenderOpeningRow.Width)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "Lo\u1ea1i", Binding = new Binding(nameof(TenderOpeningRow.Type)), Width = new DataGridLength(1.2, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "R\u1ed9ng", Binding = new Binding(nameof(TenderOpeningRow.Width)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
                 openingGrid.Columns.Add(new DataGridTextColumn { Header = "Cao", Binding = new Binding(nameof(TenderOpeningRow.Height)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-                openingGrid.Columns.Add(new DataGridTextColumn { Header = "ÄÃ¡y", Binding = new Binding(nameof(TenderOpeningRow.BottomElevationMm)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                openingGrid.Columns.Add(new DataGridTextColumn { Header = "\u0110\u00e1y", Binding = new Binding(nameof(TenderOpeningRow.BottomElevationMm)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
                 openingGrid.Columns.Add(new DataGridTextColumn { Header = "LT", Binding = new Binding(nameof(TenderOpeningRow.StationStartMm)) { StringFormat = "F0" }, Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
                 Grid.SetColumn(openingGrid, 1);
                 editorGrid.Children.Add(openingGrid);
@@ -1691,7 +1691,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Grid.SetRow(footer, 4);
                 root.Children.Add(footer);
 
-                footer.Children.Add(Btn("Há»§y", BtnGray, Brushes.White, (_, _) =>
+                footer.Children.Add(Btn("H\u1ee7y", BtnGray, Brushes.White, (_, _) =>
                 {
                     accepted = false;
                     foreach (var draftHandle in segmentRows.Where(r => r.IsDraftCadHandle && !string.IsNullOrWhiteSpace(r.CadHandle)).Select(r => r.CadHandle!).Distinct(StringComparer.OrdinalIgnoreCase))
@@ -1699,16 +1699,16 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     dlg.Close();
                 }, 110));
 
-                footer.Children.Add(Btn("Ãp dá»¥ng", AccentGreen, Brushes.White, (_, _) =>
+                footer.Children.Add(Btn("\u00c1p d\u1ee5ng", AccentGreen, Brushes.White, (_, _) =>
                 {
                     if (mode == TenderPopupGeometryMode.None)
                     {
-                        lblNote.Text = "ChÆ°a cÃ³ hÃ¬nh há»c Ä‘á»ƒ Ã¡p dá»¥ng.";
+                        lblNote.Text = "Ch\u01b0a c\u00f3 h\u00ecnh h\u1ecdc \u0111\u1ec3 \u00e1p d\u1ee5ng.";
                         lblNote.Foreground = Brushes.Firebrick;
                         return;
                     }
 
-                    string layout = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "Dá»c";
+                    string layout = string.Equals(cboLayoutDirection.SelectedItem as string, "Ngang", StringComparison.OrdinalIgnoreCase) ? "Ngang" : "D\u1ecdc";
                     if (mode == TenderPopupGeometryMode.WallLineChain)
                     {
                         if (!BuildNormalizedSegments(
@@ -1731,7 +1731,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     {
                         if (polygonVertices == null || polygonVertices.Count < 3)
                         {
-                            lblNote.Text = "Cáº§n Pick vÃ¹ng trÆ°á»›c khi Ã¡p dá»¥ng.";
+                            lblNote.Text = "C\u1ea7n Pick v\u00f9ng tr\u01b0\u1edbc khi \u00e1p d\u1ee5ng.";
                             lblNote.Foreground = Brushes.Firebrick;
                             return;
                         }

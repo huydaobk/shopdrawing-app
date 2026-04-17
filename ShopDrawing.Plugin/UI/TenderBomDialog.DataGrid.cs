@@ -273,7 +273,7 @@ namespace ShopDrawing.Plugin.UI
                     _cadPreviewTimer.Stop();
 
                     ClearHighlight();
-
+                    _previewCanvas?.Children.Clear();
                 }
 
             }

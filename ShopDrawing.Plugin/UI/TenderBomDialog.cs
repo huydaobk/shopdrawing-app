@@ -327,6 +327,11 @@ namespace ShopDrawing.Plugin.UI
                 Foreground = AccentOrange,
                 VerticalAlignment = VerticalAlignment.Center
             });
+            var btnDeleteOpening = Btn("Xóa", AccentRed, Brushes.White, (_, _) => OnDeleteOpening());
+            btnDeleteOpening.Margin = new Thickness(16, 0, 0, 0);
+            btnDeleteOpening.Padding = new Thickness(12, 0, 12, 0);
+            btnDeleteOpening.Height = 22;
+            openingBar.Children.Add(btnDeleteOpening);
             Grid.SetRow(openingBar, 0);
             rightPanel.Children.Add(openingBar);
 
@@ -1095,8 +1100,8 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         private void OnDeleteWall(object sender, RoutedEventArgs e)
         {
             var selected = _wallGrid.SelectedItems.Cast<TenderWallRow>().ToList();
-            if (selected.Count == 0) { SetStatus("C\u1ea3nh b\u00e1o: Ch\u1ecdn v\u00e1ch \u0111\u1ec3 x\u00f3a"); return; }
-            if (UiFeedback.AskYesNo("X\u00f3a d\u00f2ng n\u00e0y v\u00e0 to\u00e0n b\u1ed9 h\u00ecnh \u0111\u00e3 d\u1ef1ng ngo\u00e0i CAD?", "X\u00f3a d\u1eef li\u1ec7u Tender") != MessageBoxResult.Yes)
+            if (selected.Count == 0) { SetStatus("Cảnh báo: Chọn vách để xóa"); return; }
+            if (UiFeedback.AskYesNo("Xóa dòng này và toàn bộ hình đã dựng ngoài CAD?", "Xóa dữ liệu Tender") != MessageBoxResult.Yes)
                 return;
 
             foreach (var row in selected)
@@ -1109,12 +1114,39 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             _panelBreakdownGrid.ItemsSource = null;
             _cadPreviewTimer.Stop();
             ClearHighlight();
+            _previewCanvas?.Children.Clear();
             RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
             _project.Walls = GetWallModels();
             RefreshFooter();
-            SetStatus($"\u0110\u00e3 x\u00f3a {selected.Count} v\u00e1ch");
+            SetStatus($"Đã xóa {selected.Count} vách");
         }
-        
+
+        private void OnDeleteOpening()
+        {
+            if (_openingGrid.SelectedItem is TenderOpeningRow openingRow && _wallGrid.SelectedItem is TenderWallRow selectedWall)
+            {
+                var result = UiFeedback.AskYesNo($"Bạn có chắc muốn xóa lỗ mở {openingRow.Width}x{openingRow.Height}?", "Xác nhận");
+                if (result == MessageBoxResult.Yes)
+                {
+                    _openingRows.Remove(openingRow);
+                    var modelToRemove = selectedWall.Openings.FirstOrDefault(o =>
+                        o.Width == openingRow.Width &&
+                        o.Height == openingRow.Height &&
+                        o.CenterStationMm == openingRow.CenterStationMm &&
+                        o.BottomElevationMm == openingRow.BottomElevationMm);
+
+                    if (modelToRemove != null)
+                    {
+                        selectedWall.Openings.Remove(modelToRemove);
+                    }
+
+                    // Redraw preview explicitly after deletion to visually mirror the update
+                    RequestCadPreview(selectedWall, force: true);
+                    SafeRefreshWallGrid();
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                }
+            }
+        }
 
 
         /// <summary>Detect chÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¯ nhÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂºÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­t thuÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂºÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§n 2D tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â« OCS vertices (cross product check)</summary>

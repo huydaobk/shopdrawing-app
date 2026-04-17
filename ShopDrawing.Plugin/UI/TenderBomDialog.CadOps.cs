@@ -4310,6 +4310,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         if (poly != null && poly.Closed)
                         {
                             var vertices = new List<List<double>>();
+                            var cadHandle = poly.Handle.ToString();
                             for (int i = 0; i < poly.NumberOfVertices; i++)
                             {
                                 var pt = poly.GetPoint2dAt(i);
@@ -4317,6 +4318,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             }
                             Dispatcher.Invoke(() =>
                             {
+                                targetRow.CadHandle = cadHandle;
                                 targetRow.PolygonVertices = vertices.Select(v => v.ToArray()).ToList();
                                 targetRow.DraftGeometryMode = "WallPolygon";
                                 if (targetRow.PolygonVertices != null && targetRow.PolygonVertices.Count >= 3)
@@ -4450,7 +4452,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Dispatcher.Invoke(() =>
                 {
                     targetRow.AppliedEntityHandles = appliedHandles;
-                    targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle) ? appliedHandles.FirstOrDefault() : primaryHandle;
+                    if (string.IsNullOrWhiteSpace(targetRow.CadHandle))
+                    {
+                        targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle) ? appliedHandles.FirstOrDefault() : primaryHandle;
+                    }
                     targetRow.AppliedPlacementX = placementPoint.X;
                     targetRow.AppliedPlacementY = placementPoint.Y;
                     targetRow.AppliedPlacementZ = placementPoint.Z;

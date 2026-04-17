@@ -1,6 +1,6 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
-## [2026-04-17] - v0.2.10 Tender Persistence Fix 🔧
+## [2026-04-17] - v0.2.13 Tender Persistence Fix 🔧
 ### Fixed
 - **Critical: Tender Wall AutoLoad bị chặn bởi marker file gate** — Sau khi cập nhật plugin và restart CAD, vách đã vẽ mất khỏi Bảng quản lý khối lượng. Nguyên nhân: `EnsureProject()` yêu cầu file `.shopdrawing-project.json` tồn tại trước khi AutoLoad, nhưng AutoSave không tạo file này. Đã bỏ gate condition thừa vì `TryAutoLoad()` đã có guard `File.Exists` riêng.
 - **CS8620 nullability warnings** — Sửa 2 warning `IEnumerable<string?>` trong `TenderBomDialog.CadOps.cs` khi gom CAD handle để group entities.

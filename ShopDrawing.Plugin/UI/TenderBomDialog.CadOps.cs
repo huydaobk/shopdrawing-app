@@ -2392,25 +2392,27 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     widthMm = Math.Round(projectedWidth);
                 ed.WriteMessage($"\n\u0110\u1ecbnh v\u1ecb l\u1ed7 m\u1edf: LT={stationMm:F0} mm | R\u1ed9ng={widthMm:F0} mm");
             }
-            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao l\u1ed7 m\u1edf (mm):")
+            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách chiều cao lỗ mở (mm):")
             {
                 DefaultValue = 2100,
                 AllowNegative = false,
-                AllowZero = false
+                AllowZero = false,
+                UseDefaultValue = true
             };
-            var hRes = ed.GetDouble(hOpt);
+            var hRes = ed.GetDistance(hOpt);
             if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
             double heightMm = Math.Round(hRes.Value);
             if (heightMm <= 0)
                 return false;
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao \u0111\u1ed9 \u0111\u00e1y l\u1ed7 m\u1edf (mm):")
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách cao độ đáy lỗ mở (mm):")
             {
                 DefaultValue = 0,
                 AllowNegative = false,
-                AllowZero = true
+                AllowZero = true,
+                UseDefaultValue = true
             };
-            var bottomRes = ed.GetDouble(bottomOpt);
+            var bottomRes = ed.GetDistance(bottomOpt);
             if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
             double bottomElevationMm = Math.Max(0, Math.Round(bottomRes.Value));
@@ -4487,23 +4489,25 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         ed.WriteMessage($"\nĐịnh vị lỗ mở: L={stationMm:F0} mm | Rộng={widthMm:F0} mm");
                     }
 
-                    var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập chiều cao lỗ mở (mm):")
+                    var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách chiều cao lỗ mở (mm):")
                     {
                         DefaultValue = 2100,
                         AllowNegative = false,
-                        AllowZero = false
+                        AllowZero = false,
+                        UseDefaultValue = true
                     };
-                    var hRes = ed.GetDouble(hOpt);
+                    var hRes = ed.GetDistance(hOpt);
                     if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
                     double heightMm = Math.Round(hRes.Value);
 
-                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao độ đáy lỗ mở (mm):")
+                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách cao độ đáy lỗ mở (mm):")
                     {
                         DefaultValue = 0,
                         AllowNegative = false,
-                        AllowZero = true
+                        AllowZero = true,
+                        UseDefaultValue = true
                     };
-                    var bottomRes = ed.GetDouble(bottomOpt);
+                    var bottomRes = ed.GetDistance(bottomOpt);
                     if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
                     double bottomElevationMm = Math.Max(0, Math.Round(bottomRes.Value));
 

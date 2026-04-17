@@ -4497,21 +4497,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         AllowNegative = false,
                         AllowZero = false,
                         UseDefaultValue = true,
-                        UseBasePoint = true,
-                        BasePoint = p1Res.Value
+                        UseBasePoint = false
                     };
                     var hRes = ed.GetDistance(hOpt);
                     if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
                     double heightMm = Math.Round(hRes.Value);
 
-                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick ĐIỂM THỨ 3 khoảng cách đáy (mm):")
+                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick ĐIỂM THỨ 4 khoảng cách đáy (mm):")
                     {
                         DefaultValue = 0,
                         AllowNegative = false,
                         AllowZero = true,
                         UseDefaultValue = true,
-                        UseBasePoint = true,
-                        BasePoint = p1Res.Value
+                        UseBasePoint = false
                     };
                     var bottomRes = ed.GetDistance(bottomOpt);
                     if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;

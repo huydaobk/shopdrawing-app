@@ -229,6 +229,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
+                    ProjectStateChanged?.Invoke(this, EventArgs.Empty);
                     _lastCadPreviewKey = null;
                     if (!cadApplied)
                     {
@@ -290,6 +291,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshPanelBreakdown(popupDraftRow);
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
+                    ProjectStateChanged?.Invoke(this, EventArgs.Empty);
                     _lastCadPreviewKey = null;
                     SetStatus($"\u0110\u00e3 th\u00eam d\u1eef li\u1ec7u {popupDraftRow.Name}. Ch\u1ecdn \u0111i\u1ec3m \u0111\u1eb7t \u0111\u1ec3 d\u1ef1ng CAD.");
                 }));
@@ -305,6 +307,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         RefreshPanelBreakdown(popupDraftRow);
                         RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                         _project.Walls = GetWallModels();
+                        ProjectStateChanged?.Invoke(this, EventArgs.Empty);
                         SetStatus($"\u0110\u00e3 gi\u1eef d\u1eef li\u1ec7u {popupDraftRow.Name}; ch\u01b0a d\u1ef1ng CAD do h\u1ee7y/ch\u01b0a ch\u1ecdn \u0111i\u1ec3m \u0111\u1eb7t.");
                     }));
                     return;
@@ -320,6 +323,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     RefreshPanelBreakdown(popupDraftRow);
                     RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     _project.Walls = GetWallModels();
+                    ProjectStateChanged?.Invoke(this, EventArgs.Empty);
                     _lastCadPreviewKey = null;
                     SetStatus($"\u0110\u00e3 th\u00eam {popupDraftRow.Name} v\u00e0 d\u1ef1ng CAD.");
                 }));
@@ -3209,7 +3213,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (!string.IsNullOrWhiteSpace(drawRow.CadHandle)) handlesToGroup.Add(drawRow.CadHandle);
             if (drawRow.HeightSegments != null)
             {
-                handlesToGroup.AddRange(drawRow.HeightSegments.Select(s => s.CadHandle).Where(h => !string.IsNullOrWhiteSpace(h)));
+                handlesToGroup.AddRange(drawRow.HeightSegments.Select(s => s.CadHandle).Where(h => !string.IsNullOrWhiteSpace(h)).Select(h => h!));
             }
             TryGroupEntities(handlesToGroup);
 
@@ -4612,7 +4616,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 if (!string.IsNullOrWhiteSpace(targetRow.CadHandle)) handlesToGroup.Add(targetRow.CadHandle);
                 if (targetRow.HeightSegments != null)
                 {
-                    handlesToGroup.AddRange(targetRow.HeightSegments.Select(s => s.CadHandle).Where(h => !string.IsNullOrWhiteSpace(h)));
+                    handlesToGroup.AddRange(targetRow.HeightSegments.Select(s => s.CadHandle).Where(h => !string.IsNullOrWhiteSpace(h)).Select(h => h!));
                 }
                 TryGroupEntities(handlesToGroup);
 

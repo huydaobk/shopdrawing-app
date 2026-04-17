@@ -87,6 +87,12 @@ namespace ShopDrawing.Plugin.Models
         /// <summary>Danh sach ung dung cho dropdown</summary>
         public static readonly string[] ApplicationOptions = { "Ngoài nhà", "Phòng sạch", "Kho lạnh" };
 
+        public List<string> AppliedEntityHandles { get; set; } = new();
+        public string? AppliedGroupId { get; set; }
+        public double? AppliedPlacementX { get; set; }
+        public double? AppliedPlacementY { get; set; }
+        public double? AppliedPlacementZ { get; set; }
+
         /// <summary>
         /// Prefix ký hiệu theo hạng mục: Vách→W, Trần→C, Nền→F, Mái→R.
         /// </summary>

@@ -3394,7 +3394,22 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             AddLine(new[] { right, bottom }, new[] { right, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { right, top }, new[] { left, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { left, top }, new[] { left, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
-                            AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | \u0110\u00e1y {bottom:F0}", OpeningPreviewTextColorIndex, 120);
+                            AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | Đáy {bottom:F0}", OpeningPreviewTextColorIndex, 120);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var opening in row.Openings.Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3))
+                        {
+                            for (int i = 0; i < opening.OpeningPolygon!.Count; i++)
+                            {
+                                var a = opening.OpeningPolygon[i];
+                                var b = opening.OpeningPolygon[(i + 1) % opening.OpeningPolygon.Count];
+                                AddLine(a, b, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                            }
+                            double minO_x = opening.OpeningPolygon.Min(p => p[0]);
+                            double maxO_y = opening.OpeningPolygon.Max(p => p[1]);
+                            AddText(new[] { minO_x, maxO_y + 90 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 120);
                         }
                     }
                     if (result.Mode == TenderPopupGeometryMode.CeilingPolygon && IsSuspendedCeilingRow(row))
@@ -4410,7 +4425,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 DraftGeometrySession result = new DraftGeometrySession();
                 result.Mode = targetRow.PolygonVertices != null && targetRow.PolygonVertices.Any() 
-                    ? TenderPopupGeometryMode.WallPolygon 
+                    ? (IsSuspendedCeilingRow(targetRow) ? TenderPopupGeometryMode.CeilingPolygon : TenderPopupGeometryMode.WallPolygon) 
                     : TenderPopupGeometryMode.WallLineChain;
                 if (!TryPromptAppliedGeometryPlacementPoint(result.Mode, out var placementPoint))
                 {
@@ -4419,7 +4434,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 // Set fake result for TryDrawAppliedTenderGeometry requirement
                 result.PanelWidthMm = targetRow.PanelWidth;
                 result.AppliedGroupId = targetRow.AppliedGroupId;
-                if (result.Mode == TenderPopupGeometryMode.WallPolygon && targetRow.PolygonVertices != null)
+                if ((result.Mode == TenderPopupGeometryMode.WallPolygon || result.Mode == TenderPopupGeometryMode.CeilingPolygon) && targetRow.PolygonVertices != null)
                 {
                     result.PolygonVertices = targetRow.PolygonVertices.ToList();
                 }

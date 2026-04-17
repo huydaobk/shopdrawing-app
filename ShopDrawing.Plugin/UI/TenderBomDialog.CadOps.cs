@@ -3211,7 +3211,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     $"segments={DescribeSegments(drawRow.HeightSegments)} | openings={DescribeOpenings(drawRow.Openings)}");
                 return false;
             }
-            TryDrawElevationLinkLineToCad(targetRow, placementPoint, appliedHandles);
+            TryDrawElevationLinkLineToCad(drawRow, placementPoint, appliedHandles);
             TryGroupEntities(appliedHandles);
 
             var newHandleSet = new HashSet<string>(appliedHandles, StringComparer.OrdinalIgnoreCase);

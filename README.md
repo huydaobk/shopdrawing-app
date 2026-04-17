@@ -74,7 +74,7 @@ Project hiện đang map tới đường dẫn cài đặt mặc định của A
 |--------|-----------------|------------|
 | **Core Framework** | Registry, CAD Threading lock, Logging | 🟢 Stable |
 | **Waste Repository** | SQLite DB, Matcher, Tái tạo rác thừa | 🟢 Stable |
-| **Tender BOM** | Bóc BOM khối lượng vách/trần, Auto-tracing biên dạng, Link-line, Gom Group CAD block, Pick 2 điểm khoảng cách lỗ mở | 🟢 Stable (v0.2.8) |
+| **Tender BOM** | Bóc BOM khối lượng vách/trần, Auto-tracing biên dạng, Link-line, Gom Group CAD block, Pick 2 điểm khoảng cách lỗ mở | 🟢 Stable (v0.2.9) |
 | **Shopdrawing** | Setup lưới vách Panel, Cắt nối Joint | 🟡 In-Progress |
 | **Layout & PDF** | Xếp viewport auto-scale, Xuất PDF/Model | 🟢 Stable |
 | **SmartDimension** | Tự động Dimension các layer khung thép | 🟢 Stable |
@@ -115,17 +115,17 @@ Dự án áp dụng chặt chẽ các nguyên lý **Fail-Safe**:
 1. Chốt code trên `master`.
 2. Chạy script release trong root repo:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Version 0.2.8
+   powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Version 0.2.9
    ```
 3. Nếu local đã commit nhưng chưa push:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Version 0.2.8 -PushLatestCommit
+   powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Version 0.2.9 -PushLatestCommit
    ```
 4. Theo dõi workflow:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\watch-release.ps1 -Version 0.2.8
+   powershell -ExecutionPolicy Bypass -File .\scripts\watch-release.ps1 -Version 0.2.9
    ```
-5. Sau khi workflow xanh, gửi file `ShopDrawing.Setup.0.2.8.zip` cho người cần cài mới.
+5. Sau khi workflow xanh, gửi file `ShopDrawing.Setup.0.2.9.zip` cho người cần cài mới.
 
 ### Asset tạo ra sau mỗi release
 - `ShopDrawing.Setup.X.Y.Z.zip`: file gửi cho team khi cài mới
@@ -218,4 +218,4 @@ Muc tieu: deploy on dinh, khong mat tab `ShopDrawing`, khong lap lai loi update.
 - `%APPDATA%\Autodesk\ApplicationPlugins\ShopDrawing.bundle\PackageContents.xml`
 
 ### 7) Ban baseline on dinh
-- Baseline deploy on dinh moi nhat: `v0.2.8`.
+- Baseline deploy on dinh moi nhat: `v0.2.9`.

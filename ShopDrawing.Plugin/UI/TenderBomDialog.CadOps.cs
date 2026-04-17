@@ -4411,6 +4411,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Dispatcher.Invoke(() =>
                 {
                     LoadOpeningsForWall(targetRow);
+                    RequestCadPreview(targetRow, force: true);
                     RefreshFooter();
                     RefreshPanelBreakdown(targetRow);
                         RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);

@@ -4450,7 +4450,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 Dispatcher.Invoke(() =>
                 {
                     targetRow.AppliedEntityHandles = appliedHandles;
-                    targetRow.AppliedEntityHandles.Clear(); targetRow.AppliedEntityHandles.Add(primaryHandle);
+                    targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle) ? appliedHandles.FirstOrDefault() : primaryHandle;
                     targetRow.AppliedPlacementX = placementPoint.X;
                     targetRow.AppliedPlacementY = placementPoint.Y;
                     targetRow.AppliedPlacementZ = placementPoint.Z;

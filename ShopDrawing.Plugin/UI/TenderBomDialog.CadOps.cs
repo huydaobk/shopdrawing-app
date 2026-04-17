@@ -1898,6 +1898,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Canvas.SetTop(pText, margin + plotH + (panelIndex % 2 == 0 ? 12 : 2));
                     canvas.Children.Add(pText);
                 }
+
+                double lastBoundary = Math.Floor(drawingLength / panelWidthMm) * panelWidthMm;
+                double lastWidth = drawingLength - lastBoundary;
+                if (lastWidth > 1)
+                {
+                    double centerX = margin + ((lastBoundary + lastWidth / 2.0) / drawingLength) * plotW;
+                    int panelIndex = (int)(lastBoundary / panelWidthMm) + 1;
+                    var pText = new TextBlock { Text = $"{lastWidth:F0}", FontSize = 9, Foreground = Brushes.Gray };
+                    pText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    Canvas.SetLeft(pText, centerX - pText.DesiredSize.Width / 2);
+                    Canvas.SetTop(pText, margin + plotH + (panelIndex % 2 == 0 ? 12 : 2));
+                    canvas.Children.Add(pText);
+                }
             }
             else if (string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase))
             {
@@ -1925,6 +1938,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         double centerY = margin + (plotH - ((yMm - panelWidthMm/2.0) / maxHeight) * plotH);
                         int panelIndex = (int)(yMm / panelWidthMm);
                         var pText = new TextBlock { Text = $"{panelWidthMm:F0}", FontSize = 9, Foreground = Brushes.Gray };
+                        pText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                        Canvas.SetLeft(pText, x1 + (panelIndex % 2 == 0 ? -30 : 2));
+                        Canvas.SetTop(pText, centerY - pText.DesiredSize.Height / 2);
+                        canvas.Children.Add(pText);
+                    }
+
+                    double lastBoundary = Math.Floor(segment.HeightMm / panelWidthMm) * panelWidthMm;
+                    double lastHeight = segment.HeightMm - lastBoundary;
+                    if (lastHeight > 1)
+                    {
+                        double centerY = margin + (plotH - ((lastBoundary + lastHeight / 2.0) / maxHeight) * plotH);
+                        int panelIndex = (int)(lastBoundary / panelWidthMm) + 1;
+                        var pText = new TextBlock { Text = $"{lastHeight:F0}", FontSize = 9, Foreground = Brushes.Gray };
                         pText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                         Canvas.SetLeft(pText, x1 + (panelIndex % 2 == 0 ? -30 : 2));
                         Canvas.SetTop(pText, centerY - pText.DesiredSize.Height / 2);
@@ -3310,9 +3336,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     bool horizontal = string.Equals(row.LayoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase);
                     double minAxis = horizontal ? localVertices.Min(v => v[1]) : localVertices.Min(v => v[0]);
                     double maxAxis = horizontal ? localVertices.Max(v => v[1]) : localVertices.Max(v => v[0]);
+                    double minCrossAxis = horizontal ? localVertices.Min(v => v[0]) : localVertices.Min(v => v[1]);
                     if (row.PanelWidth > 0)
                     {
-                        for (double pos = minAxis + row.PanelWidth; pos < maxAxis - 1.0; pos += row.PanelWidth)
+                        double pos = minAxis + row.PanelWidth;
+                        for (; pos < maxAxis - 1.0; pos += row.PanelWidth)
                         {
                             foreach (var segment in GetScanSegments(localVertices, pos, horizontal))
                             {
@@ -3323,15 +3351,32 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             
                             double center = pos - row.PanelWidth / 2.0;
                             // Thêm text ra CAD text
-                            int panelIndex = (int)(pos / row.PanelWidth);
+                            int panelIndex = (int)((pos - minAxis) / row.PanelWidth);
                             double textOffset = (panelIndex % 2 == 0) ? -150.0 : -350.0;
                             if (horizontal)
                             {
-                                AddText(new[] { minAxis - 200.0, center }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
+                                AddText(new[] { minCrossAxis + textOffset, center }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
                             }
                             else
                             {
-                                AddText(new[] { center - 30.0, minAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
+                                AddText(new[] { center - 30.0, minCrossAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
+                            }
+                        }
+
+                        double lastPos = (pos - row.PanelWidth);
+                        double lastWidth = maxAxis - lastPos;
+                        if (lastWidth > 1)
+                        {
+                            double center = lastPos + lastWidth / 2.0;
+                            int panelIndex = (int)((lastPos - minAxis) / row.PanelWidth) + 1;
+                            double textOffset = (panelIndex % 2 == 0) ? -150.0 : -350.0;
+                            if (horizontal)
+                            {
+                                AddText(new[] { minCrossAxis + textOffset, center }, $"{lastWidth:F0}", PanelPreviewColorIndex, 70);
+                            }
+                            else
+                            {
+                                AddText(new[] { center - 30.0, minCrossAxis + textOffset }, $"{lastWidth:F0}", PanelPreviewColorIndex, 70);
                             }
                         }
                     }

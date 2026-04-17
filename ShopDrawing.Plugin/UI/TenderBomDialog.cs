@@ -1123,21 +1123,31 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
         private void OnDeleteOpening()
         {
-            if (_openingGrid.SelectedItem is TenderOpeningRow openingRow && _wallGrid.SelectedItem is TenderWallRow selectedWall)
+            var selectedOpenings = _openingGrid.SelectedItems.Cast<TenderOpeningRow>().ToList();
+            if (selectedOpenings.Count == 0) return;
+
+            if (_wallGrid.SelectedItem is TenderWallRow selectedWall)
             {
-                var result = UiFeedback.AskYesNo($"Bạn có chắc muốn xóa lỗ mở {openingRow.Width}x{openingRow.Height}?", "Xác nhận");
+                string msg = selectedOpenings.Count == 1 
+                    ? $"Bạn có chắc muốn xóa lỗ mở {selectedOpenings[0].Width}x{selectedOpenings[0].Height}?"
+                    : $"Bạn có chắc muốn xóa {selectedOpenings.Count} lỗ mở đang chọn?";
+
+                var result = UiFeedback.AskYesNo(msg, "Xác nhận");
                 if (result == MessageBoxResult.Yes)
                 {
-                    _openingRows.Remove(openingRow);
-                    var modelToRemove = selectedWall.Openings.FirstOrDefault(o =>
-                        o.Width == openingRow.Width &&
-                        o.Height == openingRow.Height &&
-                        o.CenterStationMm == openingRow.CenterStationMm &&
-                        o.BottomElevationMm == openingRow.BottomElevationMm);
-
-                    if (modelToRemove != null)
+                    foreach (var openingRow in selectedOpenings)
                     {
-                        selectedWall.Openings.Remove(modelToRemove);
+                        _openingRows.Remove(openingRow);
+                        var modelToRemove = selectedWall.Openings.FirstOrDefault(o =>
+                            o.Width == openingRow.Width &&
+                            o.Height == openingRow.Height &&
+                            o.CenterStationMm == openingRow.CenterStationMm &&
+                            o.BottomElevationMm == openingRow.BottomElevationMm);
+
+                        if (modelToRemove != null)
+                        {
+                            selectedWall.Openings.Remove(modelToRemove);
+                        }
                     }
 
                     // Redraw preview explicitly after deletion to visually mirror the update

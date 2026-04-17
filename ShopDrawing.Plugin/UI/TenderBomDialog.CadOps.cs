@@ -4670,6 +4670,44 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         tr.Commit();
                     }
                 }
+                else if (targetRow.HeightSegments != null && targetRow.HeightSegments.Any(s => !string.IsNullOrWhiteSpace(s.CadHandle)))
+                {
+                    using (doc.LockDocument())
+                    using (var tr = doc.Database.TransactionManager.StartTransaction())
+                    {
+                        var minPt = new Autodesk.AutoCAD.Geometry.Point3d(double.MaxValue, double.MaxValue, 0);
+                        var maxPt = new Autodesk.AutoCAD.Geometry.Point3d(double.MinValue, double.MinValue, 0);
+                        bool validExtents = false;
+                        foreach (var seg in targetRow.HeightSegments.Where(x => !string.IsNullOrWhiteSpace(x.CadHandle)))
+                        {
+                            try
+                            {
+                                var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(Convert.ToInt64(seg.CadHandle, 16));
+                                if (doc.Database.TryGetObjectId(handle, out var objId))
+                                {
+                                    var ent = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead) as Autodesk.AutoCAD.DatabaseServices.Entity;
+                                    if (ent != null)
+                                    {
+                                        var ext = ent.GeometricExtents;
+                                        minPt = new Autodesk.AutoCAD.Geometry.Point3d(Math.Min(minPt.X, ext.MinPoint.X), Math.Min(minPt.Y, ext.MinPoint.Y), 0);
+                                        maxPt = new Autodesk.AutoCAD.Geometry.Point3d(Math.Max(maxPt.X, ext.MaxPoint.X), Math.Max(maxPt.Y, ext.MaxPoint.Y), 0);
+                                        validExtents = true;
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                        if (validExtents)
+                        {
+                            sourcePoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                                (minPt.X + maxPt.X) / 2,
+                                (minPt.Y + maxPt.Y) / 2,
+                                0);
+                            hasSource = true;
+                        }
+                        tr.Commit();
+                    }
+                }
 
                 if (!hasSource) return;
 

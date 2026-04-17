@@ -688,10 +688,7 @@ namespace ShopDrawing.Plugin.UI
                 SpecKey = specKey,
                 PanelWidth = GetWidthForSpec(specKey),
                 PanelThickness = GetThicknessForSpec(specKey),
-                HeightSegments = selectedRow?.HeightSegments
-                    ?.Select(s => new TenderHeightSegment { LengthMm = s.LengthMm, HeightMm = s.HeightMm, CadHandle = s.CadHandle })
-                    .ToList()
-                    ?? new List<TenderHeightSegment>(),
+                HeightSegments = new List<TenderHeightSegment>(),
                 LayoutDirection = selectedRow?.LayoutDirection ?? TenderWall.DefaultLayoutDirection(category),
                 Application = _pickApplicationPreset?.SelectedItem as string
 

@@ -578,24 +578,74 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             if (doc == null)
                 return false;
             var ed = doc.Editor;
-            var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nCh\u1ecdn polyline k\u00edn:");
-            opt.SetRejectMessage("\nPh\u1ea3i l\u00e0 polyline k\u00edn.");
-            opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
-            var res = ed.GetEntity(opt);
-            if (res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+            
+            var ppo = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nPick 1 điểm bên trong vùng kín HOẶC [Chon polyline]:", "Chon");
+            ppo.AllowNone = true;
+            
+            var res = ed.GetPoint(ppo);
+            if (res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.Cancel)
                 return false;
+
             using (doc.LockDocument())
             using (var tr = doc.Database.TransactionManager.StartTransaction())
             {
-                if (tr.GetObject(res.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) is not Autodesk.AutoCAD.DatabaseServices.Polyline polyline
-                    || !polyline.Closed)
+                Autodesk.AutoCAD.DatabaseServices.Polyline? targetPoly = null;
+
+                if (res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                {
+                    try
+                    {
+                        var objs = ed.TraceBoundary(res.Value, false);
+                        if (objs != null && objs.Count > 0)
+                        {
+                            foreach (Autodesk.AutoCAD.DatabaseServices.DBObject obj in objs)
+                            {
+                                if (obj is Autodesk.AutoCAD.DatabaseServices.Polyline p && p.Closed)
+                                {
+                                    targetPoly = p;
+                                    break;
+                                }
+                            }
+                            foreach (Autodesk.AutoCAD.DatabaseServices.DBObject obj in objs)
+                            {
+                                if (obj != targetPoly) obj.Dispose();
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ed.WriteMessage($"\nLỗi truy tìm vùng: {ex.Message}");
+                    }
+                }
+                else if (res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.Keyword || res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
+                {
+                    var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nChọn polyline kín:");
+                    opt.SetRejectMessage("\nPhải là polyline kín.");
+                    opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
+                    var entRes = ed.GetEntity(opt);
+                    if (entRes.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                    {
+                        targetPoly = tr.GetObject(entRes.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) as Autodesk.AutoCAD.DatabaseServices.Polyline;
+                    }
+                }
+
+                if (targetPoly == null || !targetPoly.Closed)
                 {
                     tr.Commit();
                     return false;
                 }
-                vertices = GetPolylineVertices(polyline);
-                cadHandle = polyline.Handle.ToString();
-                approximateHeightMm = Math.Max(0, polyline.GeometricExtents.MaxPoint.Y - polyline.GeometricExtents.MinPoint.Y);
+
+                if (targetPoly.ObjectId.IsNull)
+                {
+                    var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(doc.Database.CurrentSpaceId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
+                    targetPoly.ColorIndex = 3;
+                    btr.AppendEntity(targetPoly);
+                    tr.AddNewlyCreatedDBObject(targetPoly, true);
+                }
+
+                vertices = GetPolylineVertices(targetPoly);
+                cadHandle = targetPoly.Handle.ToString();
+                approximateHeightMm = Math.Max(0, targetPoly.GeometricExtents.MaxPoint.Y - targetPoly.GeometricExtents.MinPoint.Y);
                 tr.Commit();
                 return vertices.Count >= 3;
             }
@@ -907,8 +957,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         continue;
                     double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
                     double bottom = Math.Max(0, opening.BottomElevationMm);
-                    var p1 = Map(new[] { left, bottom });
-                    var p2 = Map(new[] { right, bottom + opening.Height });
+                    var p1 = Map(new[] { minX + left, minY + bottom });
+                    var p2 = Map(new[] { minX + right, minY + bottom + opening.Height });
                     var rect = new System.Windows.Shapes.Rectangle
                     {
                         Width = Math.Max(2, Math.Abs(p2.X - p1.X)),
@@ -3103,6 +3153,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     $"segments={DescribeSegments(drawRow.HeightSegments)} | openings={DescribeOpenings(drawRow.Openings)}");
                 return false;
             }
+            TryDrawElevationLinkLineToCad(targetRow, placementPoint, appliedHandles);
+            TryGroupEntities(appliedHandles);
+
             var newHandleSet = new HashSet<string>(appliedHandles, StringComparer.OrdinalIgnoreCase);
             TryEraseCadEntitiesByHandles(oldHandles.Where(h => !newHandleSet.Contains(h)));
             // Đồng bộ hình học popup -> row chính thức ngay tại điểm apply thành công.
@@ -4229,10 +4282,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var ed = doc.Editor;
                 
                 var segmentRows = new List<TenderHeightSegment>();
-                if (targetRow.HeightSegments != null)
-                {
-                    segmentRows.AddRange(targetRow.HeightSegments);
-                }
                 double referenceHeightMm = Math.Max(1, targetRow.Height > 0 ? targetRow.Height : 3000);
                 while (true)
                 {
@@ -4297,58 +4346,38 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
                 if (doc == null) return;
-                
-                Autodesk.AutoCAD.EditorInput.PromptEntityOptions peo = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nChọn Polyline (Bound):");
-                peo.SetRejectMessage("\nChỉ chọn LwPolyline kín.");
-                peo.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
-                var per = doc.Editor.GetEntity(peo);
-                if (per.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                if (TryPickClosedPolygonVertices(out var vertices, out var cadHandle, out _))
                 {
-                    using (var tr = doc.TransactionManager.StartTransaction())
+                    Dispatcher.Invoke(() =>
                     {
-                        var poly = tr.GetObject(per.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead) as Autodesk.AutoCAD.DatabaseServices.Polyline;
-                        if (poly != null && poly.Closed)
+                        targetRow.CadHandle = cadHandle;
+                        targetRow.PolygonVertices = vertices.Select(v => v.ToArray()).ToList();
+                        targetRow.DraftGeometryMode = "WallPolygon";
+                        if (targetRow.PolygonVertices != null && targetRow.PolygonVertices.Count >= 3)
                         {
-                            var vertices = new List<List<double>>();
-                            var cadHandle = poly.Handle.ToString();
-                            for (int i = 0; i < poly.NumberOfVertices; i++)
+                            double minX = targetRow.PolygonVertices.Min(v => v[0]);
+                            double maxX = targetRow.PolygonVertices.Max(v => v[0]);
+                            double minY = targetRow.PolygonVertices.Min(v => v[1]);
+                            double maxY = targetRow.PolygonVertices.Max(v => v[1]);
+                            targetRow.Length = Math.Max(0, maxX - minX);
+                            targetRow.Height = Math.Max(0, maxY - minY);
+                            targetRow.HeightSegments = new List<TenderHeightSegment>
                             {
-                                var pt = poly.GetPoint2dAt(i);
-                                vertices.Add(new List<double> { pt.X, pt.Y });
-                            }
-                            Dispatcher.Invoke(() =>
-                            {
-                                targetRow.CadHandle = cadHandle;
-                                targetRow.PolygonVertices = vertices.Select(v => v.ToArray()).ToList();
-                                targetRow.DraftGeometryMode = "WallPolygon";
-                                if (targetRow.PolygonVertices != null && targetRow.PolygonVertices.Count >= 3)
-                                {
-                                    double minX = targetRow.PolygonVertices.Min(v => v[0]);
-                                    double maxX = targetRow.PolygonVertices.Max(v => v[0]);
-                                    double minY = targetRow.PolygonVertices.Min(v => v[1]);
-                                    double maxY = targetRow.PolygonVertices.Max(v => v[1]);
-                                    targetRow.Length = Math.Max(0, maxX - minX);
-                                    targetRow.Height = Math.Max(0, maxY - minY);
-                                    targetRow.HeightSegments = new List<TenderHeightSegment>
-                                    {
-                                        new TenderHeightSegment { LengthMm = targetRow.Length, HeightMm = targetRow.Height }
-                                    };
-                                }
-                                else
-                                {
-                                    targetRow.HeightSegments = new List<TenderHeightSegment>();
-                                }
-                                SyncWallRowSpecData(targetRow);
-                                targetRow.Refresh();
-                                SafeRefreshWallGrid();
-                                RefreshFooter();
-                                RefreshPanelBreakdown(targetRow);
-                                RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
-                                SetStatus($"Đã pick vùng cho {targetRow.Name}.");
-                            });
+                                new TenderHeightSegment { LengthMm = targetRow.Length, HeightMm = targetRow.Height }
+                            };
                         }
-                        tr.Commit();
-                    }
+                        else
+                        {
+                            targetRow.HeightSegments = new List<TenderHeightSegment>();
+                        }
+                        SyncWallRowSpecData(targetRow);
+                        targetRow.Refresh();
+                        SafeRefreshWallGrid();
+                        RefreshFooter();
+                        RefreshPanelBreakdown(targetRow);
+                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                        SetStatus($"Đã pick vùng cho {targetRow.Name}.");
+                    });
                 }
             }
             catch (Exception ex)
@@ -4376,16 +4405,43 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var ed = doc.Editor;
                 while (true)
                 {
-                    var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đầu lỗ mở (Enter để kết thúc):") { AllowNone = true };
+                    var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đầu chiều rộng lỗ mở (Enter để kết thúc):") { AllowNone = true };
                     var p1Res = ed.GetPoint(p1Opt);
                     if (p1Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
-                    var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptCornerOptions("\nChọn điểm đối diện: ", p1Res.Value);
-                    var p2Res = ed.GetCorner(p2Opt);
-                    if (p2Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
-                    double widthMm = Math.Round(Math.Abs(p2Res.Value.X - p1Res.Value.X));
-                    double heightMm = Math.Round(Math.Abs(p2Res.Value.Y - p1Res.Value.Y));
                     
-                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao \u0111\u1ed9 \u0111\u00e1y l\u1ed7 m\u1edf (mm):")
+                    var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm cuối chiều rộng lỗ mở:") { UseBasePoint = true, BasePoint = p1Res.Value };
+                    var p2Res = ed.GetPoint(p2Opt);
+                    if (p2Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
+                    
+                    double widthMm = Math.Round(p1Res.Value.DistanceTo(p2Res.Value));
+                    if (widthMm <= 0) continue;
+
+                    double stationMm = -1;
+                    if (TryResolveOpeningStationAndWidthFromWallGeometry(
+                        p1Res.Value,
+                        p2Res.Value,
+                        targetRow,
+                        out var detectedStation,
+                        out var projectedWidth,
+                        out _, out _))
+                    {
+                        stationMm = Math.Round(detectedStation);
+                        if (projectedWidth > 0)
+                            widthMm = Math.Round(projectedWidth);
+                        ed.WriteMessage($"\nĐịnh vị lỗ mở: L={stationMm:F0} mm | Rộng={widthMm:F0} mm");
+                    }
+
+                    var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập chiều cao lỗ mở (mm):")
+                    {
+                        DefaultValue = 2100,
+                        AllowNegative = false,
+                        AllowZero = false
+                    };
+                    var hRes = ed.GetDouble(hOpt);
+                    if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
+                    double heightMm = Math.Round(hRes.Value);
+
+                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNhập cao độ đáy lỗ mở (mm):")
                     {
                         DefaultValue = 0,
                         AllowNegative = false,
@@ -4397,13 +4453,37 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                     string typeStr = TenderOpening.ResolveTypeByBottomElevation(bottomElevationMm);
                     
+                    double dx = p2Res.Value.X - p1Res.Value.X;
+                    double dy = p2Res.Value.Y - p1Res.Value.Y;
+                    double len = Math.Sqrt(dx * dx + dy * dy);
+                    List<double[]>? openingPoly = null;
+                    if (len > 0)
+                    {
+                        double nx = -dy / len;
+                        double ny = dx / len;
+                        // Always extrude 'up' in standard XY projection
+                        if (ny < 0) { nx = -nx; ny = -ny; }
+                        
+                        openingPoly = new List<double[]>
+                        {
+                            new[] { p1Res.Value.X, p1Res.Value.Y },
+                            new[] { p2Res.Value.X, p2Res.Value.Y },
+                            new[] { p2Res.Value.X + nx * heightMm, p2Res.Value.Y + ny * heightMm },
+                            new[] { p1Res.Value.X + nx * heightMm, p1Res.Value.Y + ny * heightMm }
+                        };
+                    }
+
                     var newOp = new TenderOpening
                     {
                         Type = typeStr,
                         Width = widthMm,
                         Height = heightMm,
                         BottomElevationMm = bottomElevationMm,
-                        Quantity = 1
+                        StationStartMm = stationMm,
+                        StationEndMm = stationMm >= 0 ? stationMm + widthMm : -1,
+                        CenterStationMm = stationMm >= 0 ? stationMm + widthMm * 0.5 : stationMm,
+                        Quantity = 1,
+                        OpeningPolygon = openingPoly
                     };
                     targetRow.Openings = targetRow.Openings ?? new List<TenderOpening>();
                     targetRow.Openings.Add(newOp);
@@ -4462,6 +4542,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     SetStatus("Không thể vẽ MẶT ĐỨNG.");
                     return;
                 }
+                TryDrawElevationLinkLineToCad(targetRow, placementPoint, appliedHandles);
+                TryGroupEntities(appliedHandles);
+
                 Dispatcher.Invoke(() =>
                 {
                     targetRow.AppliedEntityHandles = appliedHandles;
@@ -4485,6 +4568,125 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             finally
             {
                 EndCadInteraction();
+            }
+        }
+        
+        private void TryDrawElevationLinkLineToCad(TenderWallRow targetRow, Autodesk.AutoCAD.Geometry.Point3d placementPoint, List<string> appliedHandles)
+        {
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+
+            Autodesk.AutoCAD.Geometry.Point3d sourcePoint = Autodesk.AutoCAD.Geometry.Point3d.Origin;
+            bool hasSource = false;
+
+            try
+            {
+                if (targetRow.PolygonVertices != null && targetRow.PolygonVertices.Count > 0)
+                {
+                    double avgX = targetRow.PolygonVertices.Average(v => v[0]);
+                    double avgY = targetRow.PolygonVertices.Average(v => v[1]);
+                    sourcePoint = new Autodesk.AutoCAD.Geometry.Point3d(avgX, avgY, 0);
+                    hasSource = true;
+                }
+                else if (!string.IsNullOrEmpty(targetRow.CadHandle))
+                {
+                    using (doc.LockDocument())
+                    using (var tr = doc.Database.TransactionManager.StartTransaction())
+                    {
+                        var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(Convert.ToInt64(targetRow.CadHandle, 16));
+                        if (doc.Database.TryGetObjectId(handle, out var objId))
+                        {
+                            var ent = tr.GetObject(objId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead) as Autodesk.AutoCAD.DatabaseServices.Entity;
+                            if (ent != null)
+                            {
+                                var ext = ent.GeometricExtents;
+                                sourcePoint = new Autodesk.AutoCAD.Geometry.Point3d(
+                                    (ext.MinPoint.X + ext.MaxPoint.X) / 2,
+                                    (ext.MinPoint.Y + ext.MaxPoint.Y) / 2,
+                                    0);
+                                hasSource = true;
+                            }
+                        }
+                        tr.Commit();
+                    }
+                }
+
+                if (!hasSource) return;
+
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    var btr = (Autodesk.AutoCAD.DatabaseServices.BlockTableRecord)tr.GetObject(doc.Database.CurrentSpaceId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
+                    
+                    string layerName = "SD_LINK";
+                    var lt = (Autodesk.AutoCAD.DatabaseServices.LayerTable)tr.GetObject(doc.Database.LayerTableId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead);
+                    if (!lt.Has(layerName))
+                    {
+                        lt.UpgradeOpen();
+                        var ltr = new Autodesk.AutoCAD.DatabaseServices.LayerTableRecord();
+                        ltr.Name = layerName;
+                        ltr.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 8); // Gray
+                        lt.Add(ltr);
+                        tr.AddNewlyCreatedDBObject(ltr, true);
+                    }
+
+                    var line = new Autodesk.AutoCAD.DatabaseServices.Line(sourcePoint, placementPoint);
+                    line.Layer = layerName;
+                    
+                    btr.AppendEntity(line);
+                    tr.AddNewlyCreatedDBObject(line, true);
+                    
+                    appliedHandles.Add(line.Handle.ToString());
+                    tr.Commit();
+                }
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn($"TryDrawElevationLinkLineToCad: {ex.Message}");
+            }
+        }
+
+        private void TryGroupEntities(IEnumerable<string> handles)
+        {
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc == null || handles == null) return;
+
+            try
+            {
+                using (doc.LockDocument())
+                using (var tr = doc.Database.TransactionManager.StartTransaction())
+                {
+                    var ids = new Autodesk.AutoCAD.DatabaseServices.ObjectIdCollection();
+                    foreach (var hStr in handles)
+                    {
+                        if (string.IsNullOrWhiteSpace(hStr)) continue;
+                        try
+                        {
+                            var handle = new Autodesk.AutoCAD.DatabaseServices.Handle(Convert.ToInt64(hStr, 16));
+                            if (doc.Database.TryGetObjectId(handle, out var objId))
+                            {
+                                ids.Add(objId);
+                            }
+                        }
+                        catch { }
+                    }
+
+                    if (ids.Count > 1)
+                    {
+                        var dictId = doc.Database.GroupDictionaryId;
+                        var dict = (Autodesk.AutoCAD.DatabaseServices.DBDictionary)tr.GetObject(dictId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForWrite);
+                        
+                        var group = new Autodesk.AutoCAD.DatabaseServices.Group("Tender Elevation Group", true);
+                        dict.SetAt("*", group);
+                        tr.AddNewlyCreatedDBObject(group, true);
+                        group.Append(ids);
+                    }
+                    tr.Commit();
+                }
+            }
+            catch (Exception ex)
+            {
+                PluginLogger.Warn($"TryGroupEntities: {ex.Message}");
             }
         }
     

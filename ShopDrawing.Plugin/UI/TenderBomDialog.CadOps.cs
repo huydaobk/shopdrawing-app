@@ -1031,21 +1031,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         if (left < 0) continue;
                         double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
                         
-                        double axisLeft = (left / lengthRef) * (horizontalLayout ? spanX : spanY);
-                        double axisRight = (right / lengthRef) * (horizontalLayout ? spanX : spanY);
+                        double axisLeft = (left / lengthRef) * spanX;
+                        double axisRight = (right / lengthRef) * spanX;
                         double bottom = Math.Max(0, opening.BottomElevationMm);
 
-                        Point p1, p2;
-                        if (horizontalLayout)
-                        {
-                            p1 = Map(new[] { minX + axisLeft, minY + bottom });
-                            p2 = Map(new[] { minX + axisRight, Math.Min(maxY, minY + bottom + opening.Height) });
-                        }
-                        else
-                        {
-                            p1 = Map(new[] { minX + bottom, minY + axisLeft });
-                            p2 = Map(new[] { Math.Min(maxX, minX + bottom + opening.Height), minY + axisRight });
-                        }
+                        Point p1 = Map(new[] { minX + axisLeft, minY + bottom });
+                        Point p2 = Map(new[] { minX + axisRight, Math.Min(maxY, minY + bottom + opening.Height) });
 
                         var rect = new System.Windows.Shapes.Rectangle
                         {
@@ -2392,12 +2383,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     widthMm = Math.Round(projectedWidth);
                 ed.WriteMessage($"\n\u0110\u1ecbnh v\u1ecb l\u1ed7 m\u1edf: LT={stationMm:F0} mm | R\u1ed9ng={widthMm:F0} mm");
             }
-            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách chiều cao lỗ mở (mm):")
+            var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick ĐIỂM THỨ 3 chiều cao lỗ mở (mm):")
             {
                 DefaultValue = 2100,
                 AllowNegative = false,
                 AllowZero = false,
-                UseDefaultValue = true
+                UseDefaultValue = true,
+                UseBasePoint = true,
+                BasePoint = p1Result.Value
             };
             var hRes = ed.GetDistance(hOpt);
             if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
@@ -2405,12 +2398,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             double heightMm = Math.Round(hRes.Value);
             if (heightMm <= 0)
                 return false;
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách cao độ đáy lỗ mở (mm):")
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick ĐIỂM THỨ 3 khoảng cách đáy (mm):")
             {
                 DefaultValue = 0,
                 AllowNegative = false,
                 AllowZero = true,
-                UseDefaultValue = true
+                UseDefaultValue = true,
+                UseBasePoint = true,
+                BasePoint = p1Result.Value
             };
             var bottomRes = ed.GetDistance(bottomOpt);
             if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
@@ -3212,7 +3207,13 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
             }
             TryDrawElevationLinkLineToCad(drawRow, placementPoint, appliedHandles);
-            TryGroupEntities(appliedHandles);
+            var handlesToGroup = new List<string>(appliedHandles);
+            if (!string.IsNullOrWhiteSpace(drawRow.CadHandle)) handlesToGroup.Add(drawRow.CadHandle);
+            if (drawRow.HeightSegments != null)
+            {
+                handlesToGroup.AddRange(drawRow.HeightSegments.Select(s => s.CadHandle).Where(h => !string.IsNullOrWhiteSpace(h)));
+            }
+            TryGroupEntities(handlesToGroup);
 
             var newHandleSet = new HashSet<string>(appliedHandles, StringComparer.OrdinalIgnoreCase);
             TryEraseCadEntitiesByHandles(oldHandles.Where(h => !newHandleSet.Contains(h)));
@@ -3223,9 +3224,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             targetRow.AppliedPlacementX = placementPoint.X;
             targetRow.AppliedPlacementY = placementPoint.Y;
             targetRow.AppliedPlacementZ = placementPoint.Z;
-            targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle)
-                ? appliedHandles.FirstOrDefault()
-                : primaryHandle;
+            if (string.IsNullOrWhiteSpace(targetRow.CadHandle))
+            {
+                targetRow.CadHandle = string.IsNullOrWhiteSpace(primaryHandle)
+                    ? appliedHandles.FirstOrDefault()
+                    : primaryHandle;
+            }
             PluginLogger.Info(
                 $"TenderApply.Done | row={targetRow.Name} | primary={targetRow.CadHandle} | " +
                 $"handles={appliedHandles.Count} | length={targetRow.Length:F0} | height={targetRow.Height:F0} | " +
@@ -4489,23 +4493,27 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         ed.WriteMessage($"\nĐịnh vị lỗ mở: L={stationMm:F0} mm | Rộng={widthMm:F0} mm");
                     }
 
-                    var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách chiều cao lỗ mở (mm):")
+                    var hOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick ĐIỂM THỨ 3 chiều cao lỗ mở (mm):")
                     {
                         DefaultValue = 2100,
                         AllowNegative = false,
                         AllowZero = false,
-                        UseDefaultValue = true
+                        UseDefaultValue = true,
+                        UseBasePoint = true,
+                        BasePoint = p1Res.Value
                     };
                     var hRes = ed.GetDistance(hOpt);
                     if (hRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
                     double heightMm = Math.Round(hRes.Value);
 
-                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách cao độ đáy lỗ mở (mm):")
+                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick ĐIỂM THỨ 3 khoảng cách đáy (mm):")
                     {
                         DefaultValue = 0,
                         AllowNegative = false,
                         AllowZero = true,
-                        UseDefaultValue = true
+                        UseDefaultValue = true,
+                        UseBasePoint = true,
+                        BasePoint = p1Res.Value
                     };
                     var bottomRes = ed.GetDistance(bottomOpt);
                     if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
@@ -4603,7 +4611,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     return;
                 }
                 TryDrawElevationLinkLineToCad(targetRow, placementPoint, appliedHandles);
-                TryGroupEntities(appliedHandles);
+                
+                var handlesToGroup = new List<string>(appliedHandles);
+                if (!string.IsNullOrWhiteSpace(targetRow.CadHandle)) handlesToGroup.Add(targetRow.CadHandle);
+                if (targetRow.HeightSegments != null)
+                {
+                    handlesToGroup.AddRange(targetRow.HeightSegments.Select(s => s.CadHandle).Where(h => !string.IsNullOrWhiteSpace(h)));
+                }
+                TryGroupEntities(handlesToGroup);
 
                 Dispatcher.Invoke(() =>
                 {
@@ -4778,6 +4793,17 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         dict.SetAt("*", group);
                         tr.AddNewlyCreatedDBObject(group, true);
                         group.Append(ids);
+                        
+                        try 
+                        {
+                            object pickStyleObj = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("PICKSTYLE");
+                            if (pickStyleObj is short ps)
+                            {
+                                if (ps == 0) Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("PICKSTYLE", (short)1);
+                                else if (ps == 2) Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("PICKSTYLE", (short)3);
+                            }
+                        }
+                        catch { }
                     }
                     tr.Commit();
                 }

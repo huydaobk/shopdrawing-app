@@ -3963,23 +3963,52 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         }
 
     
-        private void PickSpanFromCad()
+        private TenderWallRow? PrepareTargetRowForPick()
         {
-            TenderWallRow targetRow = _wallGrid.SelectedItem as TenderWallRow;
-            if (targetRow == null)
+            TenderWallRow? targetRow = null;
+            Dispatcher.Invoke(() =>
             {
-                targetRow = BuildPickTemplateRow();
-                targetRow.Index = _wallRows.Count + 1;
-                targetRow.Name = $"{TenderWall.GetCategoryPrefix(targetRow.Category)}-{_wallRows.Count + 1}";
-                if (targetRow.Height <= 0) targetRow.Height = 3000;
-                
-                Dispatcher.Invoke(() => 
+                targetRow = _wallGrid.SelectedItem as TenderWallRow;
+                if (targetRow != null && targetRow.Length > 0)
                 {
+                    var res = System.Windows.MessageBox.Show(
+                        "Dòng đang chọn đã có hình học/kích thước.\n\nBấm [Yes] để TẠO DÒNG MỚI.\nBấm [No] để CHỌN LẠI (Ghi đè) dòng hiện tại.",
+                        "Xác nhận",
+                        System.Windows.MessageBoxButton.YesNoCancel,
+                        System.Windows.MessageBoxImage.Question);
+                    
+                    if (res == System.Windows.MessageBoxResult.Cancel) 
+                    {
+                        targetRow = new TenderWallRow { Index = -1 }; // Cancel marker
+                    }
+                    else if (res == System.Windows.MessageBoxResult.Yes)
+                    {
+                        targetRow = null; 
+                    }
+                }
+                
+                if (targetRow == null)
+                {
+                    targetRow = BuildPickTemplateRow();
+                    targetRow.Index = _wallRows.Count + 1;
+                    targetRow.Name = $"{TenderWall.GetCategoryPrefix(targetRow.Category)}-{_wallRows.Count + 1}";
+                    if (targetRow.Height <= 0) targetRow.Height = 3000;
+                    
                     _wallRows.Add(targetRow);
                     _wallGrid.SelectedItem = targetRow;
                     ReindexWalls();
-                });
-            }
+                    _wallGrid.ScrollIntoView(targetRow);
+                }
+            });
+            return targetRow;
+        }
+
+        private void PickSpanFromCad()
+        {
+            TenderWallRow? targetRow = PrepareTargetRowForPick();
+            if (targetRow != null && targetRow.Index == -1) return; // Cancelled
+            if (targetRow == null) return;
+
             BeginCadInteraction();
             try
             {
@@ -4047,21 +4076,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         }
         private void PickAreaFromCad()
         {
-            TenderWallRow targetRow = _wallGrid.SelectedItem as TenderWallRow;
-            if (targetRow == null)
-            {
-                targetRow = BuildPickTemplateRow();
-                targetRow.Index = _wallRows.Count + 1;
-                targetRow.Name = $"{TenderWall.GetCategoryPrefix(targetRow.Category)}-{_wallRows.Count + 1}";
-                if (targetRow.Height <= 0) targetRow.Height = 3000;
-                
-                Dispatcher.Invoke(() => 
-                {
-                    _wallRows.Add(targetRow);
-                    _wallGrid.SelectedItem = targetRow;
-                    ReindexWalls();
-                });
-            }
+            TenderWallRow? targetRow = PrepareTargetRowForPick();
+            if (targetRow != null && targetRow.Index == -1) return; // Cancelled
+            if (targetRow == null) return;
+
             BeginCadInteraction();
             try
             {
@@ -4130,7 +4148,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         }
         private void PickOpeningFromCad()
         {
-            TenderWallRow targetRow = _wallGrid.SelectedItem as TenderWallRow;
+            TenderWallRow? targetRow = _wallGrid.SelectedItem as TenderWallRow;
             if (targetRow == null)
             {
                 SetStatus("Vui lòng chọn vách trước khi pick lỗ mở.");
@@ -4184,7 +4202,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
         }
         private void DrawElevationForSelected()
         {
-            TenderWallRow targetRow = _wallGrid.SelectedItem as TenderWallRow;
+            TenderWallRow? targetRow = _wallGrid.SelectedItem as TenderWallRow;
             if (targetRow == null)
             {
                 SetStatus("Chọn vách để vẽ MẶT ĐỨNG.");
@@ -4204,7 +4222,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 // Set fake result for TryDrawAppliedTenderGeometry requirement
                 result.PanelWidthMm = targetRow.PanelWidth;
                 result.AppliedGroupId = targetRow.AppliedGroupId;
-                if (result.Mode == TenderPopupGeometryMode.WallPolygon)
+                if (result.Mode == TenderPopupGeometryMode.WallPolygon && targetRow.PolygonVertices != null)
                 {
                     result.PolygonVertices = targetRow.PolygonVertices.ToList();
                 }
@@ -4278,10 +4296,11 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     referenceLengthMm = Math.Max(1, normalized.Sum(s => Math.Max(0, s.LengthMm)));
                     DrawHeightProfilePreview(_previewCanvas, normalized, referenceLengthMm, targetRow.PanelWidth, layout, openings);
                 }
-                else
+                else if (targetRow.PolygonVertices != null)
                 {
                     var polyPts = targetRow.PolygonVertices.ToList();
-                    DrawLocalPolygonPreview(_previewCanvas, polyPts, targetRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openings, 0, true, targetRow);
+                    var drawOpeningByStation = !IsSuspendedCeilingRow(targetRow);
+                    DrawLocalPolygonPreview(_previewCanvas, polyPts, targetRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openings, 0, drawOpeningByStation, targetRow);
                 }
             }
             catch (Exception ex)

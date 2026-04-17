@@ -57,9 +57,11 @@ namespace ShopDrawing.Plugin.UI
         private ComboBox _pickSpecPreset = null!;
         private ScrollViewer _previewScroll = null!;
         private Canvas _previewCanvas = null!;
-        private TextBlock _lblPreviewNote = null!;
-        private ComboBox _cboLayoutDirection = null!;
+        private Point? _lastDragPoint;
         private double _previewZoom = 1.0;
+        private TranslateTransform _previewTranslate = new TranslateTransform();
+        private ScaleTransform _previewScale = new ScaleTransform();
+
         private bool _isUpdatingPickPresetConstraints;
         private readonly DispatcherTimer _cadPreviewTimer;
         private readonly DispatcherTimer _cadSegmentSyncTimer;
@@ -288,7 +290,7 @@ namespace ShopDrawing.Plugin.UI
             toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
             toolbar.Children.Add(Btn("Lỗ mở", AccentBlue, Brushes.White, (s,e) => PickOpeningFromCad()));
             toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
-            toolbar.Children.Add(Btn("Vẽ MĐ", AccentGreen, Brushes.White, (s,e) => DrawElevationForSelected()));
+            toolbar.Children.Add(Btn("Vẽ CAD", AccentGreen, Brushes.White, (s,e) => DrawElevationForSelected()));
             toolbar.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Color.FromRgb(200, 210, 220)), Margin = new Thickness(4, 4, 8, 4) });
             toolbar.Children.Add(Btn("Xóa", AccentRed, Brushes.White, OnDeleteWall));
 
@@ -305,11 +307,12 @@ namespace ShopDrawing.Plugin.UI
             // RIGHT PANEL
             var rightPanel = new Grid { Margin = new Thickness(8, 0, 0, 0) };
             rightPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 0: opening header
-            rightPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.2, GridUnitType.Star) }); // 1: opening grid
+            rightPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 1: opening grid
             rightPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 2: breakdown header
-            rightPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.2, GridUnitType.Star) }); // 3: breakdown grid
+            rightPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 3: breakdown grid
             rightPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 4: preview header
-            rightPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.5, GridUnitType.Star) }); // 5: preview canvas
+            rightPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) }); // 5: preview canvas
+
 
             var openingBar = new StackPanel
             {
@@ -328,8 +331,12 @@ namespace ShopDrawing.Plugin.UI
             rightPanel.Children.Add(openingBar);
 
             _openingGrid = CreateOpeningGrid();
+            _openingGrid.MinHeight = 80;
+            _openingGrid.MaxHeight = 150;
+            _openingGrid.Margin = new Thickness(0, 0, 0, 8);
             Grid.SetRow(_openingGrid, 1);
             rightPanel.Children.Add(_openingGrid);
+
 
             var breakdownBar = new StackPanel
             {
@@ -356,7 +363,9 @@ namespace ShopDrawing.Plugin.UI
                 SelectionMode = DataGridSelectionMode.Single,
                 HeadersVisibility = DataGridHeadersVisibility.Column,
                 AlternatingRowBackground = AltRow,
-                MaxHeight = 150
+                MinHeight = 80,
+                MaxHeight = 160,
+                Margin = new Thickness(0, 0, 0, 8)
             };
             ConfigureGridScrolling(_panelBreakdownGrid);
 
@@ -392,15 +401,86 @@ namespace ShopDrawing.Plugin.UI
 
             _previewScroll = new ScrollViewer 
             { 
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, 
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto, 
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden, 
+                VerticalScrollBarVisibility = ScrollBarVisibility.Hidden, 
                 Background = Brushes.White,
                 BorderBrush = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
                 BorderThickness = new Thickness(1),
                 Margin = new Thickness(0, 0, 0, 0)
             };
-            _previewCanvas = new Canvas { Background = Brushes.White, MinWidth = 300, MinHeight = 150 };
+            _previewCanvas = new Canvas { Background = Brushes.Transparent, MinWidth = 300, MinHeight = 150 };
+            
+            var transformGroup = new TransformGroup();
+            transformGroup.Children.Add(_previewScale);
+            transformGroup.Children.Add(_previewTranslate);
+            _previewCanvas.RenderTransform = transformGroup;
+
             _previewScroll.Content = _previewCanvas;
+
+            // Zoom logic
+            _previewScroll.PreviewMouseWheel += (s, e) =>
+            {
+                e.Handled = true;
+                double zoomDelta = e.Delta > 0 ? 1.2 : 1.0 / 1.2;
+                Point mousePos = e.GetPosition(_previewScroll);
+
+                double newZoom = _previewZoom * zoomDelta;
+                // Constraints
+                if (newZoom < 0.1) newZoom = 0.1;
+                if (newZoom > 20.0) newZoom = 20.0;
+                zoomDelta = newZoom / _previewZoom; // True ratio used
+                _previewZoom = newZoom;
+
+                // Adjust translate to keep mouse stationary
+                _previewScale.ScaleX = _previewZoom;
+                _previewScale.ScaleY = _previewZoom;
+
+                _previewTranslate.X = mousePos.X - (mousePos.X - _previewTranslate.X) * zoomDelta;
+                _previewTranslate.Y = mousePos.Y - (mousePos.Y - _previewTranslate.Y) * zoomDelta;
+            };
+
+            // Pan logic (using Middle Mouse Button to pan, as left click might be used for selection later, but for now we also support Left)
+            _previewScroll.PreviewMouseLeftButtonDown += (s, e) =>
+            {
+                _lastDragPoint = e.GetPosition(_previewScroll);
+                _previewScroll.CaptureMouse();
+            };
+            
+            _previewScroll.PreviewMouseLeftButtonUp += (s, e) =>
+            {
+                _previewScroll.ReleaseMouseCapture();
+                _lastDragPoint = null;
+            };
+
+            _previewScroll.PreviewMouseMove += (s, e) =>
+            {
+                if (_previewScroll.IsMouseCaptured && _lastDragPoint.HasValue)
+                {
+                    Point currentPos = e.GetPosition(_previewScroll);
+                    _previewTranslate.X += currentPos.X - _lastDragPoint.Value.X;
+                    _previewTranslate.Y += currentPos.Y - _lastDragPoint.Value.Y;
+                    _lastDragPoint = currentPos;
+                }
+            };
+            
+            // Middle button panning as alternative
+            _previewScroll.PreviewMouseDown += (s, e) =>
+            {
+                if (e.MiddleButton == System.Windows.Input.MouseButtonState.Pressed)
+                {
+                    _lastDragPoint = e.GetPosition(_previewScroll);
+                    _previewScroll.CaptureMouse();
+                }
+            };
+            _previewScroll.PreviewMouseUp += (s, e) =>
+            {
+                if (e.MiddleButton == System.Windows.Input.MouseButtonState.Released && _previewScroll.IsMouseCaptured)
+                {
+                    _previewScroll.ReleaseMouseCapture();
+                    _lastDragPoint = null;
+                }
+            };
+
             Grid.SetRow(_previewScroll, 5);
             rightPanel.Children.Add(_previewScroll);
 

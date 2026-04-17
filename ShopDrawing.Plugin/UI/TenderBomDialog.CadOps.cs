@@ -579,7 +579,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return false;
             var ed = doc.Editor;
             
-            var ppo = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nPick 1 điểm bên trong vùng kín HOẶC [Chon polyline]:", "Chon");
+            var ppo = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nPick 1 điểm bên trong vùng kín HOẶC [Chon polyline/Ve chu nhat]:", "Chon Ve");
             ppo.AllowNone = true;
             
             var res = ed.GetPoint(ppo);
@@ -617,8 +617,44 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         ed.WriteMessage($"\nLỗi truy tìm vùng: {ex.Message}");
                     }
                 }
-                else if (res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.Keyword || res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
+                else if (res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.Keyword)
                 {
+                    if (res.StringResult == "Chon")
+                    {
+                        var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nChọn polyline kín:");
+                        opt.SetRejectMessage("\nPhải là polyline kín.");
+                        opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
+                        var entRes = ed.GetEntity(opt);
+                        if (entRes.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                        {
+                            targetPoly = tr.GetObject(entRes.ObjectId, Autodesk.AutoCAD.DatabaseServices.OpenMode.ForRead, false) as Autodesk.AutoCAD.DatabaseServices.Polyline;
+                        }
+                    }
+                    else if (res.StringResult == "Ve")
+                    {
+                        var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn góc thứ nhất của hình chữ nhật: ");
+                        var p1Res = ed.GetPoint(p1Opt);
+                        if (p1Res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                        {
+                            var p2Opt = new Autodesk.AutoCAD.EditorInput.PromptCornerOptions("\nChọn góc đối diện: ", p1Res.Value);
+                            var p2Res = ed.GetCorner(p2Opt);
+                            if (p2Res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
+                            {
+                                var pt1 = p1Res.Value;
+                                var pt2 = p2Res.Value;
+                                targetPoly = new Autodesk.AutoCAD.DatabaseServices.Polyline();
+                                targetPoly.AddVertexAt(0, new Autodesk.AutoCAD.Geometry.Point2d(pt1.X, pt1.Y), 0, 0, 0);
+                                targetPoly.AddVertexAt(1, new Autodesk.AutoCAD.Geometry.Point2d(pt2.X, pt1.Y), 0, 0, 0);
+                                targetPoly.AddVertexAt(2, new Autodesk.AutoCAD.Geometry.Point2d(pt2.X, pt2.Y), 0, 0, 0);
+                                targetPoly.AddVertexAt(3, new Autodesk.AutoCAD.Geometry.Point2d(pt1.X, pt2.Y), 0, 0, 0);
+                                targetPoly.Closed = true;
+                            }
+                        }
+                    }
+                }
+                else if (res.Status == Autodesk.AutoCAD.EditorInput.PromptStatus.None)
+                {
+                    // Default to Chon on Enter
                     var opt = new Autodesk.AutoCAD.EditorInput.PromptEntityOptions("\nChọn polyline kín:");
                     opt.SetRejectMessage("\nPhải là polyline kín.");
                     opt.AddAllowedClass(typeof(Autodesk.AutoCAD.DatabaseServices.Polyline), true);
@@ -948,76 +984,94 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     canvas.Children.Add(pText);
                 }
             }
-            if (drawOpeningByStation && openings != null)
+            if (openings != null)
             {
-                foreach (var opening in openings.Where(o => o != null && o.Width > 0 && o.Height > 0))
-                {
-                    double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
-                    if (left < 0)
-                        continue;
-                    double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
-                    double bottom = Math.Max(0, opening.BottomElevationMm);
-                    var p1 = Map(new[] { minX + left, minY + bottom });
-                    var p2 = Map(new[] { minX + right, minY + bottom + opening.Height });
-                    var rect = new System.Windows.Shapes.Rectangle
-                    {
-                        Width = Math.Max(2, Math.Abs(p2.X - p1.X)),
-                        Height = Math.Max(2, Math.Abs(p2.Y - p1.Y)),
-                        Stroke = Brushes.Firebrick,
-                        StrokeThickness = 1.5
-                    };
-                    Canvas.SetLeft(rect, Math.Min(p1.X, p2.X));
-                    Canvas.SetTop(rect, Math.Min(p1.Y, p2.Y));
-                    canvas.Children.Add(rect);
+                double lengthRef = Math.Max(1.0, row.Length);
+                double spanX = Math.Max(1.0, maxX - minX);
+                double spanY = Math.Max(1.0, maxY - minY);
 
-                    var oText = new TextBlock
-                    {
-                        Text = $"W{opening.Width:F0}xH{opening.Height:F0}",
-                        FontSize = 9,
-                        Foreground = Brushes.Firebrick
-                    };
-                    oText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                    Canvas.SetLeft(oText, Math.Min(p1.X, p2.X) + Math.Abs(p2.X - p1.X) / 2 - oText.DesiredSize.Width / 2);
-                    Canvas.SetTop(oText, Math.Min(p1.Y, p2.Y) + Math.Abs(p2.Y - p1.Y) / 2 - oText.DesiredSize.Height / 2);
-                    canvas.Children.Add(oText);
-                }
-            }
-            else if (openings != null)
-            {
-                foreach (var polygonOpening in openings.Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3))
+                foreach (var opening in openings.Where(o => o != null))
                 {
-                    var points = polygonOpening.OpeningPolygon!.Select(Map).ToList();
-                    for (int i = 0; i < points.Count; i++)
+                    if (opening.OpeningPolygon != null && opening.OpeningPolygon.Count >= 3)
                     {
-                        var p1 = points[i];
-                        var p2 = points[(i + 1) % points.Count];
-                        canvas.Children.Add(new System.Windows.Shapes.Line
+                        var points = opening.OpeningPolygon.Select(Map).ToList();
+                        for (int i = 0; i < points.Count; i++)
                         {
-                            X1 = p1.X,
-                            Y1 = p1.Y,
-                            X2 = p2.X,
-                            Y2 = p2.Y,
+                            var pt1 = points[i];
+                            var pt2 = points[(i + 1) % points.Count];
+                            canvas.Children.Add(new System.Windows.Shapes.Line
+                            {
+                                X1 = pt1.X,
+                                Y1 = pt1.Y,
+                                X2 = pt2.X,
+                                Y2 = pt2.Y,
+                                Stroke = Brushes.Firebrick,
+                                StrokeThickness = 1.5
+                            });
+                        }
+                        
+                        // Optional bounding box text (can omit for clean look, or place in center)
+                        var bounds = points;
+                        double center_X = bounds.Average(p => p.X);
+                        double center_Y = bounds.Average(p => p.Y);
+                        var oText = new TextBlock
+                        {
+                            Text = $"W{opening.Width:F0}xH{opening.Height:F0}",
+                            FontSize = 9,
+                            Foreground = Brushes.Firebrick
+                        };
+                        oText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                        Canvas.SetLeft(oText, center_X - oText.DesiredSize.Width / 2);
+                        Canvas.SetTop(oText, center_Y - oText.DesiredSize.Height / 2);
+                        canvas.Children.Add(oText);
+                    }
+                    else if (drawOpeningByStation && opening.Width > 0 && opening.Height > 0)
+                    {
+                        double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                        if (left < 0) continue;
+                        double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
+                        
+                        double axisLeft = (left / lengthRef) * (horizontalLayout ? spanX : spanY);
+                        double axisRight = (right / lengthRef) * (horizontalLayout ? spanX : spanY);
+                        double bottom = Math.Max(0, opening.BottomElevationMm);
+
+                        Point p1, p2;
+                        if (horizontalLayout)
+                        {
+                            p1 = Map(new[] { minX + axisLeft, minY + bottom });
+                            p2 = Map(new[] { minX + axisRight, Math.Min(maxY, minY + bottom + opening.Height) });
+                        }
+                        else
+                        {
+                            p1 = Map(new[] { minX + bottom, minY + axisLeft });
+                            p2 = Map(new[] { Math.Min(maxX, minX + bottom + opening.Height), minY + axisRight });
+                        }
+
+                        var rect = new System.Windows.Shapes.Rectangle
+                        {
+                            Width = Math.Max(2, Math.Abs(p2.X - p1.X)),
+                            Height = Math.Max(2, Math.Abs(p2.Y - p1.Y)),
                             Stroke = Brushes.Firebrick,
                             StrokeThickness = 1.5
-                        });
+                        };
+                        Canvas.SetLeft(rect, Math.Min(p1.X, p2.X));
+                        Canvas.SetTop(rect, Math.Min(p1.Y, p2.Y));
+                        canvas.Children.Add(rect);
+
+                        var oText = new TextBlock
+                        {
+                            Text = $"W{opening.Width:F0}xH{opening.Height:F0}",
+                            FontSize = 9,
+                            Foreground = Brushes.Firebrick
+                        };
+                        oText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                        Canvas.SetLeft(oText, Math.Min(p1.X, p2.X) + Math.Abs(p2.X - p1.X) / 2 - oText.DesiredSize.Width / 2);
+                        Canvas.SetTop(oText, Math.Min(p1.Y, p2.Y) + Math.Abs(p2.Y - p1.Y) / 2 - oText.DesiredSize.Height / 2);
+                        canvas.Children.Add(oText);
                     }
-                    
-                    double minO_x = points.Min(p => p.X);
-                    double maxO_x = points.Max(p => p.X);
-                    double minO_y = points.Min(p => p.Y);
-                    double maxO_y = points.Max(p => p.Y);
-                    var poText = new TextBlock
-                    {
-                        Text = $"W{polygonOpening.Width:F0}xH{polygonOpening.Height:F0}",
-                        FontSize = 9,
-                        Foreground = Brushes.Firebrick
-                    };
-                    poText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                    Canvas.SetLeft(poText, minO_x + (maxO_x - minO_x) / 2 - poText.DesiredSize.Width / 2);
-                    Canvas.SetTop(poText, minO_y + (maxO_y - minO_y) / 2 - poText.DesiredSize.Height / 2);
-                    canvas.Children.Add(poText);
                 }
             }
+
             if (IsSuspendedCeilingRow(row) && !drawOpeningByStation)
             {
                 var preview = TenderBomCalculator.GetColdStorageCeilingPreviewData(row.ToModel());
@@ -1162,22 +1216,24 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 return false;
             }
-            var heightOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao l\u1ed7 m\u1edf (mm):")
+            var heightOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách cao lỗ mở (mm):")
             {
                 DefaultValue = 2100,
                 AllowNegative = false,
-                AllowZero = false
+                AllowZero = false,
+                UseDefaultValue = true
             };
-            var heightRes = ed.GetDouble(heightOpt);
+            var heightRes = ed.GetDistance(heightOpt);
             if (heightRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
-            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao \u0111\u1ed9 \u0111\u00e1y l\u1ed7 m\u1edf (mm):")
+            var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDistanceOptions("\nNhập hoặc pick 2 điểm khoảng cách cao độ đáy lỗ mở (mm):")
             {
                 DefaultValue = 0,
                 AllowNegative = false,
-                AllowZero = true
+                AllowZero = true,
+                UseDefaultValue = true
             };
-            var bottomRes = ed.GetDouble(bottomOpt);
+            var bottomRes = ed.GetDistance(bottomOpt);
             if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK)
                 return false;
             opening = new TenderOpeningRow

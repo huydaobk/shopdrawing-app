@@ -811,13 +811,52 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             double maxY = vertices.Max(v => v[1]);
             double width = Math.Max(1, maxX - minX);
             double height = Math.Max(1, maxY - minY);
-            double margin = 24;
+            double margin = 36;
             double plotW = Math.Max(80, canvas.Width - margin * 2);
             double plotH = Math.Max(80, canvas.Height - margin * 2);
             double scale = Math.Min(plotW / width, plotH / height);
             Point Map(double[] v) => new(
                 margin + (v[0] - minX) * scale,
                 margin + plotH - (v[1] - minY) * scale);
+
+            double drawnWidth = width * scale;
+            double drawnHeight = height * scale;
+            double bX1 = margin;
+            double bX2 = margin + drawnWidth;
+            double bY = margin + plotH;
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = bX1, Y1 = bY + 20, X2 = bX2, Y2 = bY + 20, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = bX1, Y1 = bY, X2 = bX1, Y2 = bY + 24, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = bX2, Y1 = bY, X2 = bX2, Y2 = bY + 24, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            var textW = new TextBlock
+            {
+                Text = $"{Math.Round(width)}",
+                FontSize = 11,
+                Foreground = Brushes.DarkSlateGray,
+                Background = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255))
+            };
+            textW.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(textW, bX1 + (bX2 - bX1) / 2 - textW.DesiredSize.Width / 2);
+            Canvas.SetTop(textW, bY + 20 - 16);
+            canvas.Children.Add(textW);
+
+            double lX = margin;
+            double lY1 = margin + plotH;
+            double lY2 = margin + plotH - drawnHeight;
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = lX - 20, Y1 = lY1, X2 = lX - 20, Y2 = lY2, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = lX - 24, Y1 = lY1, X2 = lX, Y2 = lY1, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = lX - 24, Y1 = lY2, X2 = lX, Y2 = lY2, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            var textH = new TextBlock
+            {
+                Text = $"{Math.Round(height)}",
+                FontSize = 11,
+                Foreground = Brushes.DarkSlateGray,
+                Background = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255))
+            };
+            textH.RenderTransform = new RotateTransform(-90);
+            textH.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(textH, lX - 20 - 16);
+            Canvas.SetTop(textH, lY2 + (lY1 - lY2) / 2 + textH.DesiredSize.Width / 2);
+            canvas.Children.Add(textH);
             for (int i = 0; i < vertices.Count; i++)
             {
                 var p1 = Map(vertices[i]);
@@ -837,7 +876,27 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 double minAxis = horizontalLayout ? minY : minX;
                 double maxAxis = horizontalLayout ? maxY : maxX;
                 for (double pos = minAxis + panelWidthMm; pos < maxAxis - 1.0; pos += panelWidthMm)
+                {
                     DrawPreviewScanSegments(canvas, vertices, pos, horizontalLayout, Brushes.DarkSlateGray, 1.0, Map);
+                    
+                    double center = pos - panelWidthMm / 2.0;
+                    var pText = new TextBlock { Text = $"{panelWidthMm}", FontSize = 9, Foreground = Brushes.Gray };
+                    pText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    int panelIndex = (int)(pos / panelWidthMm);
+                    if (horizontalLayout)
+                    {
+                        var pt = Map(new[] { minX, center });
+                        Canvas.SetLeft(pText, pt.X - (panelIndex % 2 == 0 ? 30 : 4) - pText.DesiredSize.Width);
+                        Canvas.SetTop(pText, pt.Y - pText.DesiredSize.Height / 2);
+                    }
+                    else
+                    {
+                        var pt = Map(new[] { center, minY });
+                        Canvas.SetLeft(pText, pt.X - pText.DesiredSize.Width / 2);
+                        Canvas.SetTop(pText, pt.Y + (panelIndex % 2 == 0 ? 12 : 2));
+                    }
+                    canvas.Children.Add(pText);
+                }
             }
             if (drawOpeningByStation && openings != null)
             {
@@ -860,6 +919,17 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     Canvas.SetLeft(rect, Math.Min(p1.X, p2.X));
                     Canvas.SetTop(rect, Math.Min(p1.Y, p2.Y));
                     canvas.Children.Add(rect);
+
+                    var oText = new TextBlock
+                    {
+                        Text = $"W{opening.Width:F0}xH{opening.Height:F0}",
+                        FontSize = 9,
+                        Foreground = Brushes.Firebrick
+                    };
+                    oText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    Canvas.SetLeft(oText, Math.Min(p1.X, p2.X) + Math.Abs(p2.X - p1.X) / 2 - oText.DesiredSize.Width / 2);
+                    Canvas.SetTop(oText, Math.Min(p1.Y, p2.Y) + Math.Abs(p2.Y - p1.Y) / 2 - oText.DesiredSize.Height / 2);
+                    canvas.Children.Add(oText);
                 }
             }
             else if (openings != null)
@@ -881,6 +951,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             StrokeThickness = 1.5
                         });
                     }
+                    
+                    double minO_x = points.Min(p => p.X);
+                    double maxO_x = points.Max(p => p.X);
+                    double minO_y = points.Min(p => p.Y);
+                    double maxO_y = points.Max(p => p.Y);
+                    var poText = new TextBlock
+                    {
+                        Text = $"W{polygonOpening.Width:F0}xH{polygonOpening.Height:F0}",
+                        FontSize = 9,
+                        Foreground = Brushes.Firebrick
+                    };
+                    poText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    Canvas.SetLeft(poText, minO_x + (maxO_x - minO_x) / 2 - poText.DesiredSize.Width / 2);
+                    Canvas.SetTop(poText, minO_y + (maxO_y - minO_y) / 2 - poText.DesiredSize.Height / 2);
+                    canvas.Children.Add(poText);
                 }
             }
             if (IsSuspendedCeilingRow(row) && !drawOpeningByStation)
@@ -1687,7 +1772,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 return;
             double w = Math.Max(100, canvas.ActualWidth <= 0 ? canvas.Width : canvas.ActualWidth);
             double h = Math.Max(100, canvas.ActualHeight <= 0 ? canvas.Height : canvas.ActualHeight);
-            double margin = 18;
+            double margin = 36;
             double plotW = Math.Max(20, w - margin * 2);
             double plotH = Math.Max(20, h - margin * 2);
             double maxHeight = Math.Max(1, segments.Max(s => s.HeightMm));
@@ -1804,6 +1889,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         StrokeThickness = 1
                     };
                     canvas.Children.Add(divLine);
+
+                    double centerX = margin + ((boundary - panelWidthMm/2.0) / drawingLength) * plotW;
+                    int panelIndex = (int)(boundary / panelWidthMm);
+                    var pText = new TextBlock { Text = $"{panelWidthMm:F0}", FontSize = 9, Foreground = Brushes.Gray };
+                    pText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    Canvas.SetLeft(pText, centerX - pText.DesiredSize.Width / 2);
+                    Canvas.SetTop(pText, margin + plotH + (panelIndex % 2 == 0 ? 12 : 2));
+                    canvas.Children.Add(pText);
                 }
             }
             else if (string.Equals(layoutDirection, "Ngang", StringComparison.OrdinalIgnoreCase))
@@ -1828,9 +1921,55 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             StrokeThickness = 1
                         };
                         canvas.Children.Add(divLine);
+
+                        double centerY = margin + (plotH - ((yMm - panelWidthMm/2.0) / maxHeight) * plotH);
+                        int panelIndex = (int)(yMm / panelWidthMm);
+                        var pText = new TextBlock { Text = $"{panelWidthMm:F0}", FontSize = 9, Foreground = Brushes.Gray };
+                        pText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                        Canvas.SetLeft(pText, x1 + (panelIndex % 2 == 0 ? -30 : 2));
+                        Canvas.SetTop(pText, centerY - pText.DesiredSize.Height / 2);
+                        canvas.Children.Add(pText);
                     }
                 }
             }
+            // Overall dimensions
+            double ovX1 = margin;
+            double ovX2 = margin + plotW;
+            double ovY = bottomY;
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = ovX1, Y1 = ovY + 20, X2 = ovX2, Y2 = ovY + 20, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = ovX1, Y1 = ovY, X2 = ovX1, Y2 = ovY + 24, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = ovX2, Y1 = ovY, X2 = ovX2, Y2 = ovY + 24, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            var ovTextW = new TextBlock
+            {
+                Text = $"{Math.Round(drawingLength)}",
+                FontSize = 11,
+                Foreground = Brushes.DarkSlateGray,
+                Background = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255))
+            };
+            ovTextW.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(ovTextW, ovX1 + (ovX2 - ovX1) / 2 - ovTextW.DesiredSize.Width / 2);
+            Canvas.SetTop(ovTextW, ovY + 20 - 16);
+            canvas.Children.Add(ovTextW);
+
+            double lX = margin;
+            double lY1 = bottomY;
+            double lY2 = margin;
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = lX - 20, Y1 = lY1, X2 = lX - 20, Y2 = lY2, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = lX - 24, Y1 = lY1, X2 = lX, Y2 = lY1, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = lX - 24, Y1 = lY2, X2 = lX, Y2 = lY2, Stroke = Brushes.DimGray, StrokeThickness = 1 });
+            var ovTextH = new TextBlock
+            {
+                Text = $"{Math.Round(maxHeight)}",
+                FontSize = 11,
+                Foreground = Brushes.DarkSlateGray,
+                Background = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255))
+            };
+            ovTextH.RenderTransform = new RotateTransform(-90);
+            ovTextH.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(ovTextH, lX - 20 - 16);
+            Canvas.SetTop(ovTextH, lY2 + (lY1 - lY2) / 2 + ovTextH.DesiredSize.Width / 2);
+            canvas.Children.Add(ovTextH);
+
             DrawOpeningPreviewMarkers(canvas, openings, segments, margin, plotW, plotH, bottomY, maxHeight, drawingLength);
         }
         private static void DrawOpeningPreviewMarkers(
@@ -3180,6 +3319,19 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 var a = horizontal ? new[] { segment.Start, pos } : new[] { pos, segment.Start };
                                 var b = horizontal ? new[] { segment.End, pos } : new[] { pos, segment.End };
                                 AddLine(a, b, PanelPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight025);
+                            }
+                            
+                            double center = pos - row.PanelWidth / 2.0;
+                            // Thêm text ra CAD text
+                            int panelIndex = (int)(pos / row.PanelWidth);
+                            double textOffset = (panelIndex % 2 == 0) ? -150.0 : -350.0;
+                            if (horizontal)
+                            {
+                                AddText(new[] { minAxis - 200.0, center }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
+                            }
+                            else
+                            {
+                                AddText(new[] { center - 30.0, minAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
                             }
                         }
                     }

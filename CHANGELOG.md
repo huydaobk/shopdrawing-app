@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-17] - v0.2.14 Tender CAD "Pick Vùng" Fix 🐛
+### Fixed
+- **Tender Geometry Error for "Pick Vùng"** - Khắc phục lỗi khi chọn vách bằng "Pick vùng" (WallPolygon) với các đường bao hình đa giác không vuông góc (ví dụ vách mái dốc). Hệ thống không còn unroll tự động (trải phẳng) biên dạng trên bản vẽ CAD mà giữ nguyên hình dạng nguyên gốc (literal geometry offset) giúp đồng bộ tuyệt đối với hình ảnh trên Preview Canvas.
+- **Tender CAD Openings Placement Offset** - Đã sửa lỗi tọa độ lỗ mở khi dựng bản vẽ CAD cho vách "Pick vùng", các lỗ mở bây giờ được offset hoàn toàn chuẩn xác theo biên dạng Polyline chính.
+
 ## [2026-04-17] - v0.2.13 Tender Persistence Fix 🔧
 ### Fixed
 - **Critical: Tender Wall AutoLoad bị chặn bởi marker file gate** — Sau khi cập nhật plugin và restart CAD, vách đã vẽ mất khỏi Bảng quản lý khối lượng. Nguyên nhân: `EnsureProject()` yêu cầu file `.shopdrawing-project.json` tồn tại trước khi AutoLoad, nhưng AutoSave không tạo file này. Đã bỏ gate condition thừa vì `TryAutoLoad()` đã có guard `File.Exists` riêng.

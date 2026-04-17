@@ -1351,16 +1351,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         && polygonVertices != null
                         && polygonVertices.Count >= 3)
                     {
-                        if (mode == TenderPopupGeometryMode.WallPolygon && TryBuildWallReferenceGeometry(polygonVertices, out var wallReference))
-                        {
-                            referenceLengthMm = wallReference.ReferenceLengthMm;
-                            referenceHeightMm = wallReference.ReferenceHeightMm;
-                            DrawLocalPolygonPreview(previewCanvas, wallReference.BoundaryVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openingRows.Select(ToTenderOpeningFromRow).ToList(), referenceLengthMm, true, seedRow);
-                            lblNote.Text = $"Ch\u1ebf \u0111\u1ed9: {mode} | D\u00e0i={referenceLengthMm:F0} mm | Cao max={referenceHeightMm:F0} mm";
-                            lblNote.Foreground = Brushes.DarkGreen;
-                            return;
-                        }
-                        DrawLocalPolygonPreview(previewCanvas, polygonVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), null, 0, false, seedRow);
+                        DrawLocalPolygonPreview(previewCanvas, polygonVertices, seedRow.PanelWidth, string.Equals(layout, "Ngang", StringComparison.OrdinalIgnoreCase), openingRows.Select(ToTenderOpeningFromRow).ToList(), 0, false, seedRow);
                         lblNote.Text = $"Ch\u1ebf \u0111\u1ed9: {mode} | Bi\u00ean d\u1ea1ng v\u00f9ng: {polygonVertices.Count} \u0111\u1ec9nh";
                         lblNote.Foreground = Brushes.DarkGreen;
                         return;
@@ -1702,20 +1693,22 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     {
                         if (polygonVertices == null || polygonVertices.Count < 3)
                         {
-                            lblNote.Text = "C\u1ea7n Pick v\u00f9ng tr\u01b0\u1edbc khi \u00e1p d\u1ee5ng.";
+                            lblNote.Text = "Cần Pick vùng trước khi áp dụng.";
                             lblNote.Foreground = Brushes.Firebrick;
                             return;
                         }
                         popupResult.PolygonVertices = polygonVertices.Select(v => v.ToArray()).ToList();
-                        if (mode == TenderPopupGeometryMode.WallPolygon && TryBuildWallReferenceGeometry(popupResult.PolygonVertices, out var wallReference))
+                        
+                        double minX = popupResult.PolygonVertices.Min(v => v[0]);
+                        double maxX = popupResult.PolygonVertices.Max(v => v[0]);
+                        double minY = popupResult.PolygonVertices.Min(v => v[1]);
+                        double maxY = popupResult.PolygonVertices.Max(v => v[1]);
+                        
+                        popupResult.RepresentativeHeightMm = Math.Max(1.0, maxY - minY);
+                        popupResult.Segments = new List<TenderHeightSegment>
                         {
-                            popupResult.ReferenceGeometry = wallReference;
-                            popupResult.RepresentativeHeightMm = wallReference.ReferenceHeightMm;
-                            popupResult.Segments = new List<TenderHeightSegment>
-                            {
-                                new TenderHeightSegment { LengthMm = wallReference.ReferenceLengthMm, HeightMm = wallReference.ReferenceHeightMm }
-                            };
-                        }
+                            new TenderHeightSegment { LengthMm = Math.Max(1.0, maxX - minX), HeightMm = popupResult.RepresentativeHeightMm }
+                        };
                     }
                     popupResult.Mode = mode;
                     popupResult.LayoutDirection = layout;
@@ -3110,18 +3103,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 row.PolygonVertices = null;
                 return;
             }
-            if (result.Mode == TenderPopupGeometryMode.WallPolygon
-                && result.PolygonVertices != null
-                && TryBuildWallReferenceGeometry(result.PolygonVertices, out var wallReference))
-            {
-                row.HeightSegments = new List<TenderHeightSegment>
-                {
-                    new TenderHeightSegment { LengthMm = wallReference.ReferenceLengthMm, HeightMm = wallReference.ReferenceHeightMm }
-                };
-                row.Length = wallReference.ReferenceLengthMm;
-                row.Height = wallReference.ReferenceHeightMm;
-                return;
-            }
             if (result.PolygonVertices != null && result.PolygonVertices.Count >= 3)
             {
                 double minX = result.PolygonVertices.Min(v => v[0]);
@@ -3270,12 +3251,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 };
                 return;
             }
-            if (result.Mode == TenderPopupGeometryMode.WallPolygon
-                && result.PolygonVertices != null
-                && TryBuildWallReferenceGeometry(result.PolygonVertices, out var wallReference))
-            {
-                result.ReferenceGeometry = wallReference;
-            }
         }
         private static List<double[]> BuildStepBoundaryFromSegments(IReadOnlyList<TenderHeightSegment> segments)
         {
@@ -3386,6 +3361,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         Register(leader);
                     }
                     List<double[]> localVertices;
+                    double globalOffsetX = 0;
+                    double globalOffsetY = 0;
                     bool stationOpeningMode = result.Mode != TenderPopupGeometryMode.CeilingPolygon;
                     if (result.Mode == TenderPopupGeometryMode.WallLineChain)
                     {
@@ -3418,18 +3395,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 : new Autodesk.AutoCAD.Geometry.Point3d(mid.X, mid.Y + 180.0, mid.Z);
                         }
                     }
-                    else if (result.Mode == TenderPopupGeometryMode.WallPolygon
-                        && result.PolygonVertices != null
-                        && TryBuildWallReferenceGeometry(result.PolygonVertices, out var reference))
-                    {
-                        localVertices = reference.BoundaryVertices;
-                    }
                     else if (result.PolygonVertices != null && result.PolygonVertices.Count >= 3)
                     {
-                        double minX = result.PolygonVertices.Min(v => v[0]);
-                        double minY = result.PolygonVertices.Min(v => v[1]);
+                        globalOffsetX = result.PolygonVertices.Min(v => v[0]);
+                        globalOffsetY = result.PolygonVertices.Min(v => v[1]);
                         localVertices = result.PolygonVertices
-                            .Select(v => new[] { v[0] - minX, v[1] - minY })
+                            .Select(v => new[] { v[0] - globalOffsetX, v[1] - globalOffsetY })
                             .ToList();
                     }
                     else
@@ -3522,10 +3493,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             {
                                 var a = opening.OpeningPolygon[i];
                                 var b = opening.OpeningPolygon[(i + 1) % opening.OpeningPolygon.Count];
-                                AddLine(a, b, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                                AddLine(new[] { a[0] - globalOffsetX, a[1] - globalOffsetY }, new[] { b[0] - globalOffsetX, b[1] - globalOffsetY }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             }
-                            double minO_x = opening.OpeningPolygon.Min(p => p[0]);
-                            double maxO_y = opening.OpeningPolygon.Max(p => p[1]);
+                            double minO_x = opening.OpeningPolygon.Min(p => p[0]) - globalOffsetX;
+                            double maxO_y = opening.OpeningPolygon.Max(p => p[1]) - globalOffsetY;
                             AddText(new[] { minO_x, maxO_y + 90 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 120);
                         }
                     }

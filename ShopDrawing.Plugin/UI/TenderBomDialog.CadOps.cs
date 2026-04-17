@@ -4384,13 +4384,25 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     if (p2Res.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
                     double widthMm = Math.Round(Math.Abs(p2Res.Value.X - p1Res.Value.X));
                     double heightMm = Math.Round(Math.Abs(p2Res.Value.Y - p1Res.Value.Y));
-                    string typeStr = widthMm > heightMm ? "Cửa sổ" : "Lỗ Kỹ Thuật";
+                    
+                    var bottomOpt = new Autodesk.AutoCAD.EditorInput.PromptDoubleOptions("\nNh\u1eadp cao \u0111\u1ed9 \u0111\u00e1y l\u1ed7 m\u1edf (mm):")
+                    {
+                        DefaultValue = 0,
+                        AllowNegative = false,
+                        AllowZero = true
+                    };
+                    var bottomRes = ed.GetDouble(bottomOpt);
+                    if (bottomRes.Status != Autodesk.AutoCAD.EditorInput.PromptStatus.OK) break;
+                    double bottomElevationMm = Math.Max(0, Math.Round(bottomRes.Value));
+
+                    string typeStr = TenderOpening.ResolveTypeByBottomElevation(bottomElevationMm);
                     
                     var newOp = new TenderOpening
                     {
                         Type = typeStr,
                         Width = widthMm,
                         Height = heightMm,
+                        BottomElevationMm = bottomElevationMm,
                         Quantity = 1
                     };
                     targetRow.Openings = targetRow.Openings ?? new List<TenderOpening>();

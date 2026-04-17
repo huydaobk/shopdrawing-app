@@ -3468,9 +3468,21 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             }
                         }
                     }
-                    if (stationOpeningMode)
+                    foreach (var opening in row.Openings)
                     {
-                        foreach (var opening in row.Openings.Where(o => o.Width > 0 && o.Height > 0))
+                        if (opening.OpeningPolygon != null && opening.OpeningPolygon.Count >= 3)
+                        {
+                            for (int i = 0; i < opening.OpeningPolygon!.Count; i++)
+                            {
+                                var a = opening.OpeningPolygon[i];
+                                var b = opening.OpeningPolygon[(i + 1) % opening.OpeningPolygon.Count];
+                                AddLine(new[] { a[0] - globalOffsetX, a[1] - globalOffsetY }, new[] { b[0] - globalOffsetX, b[1] - globalOffsetY }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
+                            }
+                            double minO_x = opening.OpeningPolygon.Min(p => p[0]) - globalOffsetX;
+                            double maxO_y = opening.OpeningPolygon.Max(p => p[1]) - globalOffsetY;
+                            AddText(new[] { minO_x, maxO_y + 90 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 120);
+                        }
+                        else if (stationOpeningMode && opening.Width > 0 && opening.Height > 0)
                         {
                             double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
                             if (left < 0)
@@ -3483,21 +3495,6 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             AddLine(new[] { right, top }, new[] { left, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { left, top }, new[] { left, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | Đáy {bottom:F0}", OpeningPreviewTextColorIndex, 120);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var opening in row.Openings.Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3))
-                        {
-                            for (int i = 0; i < opening.OpeningPolygon!.Count; i++)
-                            {
-                                var a = opening.OpeningPolygon[i];
-                                var b = opening.OpeningPolygon[(i + 1) % opening.OpeningPolygon.Count];
-                                AddLine(new[] { a[0] - globalOffsetX, a[1] - globalOffsetY }, new[] { b[0] - globalOffsetX, b[1] - globalOffsetY }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
-                            }
-                            double minO_x = opening.OpeningPolygon.Min(p => p[0]) - globalOffsetX;
-                            double maxO_y = opening.OpeningPolygon.Max(p => p[1]) - globalOffsetY;
-                            AddText(new[] { minO_x, maxO_y + 90 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 120);
                         }
                     }
                     if (result.Mode == TenderPopupGeometryMode.CeilingPolygon && IsSuspendedCeilingRow(row))
@@ -4503,12 +4500,17 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         // Always extrude 'up' in standard XY projection
                         if (ny < 0) { nx = -nx; ny = -ny; }
                         
+                        double baseX1 = p1Res.Value.X + nx * bottomElevationMm;
+                        double baseY1 = p1Res.Value.Y + ny * bottomElevationMm;
+                        double baseX2 = p2Res.Value.X + nx * bottomElevationMm;
+                        double baseY2 = p2Res.Value.Y + ny * bottomElevationMm;
+                        
                         openingPoly = new List<double[]>
                         {
-                            new[] { p1Res.Value.X, p1Res.Value.Y },
-                            new[] { p2Res.Value.X, p2Res.Value.Y },
-                            new[] { p2Res.Value.X + nx * heightMm, p2Res.Value.Y + ny * heightMm },
-                            new[] { p1Res.Value.X + nx * heightMm, p1Res.Value.Y + ny * heightMm }
+                            new[] { baseX1, baseY1 },
+                            new[] { baseX2, baseY2 },
+                            new[] { baseX2 + nx * heightMm, baseY2 + ny * heightMm },
+                            new[] { baseX1 + nx * heightMm, baseY1 + ny * heightMm }
                         };
                     }
 

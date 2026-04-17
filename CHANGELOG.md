@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-17] - v0.2.15 Tender CAD "Pick Vùng" Hole Fix 🐛
+### Fixed
+- **Tender Geometry Error for Openings** - Sửa triệt để lỗi khi "Pick lỗ mở" cho "Pick vùng" thì tọa độ lỗ mở trong CAD bị trượt khỏi vị trí. Việc vẽ lỗ mở trên CAD nay đã ưu tiên sử dụng data `OpeningPolygon` thay vì station line, và bao gồm khoảng cách đáy (bottom offset) khi pick lỗ mở thay vì phụ thuộc 100% vào grid ngang thẳng đứng.
+
 ## [2026-04-17] - v0.2.14 Tender CAD "Pick Vùng" Fix 🐛
 ### Fixed
 - **Tender Geometry Error for "Pick Vùng"** - Khắc phục lỗi khi chọn vách bằng "Pick vùng" (WallPolygon) với các đường bao hình đa giác không vuông góc (ví dụ vách mái dốc). Hệ thống không còn unroll tự động (trải phẳng) biên dạng trên bản vẽ CAD mà giữ nguyên hình dạng nguyên gốc (literal geometry offset) giúp đồng bộ tuyệt đối với hình ảnh trên Preview Canvas.

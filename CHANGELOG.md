@@ -1,5 +1,17 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-17] - v0.2.5 Tender Grouping & Drawing Refinement 🚀
+### Added
+- **AutoCAD CAD Grouping**: Tự động gom nhóm toàn bộ cấu kiện được sinh ra từ lệnh vẽ Tender (đường bao, panel, lỗ mở, ghi chú, và đường nối) vào một đối tượng Group duy nhất (`Tender Elevation Group`), giúp thao tác di chuyển/xóa cả cụm bản vẽ trên CAD chỉ qua 1 click.
+- **TraceBoundary Picking (Pick Vùng)**: Giải pháp linh hoạt cho việc nhận diện vùng kín, cho phép click vào điểm bất kỳ để tự scan lấy boundary hoặc click trực tiếp lên Polyline. Giải quyết vấn đề chọn các vùng dị dạng vuông hoặc khuyết.
+- **Link Line Rendering**: Tự động vẽ các dải Line tham chiếu màu xám nhạt (`SD_LINK`) để kết nối từ vùng Floorplan ban đầu với bản vẽ Mặt Đứng Panel để kiểm soát nguồn gốc chiết tính rõ ràng.
+- **Multi-select Opening/Lỗ Mở**: Tính năng cho phép giữ phím trỏ hàng loạt lỗ mở khi thêm vào hệ thống và bổ sung khai báo Cao độ đáy (Bottom Offset) thay vì cố định = 0.
+- **Tender UI Improvements**: Cập nhật logic làm mới UI mượt mà, render ngay lập tức thông số lỗ mở vào Footer của "Pick Nhịp" sau mỗi lần chỉnh sửa. Thêm phím tắt Shift+Click cho mở nhanh.
+
+### Fixed
+- **BOM Deletion Sync Bug**: Khắc phục triệt để lỗi khi người dùng xóa dòng vách Tender mà Canvas lưới không tự động xóa CAD block. Tính năng Cleanup CAD Artifacts đã dọn sạch các handle cũ và clear Canvas chính xác.
+- **Pick Dài Dimension Reset**: Sửa lỗi Panel width/height tính sai khi dựng "Pick dài" bằng cách chuẩn hoá Unit Coordinate và áp dụng Vector quay (Rotate) đúng ma trận điểm góc.
+
 ## [2026-02-27] - MVP Milestone 🚀
 ### Added
 - **Phase 05: AutoCAD Drawing**: `BlockManager` for drawing panels, hatches, and tags.

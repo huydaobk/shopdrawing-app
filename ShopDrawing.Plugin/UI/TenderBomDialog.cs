@@ -20,6 +20,8 @@ namespace ShopDrawing.Plugin.UI
     /// </summary>
     public partial class TenderBomDialog : Window
     {
+        public event EventHandler? ProjectStateChanged;
+        
         private const bool EnableTenderCadOverlayPreview = true;
 
         // ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Color constants (match WasteManagerDialog) ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â
@@ -1117,6 +1119,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             _previewCanvas?.Children.Clear();
             RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
             _project.Walls = GetWallModels();
+            ProjectStateChanged?.Invoke(this, EventArgs.Empty);
             RefreshFooter();
             SetStatus($"Đã xóa {selected.Count} vách");
         }
@@ -2620,6 +2623,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             _lastCadPreviewKey = null;
             ClearHighlight();
             _project.Walls = GetWallModels();
+            ProjectStateChanged?.Invoke(this, EventArgs.Empty);
             base.OnClosing(e);
         }
 
@@ -3380,7 +3384,12 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 InsideCornerCount = InsideCornerCount,
                 CadHandle = CadHandle, Openings = Openings,
                 VerticalJointCount = VerticalJointCount,
-                PolygonVertices = PolygonVertices
+                PolygonVertices = PolygonVertices,
+                AppliedEntityHandles = (AppliedEntityHandles ?? new List<string>()).ToList(),
+                AppliedGroupId = AppliedGroupId,
+                AppliedPlacementX = AppliedPlacementX,
+                AppliedPlacementY = AppliedPlacementY,
+                AppliedPlacementZ = AppliedPlacementZ
             };
         }
 
@@ -3483,6 +3492,11 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 DraftGeometryMode = w.PolygonVertices != null && w.PolygonVertices.Count >= 3
                     ? (string.Equals(UiText.Normalize(w.Category), "Tr\u1ea7n", StringComparison.OrdinalIgnoreCase) ? "CeilingPolygon" : "WallPolygon")
                     : "WallLineChain",
+                AppliedEntityHandles = (w.AppliedEntityHandles ?? new List<string>()).ToList(),
+                AppliedGroupId = w.AppliedGroupId,
+                AppliedPlacementX = w.AppliedPlacementX,
+                AppliedPlacementY = w.AppliedPlacementY,
+                AppliedPlacementZ = w.AppliedPlacementZ,
                 _prevCategory = UiText.Normalize(w.Category)
             };
             row.NormalizeSuspensionLayoutDirection();

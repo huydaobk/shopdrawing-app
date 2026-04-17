@@ -1,4 +1,4 @@
-﻿﻿using System;
+using System;
 
 using System.IO;
 
@@ -317,37 +317,29 @@ namespace ShopDrawing.Plugin.UI
 
             {
 
-                bool hasExistingProjectContext =
-                    ProjectDataPathResolver.TryResolveExistingProjectContext(out _, out _);
+                // Always try auto-load from the autosave file for the current DWG.
+                // TryAutoLoad already checks File.Exists internally, so no gate needed.
+                string dwgName = GetCurrentAutoSaveDwgKey();
 
-                // Try auto-load only when drawing is in an initialized project root.
-                if (hasExistingProjectContext)
+                if (!string.IsNullOrEmpty(dwgName))
 
                 {
 
-                    string dwgName = GetCurrentAutoSaveDwgKey();
+                    var loaded = _projectManager.TryAutoLoad(dwgName);
 
-                    if (!string.IsNullOrEmpty(dwgName))
+                    if (loaded != null)
 
                     {
 
-                        var loaded = _projectManager.TryAutoLoad(dwgName);
+                        _currentProject = loaded;
 
-                        if (loaded != null)
+                        _txtProjectName.Text = loaded.ProjectName;
 
-                        {
+                        _txtCustomerName.Text = loaded.CustomerName;
 
-                            _currentProject = loaded;
+                        UpdateFooter();
 
-                            _txtProjectName.Text = loaded.ProjectName;
-
-                            _txtCustomerName.Text = loaded.CustomerName;
-
-                            UpdateFooter();
-
-                            return;
-
-                        }
+                        return;
 
                     }
 
@@ -619,6 +611,7 @@ namespace ShopDrawing.Plugin.UI
                 // Khi dialog dong thi sync data ve project
 
                 _bomDialog.Closed += HandleBomDialogClosed;
+                _bomDialog.ProjectStateChanged += HandleBomProjectStateChanged;
 
 
 
@@ -649,9 +642,19 @@ namespace ShopDrawing.Plugin.UI
             if (_bomDialog != null)
             {
                 _bomDialog.Closed -= HandleBomDialogClosed;
+                _bomDialog.ProjectStateChanged -= HandleBomProjectStateChanged;
             }
 
             _bomDialog = null;
+        }
+
+        private void HandleBomProjectStateChanged(object? sender, EventArgs e)
+        {
+            if (!_isResettingForDocumentSwitch)
+            {
+                AutoSaveProject();
+                UpdateFooter();
+            }
         }
 
 

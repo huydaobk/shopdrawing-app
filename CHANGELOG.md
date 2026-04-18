@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-18] - v0.2.21 Tender Excel Geometric Area Export 📊
+### Changed
+- **Tender UI Optimization** - Đồng bộ hóa giá trị diện tích hình học thực tế (từ Pick Vùng/Pick Dài) hiển thị trực tiếp vào file Excel xuất BOM thay vì áp dụng công thức Dài x Rộng cũ, giúp đồng nhất dữ liệu hiển thị (source of truth) giữa AutoCAD, App và Excel. Ghi chú tại Excel cũng cập nhật thông báo rõ gốc trích xuất từ mô hình CAD.
+- **Tender Opening Logic** - Cột diện tích lỗ mở trong Excel được trả lại form công thức gốc `Rộng * Cao * SL / 1000000` để người dùng có thể linh hoạt nhập tay hoặc tinh chỉnh các tham số nếu cần thiết mà không bị ảnh hưởng.
+
 ## [2026-04-18] - v0.2.20 Tender UI Dimension Locking 🔒
 ### Changed
 - **Tender UI Optimization**: Các cột kích thước trong bảng Quản lý khối lượng chào giá bao gồm: Dài, Cao (của vách) và Rộng, Cao, Cao độ đáy (của lỗ mở) đã được khóa lại (read-only). Dữ liệu này được lấy trực tiếp từ việc bắt điểm/dựng hình trích xuất từ CAD. Việc khóa lại để đảm bảo tính đồng nhất dữ liệu và bảo toàn "nguồn sự thật" từ mô hình (tránh việc sửa tay nhầm trên DataGrid).

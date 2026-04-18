@@ -74,7 +74,7 @@ Project hiện đang map tới đường dẫn cài đặt mặc định của A
 |--------|-----------------|------------|
 | **Core Framework** | Registry, CAD Threading lock, Logging | 🟢 Stable |
 | **Waste Repository** | SQLite DB, Matcher, Tái tạo rác thừa | 🟢 Stable |
-| **Tender BOM** | Bóc BOM khối lượng vách/trần, Auto-tracing biên dạng, Link-line, Gom Group CAD block, Pick 2 điểm khoảng cách lỗ mở | 🟢 Stable (v0.2.17) |
+| **Tender BOM** | Bóc BOM khối lượng vách/trần, Auto-tracing biên dạng, Link-line, Gom Group CAD block, Pick 2 điểm khoảng cách lỗ mở | 🟢 Stable (v0.2.18) |
 | **Shopdrawing** | Setup lưới vách Panel, Cắt nối Joint | 🟡 In-Progress |
 | **Layout & PDF** | Xếp viewport auto-scale, Xuất PDF/Model | 🟢 Stable |
 | **SmartDimension** | Tự động Dimension các layer khung thép | 🟢 Stable |
@@ -218,4 +218,4 @@ Muc tieu: deploy on dinh, khong mat tab `ShopDrawing`, khong lap lai loi update.
 - `%APPDATA%\Autodesk\ApplicationPlugins\ShopDrawing.bundle\PackageContents.xml`
 
 ### 7) Ban baseline on dinh
-- Baseline deploy ổn định mới nhất: `v0.2.17`.
+- Baseline deploy ổn định mới nhất: `v0.2.18`.

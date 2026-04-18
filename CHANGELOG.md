@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-18] - v0.2.18 Tender Preview Text Overlay Fix 📐
+### Changed
+- **Tender UI Optimization** - Tăng kích thước nét chữ (text size) trong Preview (Vẽ CAD) cho kích thước panel và lỗ mở (vd: size tăng từ 70 -> 150).
+- Căn chỉnh lại `Justify` và `Offset` cho Text trong AutoCAD Preview để số (dimension text) không bị đè dính gạch trực tiếp lên các nét red/green line của viền / mí nối (joints). Text giờ đây tự động dàn sáng ra mép ngoài dựa theo phương pháp gióng phải ngang/trái tương ứng.
+
 ## [2026-04-18] - v0.2.17 Immediate Preview on Pick Lỗ Mở ⚡
 ### Changed
 - **Tender UI Optimization** - Khi user thực hiện thao tác (Pick Lỗ mở), khung Preview và bảng khối lượng (BOM) bên dưới sẽ cập nhật giao diện ngay lập tức thay vì phải chờ người dùng bấm Enter để thoát thao tác.

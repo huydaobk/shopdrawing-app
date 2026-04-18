@@ -3324,16 +3324,26 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         pl.LineWeight = weight;
                         Register(pl, primary);
                     }
-                    void AddText(double[] p, string text, short color, double height)
+                    void AddText(double[] p, string text, short color, double height, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode horizMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft)
                     {
                         var dbText = new Autodesk.AutoCAD.DatabaseServices.DBText
                         {
-                            Position = Map(p),
                             TextString = text,
                             Height = height,
                             ColorIndex = color,
                             TextStyleId = BlockManager.EnsureArialStyle(btr.Database, tr)
                         };
+
+                        if (horizMode != Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft)
+                        {
+                            dbText.Justify = Autodesk.AutoCAD.DatabaseServices.AttachmentPoint.BaseLeft; // Reset justify FIRST
+                            dbText.HorizontalMode = horizMode;
+                            dbText.AlignmentPoint = Map(p);
+                        }
+                        else
+                        {
+                            dbText.Position = Map(p);
+                        }
                         Register(dbText);
                     }
                     void AddWorldText(Autodesk.AutoCAD.Geometry.Point3d p, string text, short color, double height)
@@ -3440,14 +3450,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             double center = pos - row.PanelWidth / 2.0;
                             // Thêm text ra CAD text
                             int panelIndex = (int)((pos - minAxis) / row.PanelWidth);
-                            double textOffset = (panelIndex % 2 == 0) ? -150.0 : -350.0;
+                            double textOffset = (panelIndex % 2 == 0) ? -200.0 : -450.0;
                             if (horizontal)
                             {
-                                AddText(new[] { minCrossAxis + textOffset, center }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
+                                AddText(new[] { minCrossAxis - 50.0, center - 70.0 }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight);
                             }
                             else
                             {
-                                AddText(new[] { center - 30.0, minCrossAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 70);
+                                AddText(new[] { center, minCrossAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter);
                             }
                         }
 
@@ -3457,14 +3467,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         {
                             double center = lastPos + lastWidth / 2.0;
                             int panelIndex = (int)((lastPos - minAxis) / row.PanelWidth) + 1;
-                            double textOffset = (panelIndex % 2 == 0) ? -150.0 : -350.0;
+                            double textOffset = (panelIndex % 2 == 0) ? -200.0 : -450.0;
                             if (horizontal)
                             {
-                                AddText(new[] { minCrossAxis + textOffset, center }, $"{lastWidth:F0}", PanelPreviewColorIndex, 70);
+                                AddText(new[] { minCrossAxis - 50.0, center - 70.0 }, $"{lastWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight);
                             }
                             else
                             {
-                                AddText(new[] { center - 30.0, minCrossAxis + textOffset }, $"{lastWidth:F0}", PanelPreviewColorIndex, 70);
+                                AddText(new[] { center, minCrossAxis + textOffset }, $"{lastWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter);
                             }
                         }
                     }
@@ -3480,7 +3490,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             }
                             double minO_x = opening.OpeningPolygon.Min(p => p[0]) - globalOffsetX;
                             double maxO_y = opening.OpeningPolygon.Max(p => p[1]) - globalOffsetY;
-                            AddText(new[] { minO_x, maxO_y + 90 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 120);
+                            AddText(new[] { minO_x, maxO_y + 150 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 150);
                         }
                         else if (stationOpeningMode && opening.Width > 0 && opening.Height > 0)
                         {
@@ -3494,7 +3504,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             AddLine(new[] { right, bottom }, new[] { right, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { right, top }, new[] { left, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { left, top }, new[] { left, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
-                            AddText(new[] { left, top + 90 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | Đáy {bottom:F0}", OpeningPreviewTextColorIndex, 120);
+                            AddText(new[] { left, top + 150.0 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | Đáy {bottom:F0}", OpeningPreviewTextColorIndex, 120);
                         }
                     }
                     if (result.Mode == TenderPopupGeometryMode.CeilingPolygon && IsSuspendedCeilingRow(row))
@@ -3515,7 +3525,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             }
                         }
                     }
-                    AddText(new[] { 120.0, localVertices.Max(v => v[1]) + 180.0 }, row.Name, PreviewSummaryTextColorIndex, 160.0);
+                    AddText(new[] { 120.0, localVertices.Max(v => v[1]) + 300.0 }, row.Name, PreviewSummaryTextColorIndex, 250.0);
                     if (result.Mode == TenderPopupGeometryMode.WallLineChain && lineChainAnchorPoint.HasValue)
                     {
                         AddWorldText(

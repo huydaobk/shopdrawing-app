@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-18] - v0.2.20 Tender UI Dimension Locking 🔒
+### Changed
+- **Tender UI Optimization**: Các cột kích thước trong bảng Quản lý khối lượng chào giá bao gồm: Dài, Cao (của vách) và Rộng, Cao, Cao độ đáy (của lỗ mở) đã được khóa lại (read-only). Dữ liệu này được lấy trực tiếp từ việc bắt điểm/dựng hình trích xuất từ CAD. Việc khóa lại để đảm bảo tính đồng nhất dữ liệu và bảo toàn "nguồn sự thật" từ mô hình (tránh việc sửa tay nhầm trên DataGrid).
+
 ## [2026-04-18] - v0.2.19 Tender Data Persistence Fix 💾
 ### Fixed
 - **Tender Data Loss**: Khắc phục triệt để lỗi thỉnh thoảng mất dữ liệu Tender khi tắt bật Autocad. Đã hook trực tiếp vào sự kiện `Database.SaveComplete` nguyên thủy của hạ tầng CAD. Mỗi khi người dùng bấm Save hoặc Save As, tệp tin dữ liệu dự án (`.json`) sẽ tự động được đồng bộ lưu ngay lập tức bên cạnh thư mục chứa tệp `dwg` mới nhất, đảm bảo tính bền vững (persistence) của dữ liệu.

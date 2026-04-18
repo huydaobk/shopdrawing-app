@@ -62,8 +62,8 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns.Add(ColTemplateCombo("Hạng mục", "Category", 82, TenderWall.CategoryOptions));
             grid.Columns.Add(Col("Tầng", "Floor", 58));
             grid.Columns.Add(Col("Ký hiệu", "Name", 78));
-            grid.Columns.Add(Col("Dài (mm)", "Length", 82, "F0"));
-            grid.Columns.Add(Col("Cao (mm)", "Height", 82, "F0"));
+            var colLength = Col("Dài (mm)", "Length", 82, "F0"); colLength.IsReadOnly = true; grid.Columns.Add(colLength);
+            var colHeight = Col("Cao (mm)", "Height", 82, "F0"); colHeight.IsReadOnly = true; grid.Columns.Add(colHeight);
             grid.Columns.Add(Col("Thả cáp (mm)", "CableDropLengthMm", 102, "F0"));
             grid.Columns.Add(ColTemplateCombo("Mã spec", "SpecKey", 108, _project.Specs.Select(s => s.Key).ToArray()));
             grid.Columns.Add(ColTemplateCombo("Khổ tấm", "PanelWidth", 78, new[] { "900", "1000", "1100", "1150", "1200" }));
@@ -505,9 +505,9 @@ namespace ShopDrawing.Plugin.UI
 
 
             grid.Columns.Add(ColTemplateCombo("Loại", "Type", 100, TenderOpening.TypeOptions));
-            grid.Columns.Add(Col("Rộng (mm)", "Width", 85, "F0"));
-            grid.Columns.Add(Col("Cao (mm)", "Height", 85, "F0"));
-            grid.Columns.Add(Col("Cao độ đáy (mm)", "BottomElevationMm", 115, "F0"));
+            var colOWidth = Col("Rộng (mm)", "Width", 85, "F0"); colOWidth.IsReadOnly = true; grid.Columns.Add(colOWidth);
+            var colOHeight = Col("Cao (mm)", "Height", 85, "F0"); colOHeight.IsReadOnly = true; grid.Columns.Add(colOHeight);
+            var colOBottom = Col("Cao độ đáy (mm)", "BottomElevationMm", 115, "F0"); colOBottom.IsReadOnly = true; grid.Columns.Add(colOBottom);
             grid.Columns.Add(Col("Số lượng", "Quantity", 70));
 
 

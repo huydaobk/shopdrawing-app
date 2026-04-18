@@ -652,10 +652,10 @@ namespace ShopDrawing.Plugin.UI
                     SetCell(row, 9, Math.Round(opening.Height), computedIntegerStyle);
                     SetCell(row, 10, Math.Round(opening.BottomElevationMm), computedIntegerStyle);
                     SetCell(row, 11, Math.Max(1, opening.Quantity), computedIntegerStyle);
-                    SetFormulaCell(
+                    SetCell(
                         row,
                         12,
-                        $"{CellRef(row.RowNum, 8)}*{CellRef(row.RowNum, 9)}*{CellRef(row.RowNum, 11)}/1000000",
+                        opening.AreaM2 * opening.Quantity,
                         computedStyle);
 
                     string openingNote = opening.CenterStationMm >= 0
@@ -727,11 +727,7 @@ namespace ShopDrawing.Plugin.UI
                 SetCell(row, 6, "Th\u00F4ng s\u1ED1", dataStyle);
                 SetCell(row, 7, Math.Round(wall.Length), computedIntegerStyle);
                 SetCell(row, 8, Math.Round(wall.RepresentativeHeightMm), computedIntegerStyle);
-                SetFormulaCell(
-                    row,
-                    9,
-                    $"{CellRef(row.RowNum, 7)}*{CellRef(row.RowNum, 8)}/1000000",
-                    computedStyle);
+                SetCell(row, 9, wall.WallAreaM2, computedStyle);
                 string geometryNote = $"K\u00EDch th\u01B0\u1EDBc h\u00ECnh h\u1ECDc xu\u1EA5t t\u1EEB AutoCAD: L={Math.Round(wall.Length)} mm; Htb={Math.Round(wall.RepresentativeHeightMm)} mm";
                 SetCell(row, 10, geometryNote, dataWrapStyle);
                 ApplyWrapRowHeight(row, geometryNote, 88);

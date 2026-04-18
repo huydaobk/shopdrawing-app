@@ -4523,14 +4523,18 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     };
                     targetRow.Openings = targetRow.Openings ?? new List<TenderOpening>();
                     targetRow.Openings.Add(newOp);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        LoadOpeningsForWall(targetRow);
+                        RequestCadPreview(targetRow, force: true);
+                        RefreshFooter();
+                        RefreshPanelBreakdown(targetRow);
+                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
+                    });
                 }
                 Dispatcher.Invoke(() =>
                 {
-                    LoadOpeningsForWall(targetRow);
-                    RequestCadPreview(targetRow, force: true);
-                    RefreshFooter();
-                    RefreshPanelBreakdown(targetRow);
-                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     SetStatus($"Đã pick lỗ mở.");
                 });
             }

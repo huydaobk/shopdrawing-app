@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-18] - v0.2.17 Immediate Preview on Pick Lỗ Mở ⚡
+### Changed
+- **Tender UI Optimization** - Khi user thực hiện thao tác (Pick Lỗ mở), khung Preview và bảng khối lượng (BOM) bên dưới sẽ cập nhật giao diện ngay lập tức thay vì phải chờ người dùng bấm Enter để thoát thao tác.
+
 ## [2026-04-18] - v0.2.16 Tender CAD "Pick Khoảng Cách Đáy" Revert 🐛
 ### Fixed
 - **Tender Geometry Error for Openings** - Xóa bỏ lỗi dịch chuyển (shift) khoảng cách đáy lần 2 khi lưu `OpeningPolygon`. Khắc phục triệt để lỗ mở Floating khi vẽ CAD sau khi pick. (Các điểm pick p1, p2 bằng chuột trên màn hình đã ngầm định chứa cao độ thực tế rồi, không cần cộng thêm tham số BottomElevationMm vào tọa độ `OpeningPolygon` nữa).

@@ -49,8 +49,30 @@ namespace ShopDrawing.Plugin.Models
             return bottomElevationMm <= 0.5 ? "Cửa đi" : "Lỗ kỹ thuật";
         }
 
+        private double ComputePolygonAreaM2(List<double[]>? vertices)
+        {
+            if (vertices == null || vertices.Count < 3) return 0;
+            double area = 0;
+            int j = vertices.Count - 1;
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                area += (vertices[j][0] + vertices[i][0]) * (vertices[j][1] - vertices[i][1]);
+                j = i;
+            }
+            return Math.Abs(area) / 2.0 / 1_000_000.0;
+        }
+
+        public double TrueGeometricAreaM2 => ComputePolygonAreaM2(OpeningPolygon);
+
         /// <summary>Dien tich 1 opening (m2)</summary>
-        public double AreaM2 => Width * Height / 1_000_000.0;
+        public double AreaM2
+        {
+            get
+            {
+                double exactArea = TrueGeometricAreaM2;
+                return exactArea > 0 ? exactArea : Width * Height / 1_000_000.0;
+            }
+        }
 
         /// <summary>Tong dien tich (m2) = DT x SL</summary>
         public double TotalAreaM2 => AreaM2 * Quantity;
@@ -93,3 +115,4 @@ namespace ShopDrawing.Plugin.Models
         public static readonly string[] TypeOptions = { "Cửa đi", "Cửa sổ", "Lỗ kỹ thuật" };
     }
 }
+

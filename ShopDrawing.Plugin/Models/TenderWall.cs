@@ -281,10 +281,29 @@ namespace ShopDrawing.Plugin.Models
             }
         }
 
+        private double ComputePolygonAreaM2(List<double[]>? vertices)
+        {
+            if (vertices == null || vertices.Count < 3) return 0;
+            double area = 0;
+            int j = vertices.Count - 1;
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                area += (vertices[j][0] + vertices[i][0]) * (vertices[j][1] - vertices[i][1]);
+                j = i;
+            }
+            return Math.Abs(area) / 2.0 / 1_000_000.0;
+        }
+
+        public double TrueGeometricAreaM2 => ComputePolygonAreaM2(PolygonVertices);
+
         public double WallAreaM2
         {
             get
             {
+                double exactArea = TrueGeometricAreaM2;
+                if (exactArea > 0)
+                    return exactArea;
+
                 var segments = GetEffectiveHeightSegments();
                 if (segments.Count == 0)
                     return Math.Max(0, Length) * Math.Max(0, Height) / 1_000_000.0;

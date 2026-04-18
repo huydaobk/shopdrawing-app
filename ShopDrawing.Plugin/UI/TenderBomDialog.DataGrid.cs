@@ -100,9 +100,9 @@ namespace ShopDrawing.Plugin.UI
             grid.Columns[8].CellStyle = cellStyleSpecLocked;
 
 
-            var colArea = Col("DT tường", "WallAreaM2Display", 82); colArea.IsReadOnly = true; colArea.CellStyle = cellStyleBold;
-            var colOp = Col("DT lỗ mở", "OpeningAreaM2Display", 82); colOp.IsReadOnly = true; colOp.CellStyle = cellStyleBold;
-            var colNet = Col("DT Net", "NetAreaM2Display", 70); colNet.IsReadOnly = true; colNet.CellStyle = cellStyleBold;
+            var colArea = Col("DT hình học (m²)", "WallAreaM2Display", 115); colArea.IsReadOnly = true; colArea.CellStyle = cellStyleBold;
+            var colOp = Col("DT lỗ mở (m²)", "OpeningAreaM2Display", 100); colOp.IsReadOnly = true; colOp.CellStyle = cellStyleBold;
+            var colNet = Col("DT Net (m²)", "NetAreaM2Display", 95); colNet.IsReadOnly = true; colNet.CellStyle = cellStyleBold;
             var colPanels = Col("Số tấm", "EstimatedPanelCountDisplay", 68); colPanels.IsReadOnly = true; colPanels.CellStyle = cellStyleBold;
 
 
@@ -129,119 +129,61 @@ namespace ShopDrawing.Plugin.UI
 
 
         private void OnWallBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
-
         {
-
-            if (e.Row.Item is TenderWallRow wallRow
-
-                && IsVerticalJointColumn(e.Column)
-
-                && !wallRow.IsVerticalJointEditable)
-
+            if (e.Row.Item is TenderWallRow wallRow)
             {
+                if (IsVerticalJointColumn(e.Column) && !wallRow.IsVerticalJointEditable)
+                {
+                    e.Cancel = true;
+                    SetStatus("Khe đứng chỉ nhập cho Vách + Ngoài nhà.");
+                    return;
+                }
 
-                e.Cancel = true;
+                if (IsSuspensionLayoutColumn(e.Column) && !wallRow.IsSuspensionLayoutEditable)
+                {
+                    e.Cancel = true;
+                    SetStatus("Hướng PK chỉ nhập cho hạng mục Trần.");
+                    return;
+                }
 
-                SetStatus("Khe đứng chỉ nhập cho Vách + Ngoài nhà.");
-                return;
+                if (IsCornerLinkColumn(e.Column) && !wallRow.IsCornerLinkEditable)
+                {
+                    e.Cancel = true;
+                    SetStatus("Liên kết góc chỉ nhập cho Vách + Ngoài nhà.");
+                    return;
+                }
 
-            }
+                if (IsTopPanelTreatmentColumn(e.Column) && !wallRow.IsTopPanelTreatmentEditable)
+                {
+                    e.Cancel = true;
+                    SetStatus(wallRow.IsTopPanelTreatmentFixed
+                        ? "Vách + Ngoài nhà: đỉnh vách đang tự động (Diềm 01 và phụ kiện đi kèm)."
+                        : "Chi tiết đỉnh vách chỉ nhập cho hạng mục Vách.");
+                    return;
+                }
 
+                if (IsEndPanelTreatmentColumn(e.Column) && !wallRow.IsEndPanelTreatmentEditable)
+                {
+                    e.Cancel = true;
+                    SetStatus("Chi tiết đầu/cuối vách không áp dụng cho Vách + Ngoài nhà.");
+                    return;
+                }
 
-
-            if (e.Row.Item is TenderWallRow suspensionRow
-
-                && IsSuspensionLayoutColumn(e.Column)
-
-                && !suspensionRow.IsSuspensionLayoutEditable)
-
-            {
-
-                e.Cancel = true;
-
-                SetStatus("Hướng PK chỉ nhập cho hạng mục Trần.");
-
-                return;
-
-            }
-
-            if (e.Row.Item is TenderWallRow cornerRow
-
-                && IsCornerLinkColumn(e.Column)
-
-                && !cornerRow.IsCornerLinkEditable)
-
-            {
-
-                e.Cancel = true;
-
-                SetStatus("Liên kết góc chỉ nhập cho Vách + Ngoài nhà.");
-
-                return;
-
-            }
-
-            if (e.Row.Item is TenderWallRow topTreatmentRow
-
-                && IsTopPanelTreatmentColumn(e.Column)
-
-                && !topTreatmentRow.IsTopPanelTreatmentEditable)
-
-            {
-
-                e.Cancel = true;
-
-                SetStatus(topTreatmentRow.IsTopPanelTreatmentFixed
-                    ? "Vách + Ngoài nhà: đỉnh vách đang tự động (Diềm 01 và phụ kiện đi kèm)."
-                    : "Chi tiết đỉnh vách chỉ nhập cho hạng mục Vách.");
-
-                return;
-
-            }
-
-            if (e.Row.Item is TenderWallRow endTreatmentRow
-
-                && IsEndPanelTreatmentColumn(e.Column)
-
-                && !endTreatmentRow.IsEndPanelTreatmentEditable)
-
-            {
-
-                e.Cancel = true;
-
-                SetStatus("Chi tiết đầu/cuối vách không áp dụng cho Vách + Ngoài nhà.");
-
-                return;
-
-            }
-
-            if (e.Row.Item is TenderWallRow bottomTreatmentRow
-
-                && IsBottomPanelTreatmentColumn(e.Column)
-
-                && !bottomTreatmentRow.IsBottomPanelTreatmentEditable)
-
-            {
-
-                e.Cancel = true;
-
-                SetStatus(bottomTreatmentRow.IsBottomPanelTreatmentFixed
-                    ? "Chi tiết chân vách kho lạnh đang tự động: Trên bệ chân (curb)."
-                    : "Chi tiết chân vách hiện không áp dụng cho dòng này.");
-
-                return;
-
+                if (IsBottomPanelTreatmentColumn(e.Column) && !wallRow.IsBottomPanelTreatmentEditable)
+                {
+                    e.Cancel = true;
+                    SetStatus(wallRow.IsBottomPanelTreatmentFixed
+                        ? "Vách + Ngoài nhà: chân vách đang tự động theo check box Xử lý chân."
+                        : "Chi tiết chân vách chỉ nhập cho hạng mục Vách.");
+                    return;
+                }
             }
 
             _cadPreviewTimer.Stop();
             _pendingPreviewRow = null;
-
             _lastCadPreviewKey = null;
-
             ForceClearHighlight();
-
             _isEditingCell = true;
-
         }
 
 
@@ -520,6 +462,7 @@ namespace ShopDrawing.Plugin.UI
 
 
 
+            grid.BeginningEdit += OnOpeningBeginningEdit;
             grid.CellEditEnding += OnOpeningCellEditEnding;
 
             return grid;
@@ -527,6 +470,12 @@ namespace ShopDrawing.Plugin.UI
         }
 
 
+
+        private void OnOpeningBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
+        {
+            // Fully readonly columns for dimensions are set at init. 
+            // Reserved for future opening column edge-cases.
+        }
 
         private void OnOpeningCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
 

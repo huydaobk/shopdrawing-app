@@ -790,6 +790,9 @@ private void SetStatus(string message)
                 $"Kh\u1ed1i l\u01b0\u1ee3ng: {panelSummary.Count} nh\u00f3m panel | " +
                 $"T\u1ed5ng {panelSummary.Sum(p => p.EstimatedPanels)} t\u1ea5m | " +
                 $"Ph\u1ee5 ki\u1ec7n ch\u1ed1t {accessoryReport.SummaryRows.Sum(r => r.FinalQuantity):F2}");
+                
+            _project.Walls = walls;
+            ProjectStateChanged?.Invoke(this, EventArgs.Empty);
         }
 private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         {

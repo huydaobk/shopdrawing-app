@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-18] - v0.2.19 Tender Data Persistence Fix 💾
+### Fixed
+- **Tender Data Loss**: Khắc phục triệt để lỗi thỉnh thoảng mất dữ liệu Tender khi tắt bật Autocad. Đã hook trực tiếp vào sự kiện `Database.SaveComplete` nguyên thủy của hạ tầng CAD. Mỗi khi người dùng bấm Save hoặc Save As, tệp tin dữ liệu dự án (`.json`) sẽ tự động được đồng bộ lưu ngay lập tức bên cạnh thư mục chứa tệp `dwg` mới nhất, đảm bảo tính bền vững (persistence) của dữ liệu.
+
 ## [2026-04-18] - v0.2.18 Tender Preview Text Overlay Fix 📐
 ### Changed
 - **Tender UI Optimization** - Tăng kích thước nét chữ (text size) trong Preview (Vẽ CAD) cho kích thước panel và lỗ mở (vd: size tăng từ 70 -> 150).

@@ -277,7 +277,16 @@ namespace ShopDrawing.Plugin.UI
             Dispatcher.UnhandledException -= _dispatcherUnhandledExceptionHandler;
             ProjectProfileManager.ProfileUpdated -= HandleProjectProfileUpdated;
             Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.DocumentActivated -= HandleDocumentActivated;
-
+            
+            if (_hookedDatabase != null)
+            {
+                try
+                {
+                    _hookedDatabase.SaveComplete -= HandleDatabaseSaveComplete;
+                    _hookedDatabase = null;
+                }
+                catch { }
+            }
         }
 
 
@@ -412,8 +421,48 @@ namespace ShopDrawing.Plugin.UI
             }
         }
 
+        private Autodesk.AutoCAD.DatabaseServices.Database? _hookedDatabase;
+
+        private void HookDatabaseSaveComplete()
+        {
+            try
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                var db = doc?.Database;
+                
+                if (_hookedDatabase != null && _hookedDatabase != db)
+                {
+                    _hookedDatabase.SaveComplete -= HandleDatabaseSaveComplete;
+                    _hookedDatabase = null;
+                }
+                
+                if (db != null && _hookedDatabase == null)
+                {
+                    db.SaveComplete += HandleDatabaseSaveComplete;
+                    _hookedDatabase = db;
+                }
+            }
+            catch (Exception ex)
+            {
+                ShopDrawing.Plugin.Core.PluginLogger.Warn("HookDatabaseSaveComplete error: " + ex.Message);
+            }
+        }
+
+        private void HandleDatabaseSaveComplete(object sender, Autodesk.AutoCAD.DatabaseServices.DatabaseIOEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_currentProject != null)
+                {
+                    AutoSaveProject();
+                }
+            }));
+        }
+
         private void EnsureDocumentContext(bool forceReset = false)
         {
+            HookDatabaseSaveComplete();
+
             string currentIdentity = GetActiveDocumentIdentity();
             if (!forceReset &&
                 string.Equals(_activeDocumentIdentity, currentIdentity, StringComparison.OrdinalIgnoreCase))
@@ -505,19 +554,17 @@ namespace ShopDrawing.Plugin.UI
 
 
             try
-
             {
-
                 string dwgName = GetCurrentAutoSaveDwgKey();
-
-                if (!string.IsNullOrEmpty(dwgName))
-
+                if (string.IsNullOrEmpty(dwgName))
                 {
-
-                    _projectManager.AutoSave(_currentProject, dwgName);
-
+                    dwgName = _activeDocumentIdentity;
                 }
 
+                if (!string.IsNullOrEmpty(dwgName))
+                {
+                    _projectManager.AutoSave(_currentProject, dwgName);
+                }
             }
 
             catch (System.Exception innerEx)

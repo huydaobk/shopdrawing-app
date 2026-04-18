@@ -408,6 +408,7 @@ namespace ShopDrawing.Plugin.UI
                     SafeRefreshWallGrid();
 
                     RefreshFooter();
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
 
                     if (ReferenceEquals(_wallGrid.SelectedItem, e.Row.Item)
 
@@ -559,6 +560,8 @@ namespace ShopDrawing.Plugin.UI
                         SafeRefreshWallGrid();
 
                         RefreshFooter();
+
+                        RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
 
                         RefreshPanelBreakdown(wallRow);
 

@@ -1141,6 +1141,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             IReadOnlyList<PopupSegmentRow> segmentRows,
             List<double[]>? polygonVertices,
             double referenceLengthMm,
+            TenderWallRow targetRow,
             out TenderOpeningRow opening)
         {
             opening = new TenderOpeningRow();
@@ -1182,6 +1183,44 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 if (!TryPickClosedPolygonVertices(out var openingPolygon, out _, out _))
                     return false;
+                
+                if (targetRow != null && targetRow.AppliedPlacementX.HasValue && targetRow.AppliedPlacementY.HasValue)
+                {
+                    double minX = openingPolygon.Min(v => v[0]);
+                    double minY = openingPolygon.Min(v => v[1]);
+                    
+                    double dx = minX - targetRow.AppliedPlacementX.Value;
+                    double dy = minY - targetRow.AppliedPlacementY.Value;
+                    
+                    if (dx >= -5000 && dx <= (referenceLengthMm + 5000) && dy >= -5000 && dy <= 50000)
+                    {
+                        double maxX = openingPolygon.Max(v => v[0]);
+                        double maxY = openingPolygon.Max(v => v[1]);
+                        
+                        double width = Math.Round(maxX - minX);
+                        double height = Math.Round(maxY - minY);
+                        double start = Math.Round(dx);
+                        double end = Math.Round(maxX - targetRow.AppliedPlacementX.Value);
+                        double bottomMm = Math.Round(dy);
+                        
+                        opening = new TenderOpeningRow
+                        {
+                            Type = TenderOpening.ResolveTypeByBottomElevation(bottomMm),
+                            Width = width,
+                            Height = height,
+                            BottomElevationMm = bottomMm,
+                            StationStartMm = start,
+                            StationEndMm = end,
+                            CenterStationMm = Math.Round((start + end) * 0.5),
+                            ResolvedChainRatioStart = Math.Max(0, Math.Min(1, start / Math.Max(1, referenceLengthMm))),
+                            ResolvedChainRatioEnd = Math.Max(0, Math.Min(1, end / Math.Max(1, referenceLengthMm))),
+                            Quantity = 1,
+                            OpeningPolygon = openingPolygon.Select(v => v.ToArray()).ToList()
+                        };
+                        return true;
+                    }
+                }
+                
                 return TryProjectOpeningPolygon(polygonVertices, openingPolygon, Math.Max(1, referenceLengthMm), out opening);
             }
             var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
@@ -1496,7 +1535,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     dlg.Hide();
                     try
                     {
-                        if (TryPickOpeningForPopup(mode, segmentRows.ToList(), polygonVertices, referenceLengthMm, out var opening))
+                        if (TryPickOpeningForPopup(mode, segmentRows.ToList(), polygonVertices, referenceLengthMm, seedRow, out var opening))
                             openingRows.Add(opening);
                     }
                     finally
@@ -3450,14 +3489,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             double center = pos - row.PanelWidth / 2.0;
                             // Thêm text ra CAD text
                             int panelIndex = (int)((pos - minAxis) / row.PanelWidth);
-                            double textOffset = (panelIndex % 2 == 0) ? -200.0 : -450.0;
+                            double textOffset = (panelIndex % 2 == 0) ? -250.0 : -600.0;
                             if (horizontal)
                             {
-                                AddText(new[] { minCrossAxis - 50.0, center - 70.0 }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight);
+                                AddText(new[] { minCrossAxis - 150.0, center - 100.0 }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 250, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight);
                             }
                             else
                             {
-                                AddText(new[] { center, minCrossAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter);
+                                AddText(new[] { center, minCrossAxis + textOffset }, $"{row.PanelWidth:F0}", PanelPreviewColorIndex, 250, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter);
                             }
                         }
 
@@ -3467,14 +3506,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         {
                             double center = lastPos + lastWidth / 2.0;
                             int panelIndex = (int)((lastPos - minAxis) / row.PanelWidth) + 1;
-                            double textOffset = (panelIndex % 2 == 0) ? -200.0 : -450.0;
+                            double textOffset = (panelIndex % 2 == 0) ? -250.0 : -600.0;
                             if (horizontal)
                             {
-                                AddText(new[] { minCrossAxis - 50.0, center - 70.0 }, $"{lastWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight);
+                                AddText(new[] { minCrossAxis - 150.0, center - 100.0 }, $"{lastWidth:F0}", PanelPreviewColorIndex, 250, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight);
                             }
                             else
                             {
-                                AddText(new[] { center, minCrossAxis + textOffset }, $"{lastWidth:F0}", PanelPreviewColorIndex, 150, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter);
+                                AddText(new[] { center, minCrossAxis + textOffset }, $"{lastWidth:F0}", PanelPreviewColorIndex, 250, Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter);
                             }
                         }
                     }
@@ -3490,7 +3529,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             }
                             double minO_x = opening.OpeningPolygon.Min(p => p[0]) - globalOffsetX;
                             double maxO_y = opening.OpeningPolygon.Max(p => p[1]) - globalOffsetY;
-                            AddText(new[] { minO_x, maxO_y + 150 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 150);
+                            AddText(new[] { minO_x, maxO_y + 250 }, $"{opening.Width:F0}x{opening.Height:F0}", OpeningPreviewTextColorIndex, 250);
                         }
                         else if (stationOpeningMode && opening.Width > 0 && opening.Height > 0)
                         {
@@ -3504,7 +3543,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             AddLine(new[] { right, bottom }, new[] { right, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { right, top }, new[] { left, top }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
                             AddLine(new[] { left, top }, new[] { left, bottom }, OpeningPreviewColorIndex, Autodesk.AutoCAD.DatabaseServices.LineWeight.LineWeight030);
-                            AddText(new[] { left, top + 150.0 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | Đáy {bottom:F0}", OpeningPreviewTextColorIndex, 120);
+                            AddText(new[] { left, top + 250.0 }, $"LT {left:F0} | {opening.Width:F0}x{opening.Height:F0} | Đáy {bottom:F0}", OpeningPreviewTextColorIndex, 200);
                         }
                     }
                     if (result.Mode == TenderPopupGeometryMode.CeilingPolygon && IsSuspendedCeilingRow(row))
@@ -4615,6 +4654,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     
                     targetRow.Refresh();
                     SafeRefreshWallGrid();
+                    RefreshBomSummary(allowDeferredRetry: false, forceWhenPendingEdits: true);
                     SetStatus($"Đã vẽ MẶT ĐỨNG cho {targetRow.Name}.");
                 });
             }

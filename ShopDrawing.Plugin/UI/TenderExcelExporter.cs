@@ -652,10 +652,10 @@ namespace ShopDrawing.Plugin.UI
                     SetCell(row, 9, Math.Round(opening.Height), computedIntegerStyle);
                     SetCell(row, 10, Math.Round(opening.BottomElevationMm), computedIntegerStyle);
                     SetCell(row, 11, Math.Max(1, opening.Quantity), computedIntegerStyle);
-                    SetCell(
+                    SetFormulaCell(
                         row,
                         12,
-                        opening.AreaM2 * opening.Quantity,
+                        $"{CellRef(row.RowNum, 8)}*{CellRef(row.RowNum, 9)}*{CellRef(row.RowNum, 11)}/1000000",
                         computedStyle);
 
                     string openingNote = opening.CenterStationMm >= 0

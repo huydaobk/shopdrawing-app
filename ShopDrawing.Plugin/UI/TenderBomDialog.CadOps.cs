@@ -4500,17 +4500,12 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         // Always extrude 'up' in standard XY projection
                         if (ny < 0) { nx = -nx; ny = -ny; }
                         
-                        double baseX1 = p1Res.Value.X + nx * bottomElevationMm;
-                        double baseY1 = p1Res.Value.Y + ny * bottomElevationMm;
-                        double baseX2 = p2Res.Value.X + nx * bottomElevationMm;
-                        double baseY2 = p2Res.Value.Y + ny * bottomElevationMm;
-                        
                         openingPoly = new List<double[]>
                         {
-                            new[] { baseX1, baseY1 },
-                            new[] { baseX2, baseY2 },
-                            new[] { baseX2 + nx * heightMm, baseY2 + ny * heightMm },
-                            new[] { baseX1 + nx * heightMm, baseY1 + ny * heightMm }
+                            new[] { p1Res.Value.X, p1Res.Value.Y },
+                            new[] { p2Res.Value.X, p2Res.Value.Y },
+                            new[] { p2Res.Value.X + nx * heightMm, p2Res.Value.Y + ny * heightMm },
+                            new[] { p1Res.Value.X + nx * heightMm, p1Res.Value.Y + ny * heightMm }
                         };
                     }
 

@@ -1,5 +1,11 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.14 Manual CUI Integration 📖
+### Added
+- **Manual CUI Integration**: Thêm nút "Manual" vào System Ribbon để mở bảng hướng dẫn sử dụng.
+- **Tender Workflow Guide**: Xây dựng UI WPF "ManualWindow" hướng dẫn tuần tự các bước cấu hình (Input -> Spec -> Pick vách -> Khoét lỗ -> Export Excel).
+- **Quick Command Launcher**: Tích hợp các hyperlink "👉 Mở bảng ngay" xử lý qua hàm `SendStringToExecute` để gọi nhanh lệnh mà không cần gõ (SD_INPUT, SD_TAB, SD_TENDER_BOM).
+
 ## [2026-04-17] - v0.2.13 Tender Persistence Fix 🔧
 ### Fixed
 - **Critical: Tender Wall AutoLoad bị chặn bởi marker file gate** — Sau khi cập nhật plugin và restart CAD, vách đã vẽ mất khỏi Bảng quản lý khối lượng. Nguyên nhân: `EnsureProject()` yêu cầu file `.shopdrawing-project.json` tồn tại trước khi AutoLoad, nhưng AutoSave không tạo file này. Đã bỏ gate condition thừa vì `TryAutoLoad()` đã có guard `File.Exists` riêng.

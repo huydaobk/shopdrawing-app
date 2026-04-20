@@ -188,6 +188,7 @@ namespace ShopDrawing.Plugin.Core
                 Directory.CreateDirectory(projectRoot);
                 Directory.CreateDirectory(dataDirectory);
                 Directory.CreateDirectory(logsDirectory);
+                EnsureMarkerFile(projectRoot);
             }
 
             return new PathContext(projectRoot, dataDirectory, logPath);

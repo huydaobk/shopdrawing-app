@@ -438,20 +438,22 @@ namespace ShopDrawing.Tests
 
                 using var fs = new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 var workbook = new XSSFWorkbook(fs);
-                var sheet = workbook.GetSheetAt(0);
-
                 var values = new List<string>();
-                for (int rowIndex = 0; rowIndex <= sheet.LastRowNum; rowIndex++)
+                for (int s = 0; s < workbook.NumberOfSheets; s++)
                 {
-                    var row = sheet.GetRow(rowIndex);
-                    if (row == null)
-                        continue;
-
-                    for (int col = 0; col < row.LastCellNum; col++)
+                    var sheet = workbook.GetSheetAt(s);
+                    for (int rowIndex = 0; rowIndex <= sheet.LastRowNum; rowIndex++)
                     {
-                        string text = row.GetCell(col)?.ToString() ?? "";
-                        if (!string.IsNullOrWhiteSpace(text))
-                            values.Add(text);
+                        var row = sheet.GetRow(rowIndex);
+                        if (row == null)
+                            continue;
+
+                        for (int col = 0; col < row.LastCellNum; col++)
+                        {
+                            string text = row.GetCell(col)?.ToString() ?? "";
+                            if (!string.IsNullOrWhiteSpace(text))
+                                values.Add(text);
+                        }
                     }
                 }
 

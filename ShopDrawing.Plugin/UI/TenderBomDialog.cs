@@ -560,9 +560,16 @@ namespace ShopDrawing.Plugin.UI
             _panelSummaryGrid.Columns.Add(Col("DT l\u1ed7 m\u1edf (m2)", "OpeningAreaM2", 105, "F2"));
             _panelSummaryGrid.Columns.Add(Col("DT nghiệm thu (m2)", "NetAreaM2", 85, "F2"));
             _panelSummaryGrid.Columns.Add(Col("S\u1ed1 t\u1ea5m", "EstimatedPanels", 55));
+            _panelSummaryGrid.Columns.Add(Col("S\u1ed1 t\u1ea5m gi\u1ea3m", "ReducedPanels", 75));
+            
             var wasteStyle = new Style(typeof(DataGridCell));
             wasteStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, AccentOrange));
             wasteStyle.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.SemiBold));
+            
+            var colWastePieces = Col("S\u1ed1 t\u1ea5m hao h\u1ee5t", "WastePieces", 90);
+            colWastePieces.CellStyle = wasteStyle;
+            _panelSummaryGrid.Columns.Add(colWastePieces);
+            
             var colOrdered = Col("DT d\u1ef1 ki\u1ebfn c\u1ea5p (m2)", "OrderedAreaM2", 100, "F2");
             var colWaste = Col("Hao h\u1ee5t (m2)", "WasteAreaM2", 90, "F2");
             var colPct = Col("Hao h\u1ee5t (%)", "WastePercent", 80, "F1");

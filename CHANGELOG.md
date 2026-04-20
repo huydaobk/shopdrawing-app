@@ -1,5 +1,11 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.24 Tender Project Folder Structure 📁
+### Changed
+- Cập nhật cấu trúc thư mục dữ liệu dự án từ `ShopDrawingData` sang `Project Data` để bao quát hơn (chứa Tender, Shopdrawing, Production).
+- Tự động gom các file Excel xuất BOM vào thư mục `BOQ` / `Tender` tương ứng.
+- Khắc phục lỗi test case và đảm bảo file `Project Data` marker được tạo thành công trong môi trường runtime.
+
 ## [2026-04-20] - v0.2.23 Tender Net Area Relabeling 🏷️
 ### Changed
 - **UI Label Update**: Đổi tên cột tiêu đề `DT net (m²)` thành `DT nghiệm thu (m²)` trong form xuất báo cáo Excel BOM để trở nên trực quan và dễ hiểu hơn đối với nghiệp vụ nghiệm thu công trường, giữ nguyên tính đúng đắn của logic tính toán.

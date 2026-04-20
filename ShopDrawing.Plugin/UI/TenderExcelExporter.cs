@@ -204,6 +204,7 @@ namespace ShopDrawing.Plugin.UI
             {
                 "STT", "T\u1EA7ng", "H\u1EA1ng m\u1EE5c", "M\u00E3 spec", "S\u1ED1 v\u00F9ng",
                 "DT h\u00ECnh h\u1ECDc (m\u00B2)", "DT l\u1ED7 m\u1EDF (m\u00B2)", "DT nghi\u1EC7m thu (m\u00B2)",
+                "S\u1ED1 t\u1EA5m (chu\u1EA9n)", "S\u1ED1 t\u1EA5m gi\u1EA3m", "S\u1ED1 t\u1EA5m hao h\u1EE5t",
                 "DT d\u1EF1 ki\u1EBFn c\u1EA5p (m\u00B2)", "Kh\u1ED1i l\u01B0\u1EE3ng hao h\u1EE5t t\u1ED5ng (m\u00B2)", "Hao h\u1EE5t (%)"
             };
 
@@ -246,6 +247,21 @@ namespace ShopDrawing.Plugin.UI
                 SetFormulaCell(
                     excelRow,
                     col++,
+                    $"SUMIFS({panelExplainSheetRef}!$J:$J,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Nguy\u00EAn\")",
+                    computedStyle);
+                SetFormulaCell(
+                    excelRow,
+                    col++,
+                    $"SUMIFS({panelExplainSheetRef}!$J:$J,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Gi\u1EA3m*\")",
+                    computedStyle);
+                SetFormulaCell(
+                    excelRow,
+                    col++,
+                    $"SUMIFS({panelExplainSheetRef}!$J:$J,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Hao h\u1EE5t*\")",
+                    computedStyle);
+                SetFormulaCell(
+                    excelRow,
+                    col++,
                     $"SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Nguy\u00EAn\")+SUMIFS({panelExplainSheetRef}!$L:$L,{panelExplainSheetRef}!$B:$B,{floorRef},{panelExplainSheetRef}!$D:$D,{categoryRef},{panelExplainSheetRef}!$F:$F,{specRef},{panelExplainSheetRef}!$G:$G,\"Gi\u1EA3m*\")",
                     computedStyle);
                 SetFormulaCell(
@@ -256,7 +272,7 @@ namespace ShopDrawing.Plugin.UI
                 SetFormulaCell(
                     excelRow,
                     col++,
-                    $"IF({CellRef(excelRow.RowNum, 8)}>0,{CellRef(excelRow.RowNum, 9)}/{CellRef(excelRow.RowNum, 8)}*100,0)",
+                    $"IF({CellRef(excelRow.RowNum, 11)}>0,{CellRef(excelRow.RowNum, 12)}/{CellRef(excelRow.RowNum, 11)}*100,0)",
                     computedStyle);
             }
 
@@ -271,17 +287,16 @@ namespace ShopDrawing.Plugin.UI
                 SetFormulaCell(totalRow, 7, $"SUM({CellRef(dataStartRowIndex, 7)}:{CellRef(dataEndRowIndex, 7)})", totalStyle);
                 SetFormulaCell(totalRow, 8, $"SUM({CellRef(dataStartRowIndex, 8)}:{CellRef(dataEndRowIndex, 8)})", totalStyle);
                 SetFormulaCell(totalRow, 9, $"SUM({CellRef(dataStartRowIndex, 9)}:{CellRef(dataEndRowIndex, 9)})", totalStyle);
-                SetFormulaCell(totalRow, 10, $"IF({CellRef(totalRow.RowNum, 8)}>0,{CellRef(totalRow.RowNum, 9)}/{CellRef(totalRow.RowNum, 8)}*100,0)", totalStyle);
+                SetFormulaCell(totalRow, 10, $"SUM({CellRef(dataStartRowIndex, 10)}:{CellRef(dataEndRowIndex, 10)})", totalStyle);
+                SetFormulaCell(totalRow, 11, $"SUM({CellRef(dataStartRowIndex, 11)}:{CellRef(dataEndRowIndex, 11)})", totalStyle);
+                SetFormulaCell(totalRow, 12, $"SUM({CellRef(dataStartRowIndex, 12)}:{CellRef(dataEndRowIndex, 12)})", totalStyle);
+                SetFormulaCell(totalRow, 13, $"IF({CellRef(totalRow.RowNum, 11)}>0,{CellRef(totalRow.RowNum, 12)}/{CellRef(totalRow.RowNum, 11)}*100,0)", totalStyle);
             }
             else
             {
                 SetCell(totalRow, 4, 0, totalStyle);
-                SetCell(totalRow, 5, 0, totalStyle);
-                SetCell(totalRow, 6, 0, totalStyle);
-                SetCell(totalRow, 7, 0, totalStyle);
-                SetCell(totalRow, 8, 0, totalStyle);
-                SetCell(totalRow, 9, 0, totalStyle);
-                SetCell(totalRow, 10, 0, totalStyle);
+                for (int i = 5; i <= 13; i++)
+                    SetCell(totalRow, i, 0, totalStyle);
             }
 
             rowIdx++;

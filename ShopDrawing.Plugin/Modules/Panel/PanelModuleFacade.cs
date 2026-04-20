@@ -56,7 +56,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 Document? doc = Application.DocumentManager.MdiActiveDocument;
                 if (doc == null) return;
 
-                string initDir = Path.Combine(ShopDrawing.Plugin.Core.ProjectDataPathResolver.GetDataDirectory(), "BOQ", "Shopdrawing");
+                string initDir = System.IO.Path.Combine(ShopDrawing.Plugin.Core.ProjectDataPathResolver.GetDataDirectory(), "BOQ", "Shopdrawing");
                 try { System.IO.Directory.CreateDirectory(initDir); } catch { initDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop); }
 
                 var dlg = new Microsoft.Win32.SaveFileDialog

@@ -24,8 +24,8 @@ namespace ShopDrawing.Tests
                 var context = ProjectDataPathResolver.ResolveFromDrawingPath(drawingPath, ensureExists: false);
 
                 Assert.Equal(projectRoot, context.RuntimeRoot);
-                Assert.Equal(Path.Combine(projectRoot, "ShopDrawingData"), context.DataDirectory);
-                Assert.Equal(Path.Combine(projectRoot, "ShopDrawingData", "logs", "shopdrawing_plugin.log"), context.LogPath);
+                Assert.Equal(Path.Combine(projectRoot, "Project Data"), context.DataDirectory);
+                Assert.Equal(Path.Combine(projectRoot, "Project Data", "Log", "shopdrawing_plugin.log"), context.LogPath);
             }
             finally
             {
@@ -50,7 +50,7 @@ namespace ShopDrawing.Tests
                 var context = ProjectDataPathResolver.ResolveFromDrawingPath(drawingPath, ensureExists: false);
 
                 Assert.Equal(projectRoot, context.RuntimeRoot);
-                Assert.Equal(Path.Combine(projectRoot, "ShopDrawingData"), context.DataDirectory);
+                Assert.Equal(Path.Combine(projectRoot, "Project Data"), context.DataDirectory);
             }
             finally
             {
@@ -74,7 +74,7 @@ namespace ShopDrawing.Tests
                 var context = ProjectDataPathResolver.ResolveFromDrawingPath(drawingPath, ensureExists: false);
 
                 Assert.Equal(drawingFolder, context.RuntimeRoot);
-                Assert.Equal(Path.Combine(drawingFolder, "ShopDrawingData"), context.DataDirectory);
+                Assert.Equal(Path.Combine(drawingFolder, "Project Data"), context.DataDirectory);
             }
             finally
             {
@@ -100,7 +100,7 @@ namespace ShopDrawing.Tests
 
                 Assert.True(File.Exists(Path.Combine(projectRoot, ".shopdrawing-project.json")));
                 Assert.True(Directory.Exists(context.DataDirectory));
-                Assert.True(Directory.Exists(Path.Combine(context.DataDirectory, "logs")));
+                Assert.True(Directory.Exists(Path.Combine(context.DataDirectory, "Log")));
             }
             finally
             {

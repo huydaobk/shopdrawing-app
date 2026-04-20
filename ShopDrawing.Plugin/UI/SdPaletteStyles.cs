@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
@@ -99,7 +99,8 @@ namespace ShopDrawing.Plugin.UI
                 FontFamily = Font,
                 FontSize   = FontSizeNormal,
                 Foreground = TextPrimaryBrush,
-                Margin     = new Thickness(0, 0, 0, 2)
+                Margin     = new Thickness(0, 0, 0, 2),
+                TextWrapping = TextWrapping.Wrap
             };
         }
 

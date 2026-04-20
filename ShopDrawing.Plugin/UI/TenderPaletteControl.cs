@@ -86,7 +86,7 @@ namespace ShopDrawing.Plugin.UI
 
             var gridInfo = new Grid { Margin = new Thickness(0, 0, 0, 5) };
 
-            gridInfo.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+            gridInfo.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             gridInfo.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
@@ -102,7 +102,7 @@ namespace ShopDrawing.Plugin.UI
 
             var lblProject = MakeLabel("Dự án:");
 
-            lblProject.Margin = new Thickness(0, 0, 0, 5);
+            lblProject.Margin = new Thickness(0, 0, 5, 5);
 
             Grid.SetRow(lblProject, 0);
 
@@ -122,7 +122,8 @@ namespace ShopDrawing.Plugin.UI
 
                 Margin = new Thickness(0, 0, 0, 5),
 
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextWrapping = TextWrapping.Wrap
 
             };
 
@@ -137,6 +138,8 @@ namespace ShopDrawing.Plugin.UI
             // Khach hang
 
             var lblCustomer = MakeLabel("Khách hàng:");
+
+            lblCustomer.Margin = new Thickness(0, 0, 5, 0);
 
             Grid.SetRow(lblCustomer, 1);
 
@@ -154,7 +157,8 @@ namespace ShopDrawing.Plugin.UI
 
                 ToolTip = "Tên khách hàng",
 
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextWrapping = TextWrapping.Wrap
 
             };
 

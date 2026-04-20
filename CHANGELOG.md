@@ -1,6 +1,6 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
-## [2026-04-20] - v0.2.14 Manual CUI Integration 📖
+## [2026-04-20] - v0.2.28 Manual CUI Integration 📖
 ### Added
 - **Manual CUI Integration**: Thêm nút "Manual" vào System Ribbon để mở bảng hướng dẫn sử dụng.
 - **Tender Workflow Guide**: Xây dựng UI WPF "ManualWindow" hướng dẫn tuần tự các bước cấu hình (Input -> Spec -> Pick vách -> Khoét lỗ -> Export Excel).

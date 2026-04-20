@@ -2017,17 +2017,50 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     double hRight = GetHeightAt(boundary + 1, segments, drawingLength);
                     double hBoundary = Math.Max(hLeft, hRight);
                     double top = margin + (plotH - (hBoundary / maxHeight) * plotH);
-                    var divLine = new System.Windows.Shapes.Line
+                    List<(double Start, double End)> yRanges = new List<(double, double)> { (0, hBoundary) };
+                    if (openings != null)
                     {
-                        X1 = x,
-                        X2 = x,
-                        Y1 = margin + plotH,
-                        Y2 = top,
-                        Stroke = new SolidColorBrush(Color.FromRgb(30, 30, 30)),
-                        StrokeDashArray = new DoubleCollection { 3, 2 },
-                        StrokeThickness = 1
-                    };
-                    canvas.Children.Add(divLine);
+                        foreach (var opening in openings)
+                        {
+                            if (opening.Width <= 0 || opening.Height <= 0) continue;
+                            double oLeft = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                            double oRight = opening.StationEndMm >= oLeft ? opening.StationEndMm : oLeft + opening.Width;
+                            if (oLeft < 0) continue;
+                            if (boundary >= oLeft && boundary <= oRight)
+                            {
+                                double oBot = Math.Max(0, opening.BottomElevationMm);
+                                double oTop = oBot + opening.Height;
+                                var newRanges = new List<(double, double)>();
+                                foreach (var r in yRanges)
+                                {
+                                    if (oBot <= r.Start && oTop >= r.End) { }
+                                    else if (oBot > r.Start && oTop < r.End) { newRanges.Add((r.Start, oBot)); newRanges.Add((oTop, r.End)); }
+                                    else if (oBot <= r.Start && oTop > r.Start && oTop < r.End) { newRanges.Add((oTop, r.End)); }
+                                    else if (oBot > r.Start && oBot < r.End && oTop >= r.End) { newRanges.Add((r.Start, oBot)); }
+                                    else newRanges.Add(r);
+                                }
+                                yRanges = newRanges;
+                            }
+                        }
+                    }
+
+                    foreach (var range in yRanges)
+                    {
+                        if (range.End <= range.Start) continue;
+                        double y1 = margin + (plotH - (range.Start / maxHeight) * plotH);
+                        double y2 = margin + (plotH - (range.End / maxHeight) * plotH);
+                        var divLine = new System.Windows.Shapes.Line
+                        {
+                            X1 = x,
+                            X2 = x,
+                            Y1 = y1,
+                            Y2 = y2,
+                            Stroke = new SolidColorBrush(Color.FromRgb(30, 30, 30)),
+                            StrokeDashArray = new DoubleCollection { 3, 2 },
+                            StrokeThickness = 1
+                        };
+                        canvas.Children.Add(divLine);
+                    }
 
                     double centerX = margin + ((boundary - panelWidthMm/2.0) / drawingLength) * plotW;
                     int panelIndex = (int)(boundary / panelWidthMm);
@@ -2062,17 +2095,51 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     for (double yMm = panelWidthMm; yMm < segment.HeightMm - 0.5; yMm += panelWidthMm)
                     {
                         double y = margin + (plotH - (yMm / maxHeight) * plotH);
-                        var divLine = new System.Windows.Shapes.Line
+                        List<(double Start, double End)> xRanges = new List<(double, double)> { (cursor - segment.LengthMm, cursor) };
+                        if (openings != null)
                         {
-                            X1 = x1,
-                            X2 = x2,
-                            Y1 = y,
-                            Y2 = y,
-                            Stroke = new SolidColorBrush(Color.FromRgb(30, 30, 30)),
-                            StrokeDashArray = new DoubleCollection { 3, 2 },
-                            StrokeThickness = 1
-                        };
-                        canvas.Children.Add(divLine);
+                            foreach (var opening in openings)
+                            {
+                                if (opening.Width <= 0 || opening.Height <= 0) continue;
+                                double oBot = Math.Max(0, opening.BottomElevationMm);
+                                double oTop = oBot + opening.Height;
+                                if (yMm >= oBot && yMm <= oTop)
+                                {
+                                    double oLeft = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                                    double oRight = opening.StationEndMm >= oLeft ? opening.StationEndMm : oLeft + opening.Width;
+                                    if (oLeft < 0) continue;
+                                    
+                                    var newRanges = new List<(double, double)>();
+                                    foreach (var r in xRanges)
+                                    {
+                                        if (oLeft <= r.Start && oRight >= r.End) { }
+                                        else if (oLeft > r.Start && oRight < r.End) { newRanges.Add((r.Start, oLeft)); newRanges.Add((oRight, r.End)); }
+                                        else if (oLeft <= r.Start && oRight > r.Start && oRight < r.End) { newRanges.Add((oRight, r.End)); }
+                                        else if (oLeft > r.Start && oLeft < r.End && oRight >= r.End) { newRanges.Add((r.Start, oLeft)); }
+                                        else newRanges.Add(r);
+                                    }
+                                    xRanges = newRanges;
+                                }
+                            }
+                        }
+
+                        foreach (var range in xRanges)
+                        {
+                            if (range.End <= range.Start) continue;
+                            double px1 = margin + (range.Start / drawingLength) * plotW;
+                            double px2 = margin + (range.End / drawingLength) * plotW;
+                            var divLine = new System.Windows.Shapes.Line
+                            {
+                                X1 = px1,
+                                X2 = px2,
+                                Y1 = y,
+                                Y2 = y,
+                                Stroke = new SolidColorBrush(Color.FromRgb(30, 30, 30)),
+                                StrokeDashArray = new DoubleCollection { 3, 2 },
+                                StrokeThickness = 1
+                            };
+                            canvas.Children.Add(divLine);
+                        }
 
                         double centerY = margin + (plotH - ((yMm - panelWidthMm/2.0) / maxHeight) * plotH);
                         int panelIndex = (int)(yMm / panelWidthMm);
@@ -3485,7 +3552,29 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         var localOpenings = row.Openings?
                             .Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3)
                             .Select(o => o.OpeningPolygon!.Select(v => new[] { v[0] - globalOffsetX, v[1] - globalOffsetY }).ToList())
-                            .ToList();
+                            .ToList() ?? new List<List<double[]>>();
+
+                        if (stationOpeningMode && row.Openings != null)
+                        {
+                            foreach (var opening in row.Openings)
+                            {
+                                if ((opening.OpeningPolygon == null || opening.OpeningPolygon.Count < 3) && opening.Width > 0 && opening.Height > 0)
+                                {
+                                    double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                                    if (left < 0) continue;
+                                    double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
+                                    double bottom = Math.Max(0, opening.BottomElevationMm);
+                                    double top = bottom + opening.Height;
+                                    localOpenings.Add(new List<double[]>
+                                    {
+                                        new[] { left, bottom },
+                                        new[] { right, bottom },
+                                        new[] { right, top },
+                                        new[] { left, top }
+                                    });
+                                }
+                            }
+                        }
                             
                         double pos = minAxis + row.PanelWidth;
                         for (; pos < maxAxis - 1.0; pos += row.PanelWidth)

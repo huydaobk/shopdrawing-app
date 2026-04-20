@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.31 Rollback Release ⏪
+### Fixed
+- **System Stability**: Tự động rollback hệ thống về trạng thái ổn định nhất (tương đương với mã nguồn phiên bản v0.2.27). Tính năng Manual CUI đang trong quá trình hoàn thiện sẽ được tiếp tục phát triển ở một nhánh riêng biệt, đảm bảo không ảnh hưởng đến trải nghiệm người dùng hiện tại trên phiên bản chính thức. Phiên bản này được phát hành để máy của người dùng tự động hạ cấp từ các phiên bản lỗi.
+
+
 ## [2026-04-20] - v0.2.27 Tender Polygon Waste & Preview UI 🚀
 ### Changed
 - **Tender Waste Logic**: Tối ưu logic tính toán khối lượng hao hụt cho vách "Pick Vùng" (Polygon) đồng nhất với Pick vách. Bắt chính xác lượng "Hao hụt (Lỗ mở)" (Grazing Waste) do lỗ cắt lẹm 1 phần, và sửa lỗi tính mẩu vụn tấm cuối không chính xác khi dải tấm bị chia cắt.

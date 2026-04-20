@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.26 Tender Excel Export Synchronization 📊
+### Fixed
+- **Excel Reference Bug**: Cập nhật lại logic xuất báo cáo Excel cho chức năng Tender, đảm bảo tham chiếu chỉ số chính xác ở phần tổng (Tổng diện tích dự kiến cấp và Khối lượng hao hụt) đến đúng các cột dữ liệu thay vì cột số lượng tấm.
+
+
 ## [2026-04-20] - v0.2.25 Tender Opening CAD Projection Fix 🔧
 ### Fixed
 - **CAD Projection**: Sửa lỗi sai tọa độ lỗ mở khi bấm "Vẽ CAD" trong chế độ "Pick Dài" bằng cách bắt tuân thủ tọa độ chuẩn Unroll thay vì tọa độ chuột tuyệt đối.

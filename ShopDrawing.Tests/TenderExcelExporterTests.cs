@@ -140,7 +140,7 @@ namespace ShopDrawing.Tests
                 using var fs = new FileStream(tempFile, FileMode.Open, FileAccess.Read);
                 var workbook = new XSSFWorkbook(fs);
 
-                Assert.Equal(2, workbook.NumberOfSheets);
+                Assert.Equal(4, workbook.NumberOfSheets);
                 var tenderSheet = workbook.GetSheet("Khối lượng đấu thầu");
                 Assert.NotNull(tenderSheet);
                 Assert.Equal("BẢNG KHỐI LƯỢNG ĐẤU THẦU - Du an test", tenderSheet.GetRow(0).GetCell(0).StringCellValue);

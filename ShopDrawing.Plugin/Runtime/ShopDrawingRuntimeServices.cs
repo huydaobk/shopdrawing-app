@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Data;
 
@@ -12,6 +12,7 @@ namespace ShopDrawing.Plugin.Runtime
 
         public static string WasteDbPath => System.IO.Path.Combine(
             PluginLogger.GetDataDirectory(),
+            "shopdrawing_project",
             "shopdrawing_waste.db");
 
         private static WasteRepository? _wasteRepo;
@@ -51,6 +52,23 @@ namespace ShopDrawing.Plugin.Runtime
         private static WasteRepository? GetWasteRepository()
         {
             string dbPath = WasteDbPath;
+            string oldDbPath = System.IO.Path.Combine(PluginLogger.GetDataDirectory(), "shopdrawing_waste.db");
+
+            try 
+            {
+               System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dbPath)!);
+            } 
+            catch { }
+
+            if (!System.IO.File.Exists(dbPath) && System.IO.File.Exists(oldDbPath))
+            {
+                try 
+                { 
+                    System.IO.File.Move(oldDbPath, dbPath); 
+                } 
+                catch { }
+            }
+
             if (_wasteRepo != null && string.Equals(_wasteRepoPath, dbPath, StringComparison.OrdinalIgnoreCase))
             {
                 return _wasteRepo;

@@ -136,6 +136,7 @@ namespace ShopDrawing.Plugin.Core
             Directory.CreateDirectory(dataDirectory);
             Directory.CreateDirectory(logsDirectory);
             
+            Directory.CreateDirectory(Path.Combine(dataDirectory, "Shared"));
             Directory.CreateDirectory(Path.Combine(dataDirectory, "tender_project"));
             Directory.CreateDirectory(Path.Combine(dataDirectory, "shopdrawing_project"));
             Directory.CreateDirectory(Path.Combine(dataDirectory, "production_project"));

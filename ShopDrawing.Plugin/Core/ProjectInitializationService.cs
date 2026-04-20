@@ -30,7 +30,7 @@ namespace ShopDrawing.Plugin.Core
 
             editor.WriteMessage($"\n[ShopDrawing] Đã khởi tạo dự án tại: {initializedRoot}");
             editor.WriteMessage($"\n[ShopDrawing] Marker: {Path.Combine(initializedRoot, ProjectDataPathResolver.GetProjectMarkerFileName())}");
-            editor.WriteMessage($"\n[ShopDrawing] Data:   {Path.Combine(initializedRoot, "ShopDrawingData")}");
+            editor.WriteMessage($"\n[ShopDrawing] Data:   {ProjectDataPathResolver.GetDataDirectory()}");
             editor.WriteMessage("\n[ShopDrawing] Nếu có bản vẽ dự án, nên lưu chúng trong thư mục Drawings để team dùng thống nhất.");
             return true;
         }

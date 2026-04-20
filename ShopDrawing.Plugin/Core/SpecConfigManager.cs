@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -82,23 +82,34 @@ namespace ShopDrawing.Plugin.Core
 
         private static string GetConfigPath()
         {
-            return Path.Combine(PluginLogger.GetDataDirectory(), "panel_specs.json");
+            return Path.Combine(PluginLogger.GetDataDirectory(), "Shared", "panel_specs.json");
         }
 
         private static void EnsureConfigFileExists()
         {
-            string configPath = GetConfigPath();
+            string oldConfigPath = Path.Combine(PluginLogger.GetDataDirectory(), "panel_specs.json");
+            string newConfigPath = GetConfigPath();
 
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+                Directory.CreateDirectory(Path.GetDirectoryName(newConfigPath)!);
             }
             catch (System.Exception ex)
             {
                 PluginLogger.Error("Suppressed exception in SpecConfigManager.cs", ex);
             }
 
-            if (File.Exists(configPath))
+            // Migration from root Data to Shared/
+            if (!File.Exists(newConfigPath) && File.Exists(oldConfigPath))
+            {
+                try
+                {
+                    File.Move(oldConfigPath, newConfigPath);
+                }
+                catch { }
+            }
+
+            if (File.Exists(newConfigPath))
             {
                 return;
             }
@@ -108,12 +119,12 @@ namespace ShopDrawing.Plugin.Core
                 string bundledConfigPath = Path.Combine(PluginLogger.GetBundledResourcesDirectory(), "panel_specs.json");
                 if (File.Exists(bundledConfigPath))
                 {
-                    File.Copy(bundledConfigPath, configPath, overwrite: false);
+                    File.Copy(bundledConfigPath, newConfigPath, overwrite: false);
                 }
                 else
                 {
                     string json = JsonSerializer.Serialize(BuildDefaultSpecs(), new JsonSerializerOptions { WriteIndented = true });
-                    File.WriteAllText(configPath, json);
+                    File.WriteAllText(newConfigPath, json);
                 }
             }
             catch (System.Exception ex)

@@ -48,6 +48,7 @@
     <EmbeddedResource Include="Resources\Icons\icon_tender.png" />
     <EmbeddedResource Include="Resources\Icons\icon_input.png" />
     <EmbeddedResource Include="Resources\Icons\icon_system.png" />
+    <EmbeddedResource Include="Resources\Icons\icon_manual.png" />
   </ItemGroup>
 
   <ItemGroup>

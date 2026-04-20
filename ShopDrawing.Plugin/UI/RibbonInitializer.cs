@@ -89,6 +89,8 @@ namespace ShopDrawing.Plugin.UI
 
             AddSystemButtons(tab);
 
+            AddManualButtons(tab);
+
             tab.IsActive = true;
             _created = true;
         }
@@ -133,13 +135,22 @@ namespace ShopDrawing.Plugin.UI
                 "ShopDrawing.Plugin.Resources.Icons.icon_system.png",
                 isLarge: true));
 
-            panelSource.Items.Add(new RibbonSeparator());
+            tab.Panels.Add(new RibbonPanel { Source = panelSource });
+        }
+
+        private static void AddManualButtons(RibbonTab tab)
+        {
+            var panelSource = new RibbonPanelSource
+            {
+                Title = UiText.Normalize("Manual"),
+                Id = "SD_PANEL_MANUAL_TOOLS"
+            };
 
             panelSource.Items.Add(CreateButton(
                 "Manual",
                 "Huong dan su dung tinh nang.",
                 "SD_MANUAL",
-                "ShopDrawing.Plugin.Resources.Icons.icon_system.png",
+                "ShopDrawing.Plugin.Resources.Icons.icon_manual.png",
                 isLarge: true));
 
             tab.Panels.Add(new RibbonPanel { Source = panelSource });

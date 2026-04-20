@@ -317,8 +317,8 @@ namespace ShopDrawing.Plugin.UI
             SetCell(supplyHeaderRow, 2, "Gi\u00E1 tr\u1ECB", headerStyle);
             SetMergedTextCell(sheet, supplyHeaderRow, 3, 8, "Ghi ch\u00FA", headerStyle);
 
-            string totalOrderedRef = CellRef(totalRow.RowNum, 8);
-            string totalWasteRef = CellRef(totalRow.RowNum, 9);
+            string totalOrderedRef = CellRef(totalRow.RowNum, 11);
+            string totalWasteRef = CellRef(totalRow.RowNum, 12);
             var supplyRows = new (string Label, string Formula, string Note)[]
             {
                 ("T\u1ED5ng di\u1EC7n t\u00EDch d\u1EF1 ki\u1EBFn ph\u1EA3i c\u1EA5p (m\u00B2)", totalOrderedRef, "Di\u1EC7n t\u00EDch panel quy \u0111\u1ED5i theo t\u1ED5ng s\u1ED1 t\u1EA5m nguy\u00EAn c\u1EA7n c\u1EA5p."),

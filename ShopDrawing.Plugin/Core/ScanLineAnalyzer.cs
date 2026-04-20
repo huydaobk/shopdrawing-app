@@ -52,6 +52,7 @@ namespace ShopDrawing.Plugin.Core
 
             // Quét từng tấm — lấy chiều dài TỐI ĐA trong dải tấm để đặt hàng đúng
             var panelLengths = new List<double>(); // chiều dài thực tế mỗi tấm
+            var openingWasteGroups = new Dictionary<(double Width, double Length), int>(); // thống kê hao hụt lỗ mở lẹm
 
             for (int i = 0; i < totalPanels; i++)
             {
@@ -66,26 +67,80 @@ namespace ShopDrawing.Plugin.Core
                 // Sử dụng nhiều đường scan bên trong dải tấm để bù trừ biên dạng xiên
                 int numScans = 5;
                 double step = stripeW / (numScans + 1);
-                var allStripes = new List<(double Start, double End)>();
-
+                
+                // Bước 1: Quét KHÔNG CÓ lỗ mở để tìm kích thước tấm Nguyên nguyên thủy của dải polygon
+                var rawStripes = new List<(double Start, double End)>();
                 for (int s = 1; s <= numScans; s++)
                 {
                     double scanPos = panelStart + s * step;
-                    var solidSegs = GetSolidSegments(pts, scanPos, isHorizontal, openings);
-                    allStripes.AddRange(solidSegs);
+                    var solidSegs = GetSolidSegments(pts, scanPos, isHorizontal, null);
+                    rawStripes.AddRange(solidSegs);
+                }
+                var orderedPieces = UnionSegments(rawStripes);
+
+                // Bước 2: Tự đối chiếu lỗ mở bằng Geometry để bắt "Hao hụt lẹm" y hệt Pick Vách
+                var partialOpenings = new List<(double OverlapW, double Start, double End)>();
+
+                if (openings != null)
+                {
+                    foreach (var op in openings)
+                    {
+                        if (op.OpeningPolygon == null || op.OpeningPolygon.Count < 3) continue;
+
+                        var opPts = op.OpeningPolygon.Select(v => (X: v[0], Y: v[1])).ToList();
+                        double opScanMin = isHorizontal ? opPts.Min(p => p.Y) : opPts.Min(p => p.X);
+                        double opScanMax = isHorizontal ? opPts.Max(p => p.Y) : opPts.Max(p => p.X);
+                        double opMeasureMin = isHorizontal ? opPts.Min(p => p.X) : opPts.Min(p => p.Y);
+                        double opMeasureMax = isHorizontal ? opPts.Max(p => p.X) : opPts.Max(p => p.Y);
+
+                        double overlapScan = Math.Max(0, Math.Min(panelEnd, opScanMax) - Math.Max(panelStart, opScanMin));
+                        if (overlapScan <= 0) continue;
+
+                        if (overlapScan >= stripeW - 1.0)
+                        {
+                            // Cắt đứt hoàn toàn dải panel -> trừ đoạn đứt trên trục đo
+                            SubtractSegment(orderedPieces, opMeasureMin, opMeasureMax);
+                        }
+                        else
+                        {
+                            // Lẹm 1 phần -> Giữ nguyên trạng thái Tấm đặt, khoanh vùng lại để ghi nhận Hao hụt
+                            partialOpenings.Add((overlapScan, opMeasureMin, opMeasureMax));
+                        }
+                    }
                 }
 
-                var finalPieces = UnionSegments(allStripes);
-                foreach (var piece in finalPieces)
+                // Bước 3: Áp số lượng và trích rác (Waste) 
+                foreach (var piece in orderedPieces)
                 {
-                    double len = Math.Round(piece.End - piece.Start);
-                    if (len > 0)
-                        panelLengths.Add(len);
+                    double pieceSpan = piece.End - piece.Start;
+                    if (pieceSpan <= 1.0) continue;
+
+                    double roundedSpan = Math.Round(pieceSpan);
+                    if (roundedSpan > 0)
+                        panelLengths.Add(roundedSpan);
+
+                    // Quá trình trích xuất Hao hụt do Lỗ mở lẹm (Grazing Waste)
+                    foreach (var op in partialOpenings)
+                    {
+                        double opOverlapStart = Math.Max(piece.Start, op.Start);
+                        double opOverlapEnd = Math.Min(piece.End, op.End);
+                        double opSpanDim = opOverlapEnd - opOverlapStart;
+
+                        if (opSpanDim > 1.0)
+                        {
+                            double wasteW = Math.Round(Math.Min(panelWidth, Math.Max(1, op.OverlapW)));
+                            var wasteKey = (Width: wasteW, Length: Math.Round(opSpanDim));
+                            if (openingWasteGroups.ContainsKey(wasteKey))
+                                openingWasteGroups[wasteKey] += 1;
+                            else
+                                openingWasteGroups[wasteKey] = 1;
+                        }
+                    }
                 }
             }
 
             // Nhóm theo chiều dài giống nhau → gọn bảng
-            return GroupPanelEntries(panelLengths, panelWidth, totalScanSpan);
+            return GroupPanelEntries(panelLengths, panelWidth, totalScanSpan, totalPanels, openingWasteGroups);
         }
 
         /// <summary>
@@ -216,7 +271,8 @@ namespace ShopDrawing.Plugin.Core
         /// Panels cùng chiều dài (tolerance 50mm) → gộp thành 1 dòng.
         /// </summary>
         private static List<TenderPanelEntry> GroupPanelEntries(
-            List<double> panelLengths, int panelWidth, double totalScanSpan)
+            List<double> panelLengths, int panelWidth, double totalScanSpan, int totalStripes,
+            Dictionary<(double Width, double Length), int> openingWasteGroups)
         {
             var entries = new List<TenderPanelEntry>();
             if (panelLengths.Count == 0) return entries;
@@ -254,15 +310,14 @@ namespace ShopDrawing.Plugin.Core
                 });
             }
 
-            // Tính hao hụt tấm cuối (remnant)
-            int totalPanels = panelLengths.Count;
-            double remnantW = totalScanSpan - (totalPanels - 1) * panelWidth;
+            // Tính hao hụt tấm cuối (remnant) bằng logic tương đương Pick Vách
+            double remnantW = totalScanSpan - (totalStripes - 1) * panelWidth;
             if (remnantW > 0 && remnantW < panelWidth - 1)
             {
                 double wasteW = panelWidth - remnantW;
                 if (wasteW > 1)
                 {
-                    // Tìm chiều dài tấm cuối để tính DT hao hụt
+                    // Lấy chiều dài của tấm cuối cùng sinh ra
                     double lastPanelLength = panelLengths.LastOrDefault();
                     if (lastPanelLength > 0)
                     {
@@ -274,6 +329,20 @@ namespace ShopDrawing.Plugin.Core
                             Label = "Hao hụt"
                         });
                     }
+                }
+            }
+
+            if (openingWasteGroups != null)
+            {
+                foreach (var kv in openingWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+                {
+                    entries.Add(new TenderPanelEntry
+                    {
+                        WidthMm = kv.Key.Width,
+                        LengthMm = kv.Key.Length,
+                        Count = kv.Value,
+                        Label = "Hao hụt (Lỗ mở)"
+                    });
                 }
             }
 

@@ -3530,7 +3530,8 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     }
                     foreach (var opening in row.Openings)
                     {
-                        if (opening.OpeningPolygon != null && opening.OpeningPolygon.Count >= 3)
+                        bool isPolygonMode = result.Mode == TenderPopupGeometryMode.WallPolygon || result.Mode == TenderPopupGeometryMode.CeilingPolygon;
+                        if (isPolygonMode && opening.OpeningPolygon != null && opening.OpeningPolygon.Count >= 3)
                         {
                             for (int i = 0; i < opening.OpeningPolygon!.Count; i++)
                             {

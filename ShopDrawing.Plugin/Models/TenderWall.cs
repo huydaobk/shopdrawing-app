@@ -810,15 +810,11 @@ namespace ShopDrawing.Plugin.Models
                     if (cutHeight <= 0)
                         continue;
 
-                    // Cắt trọn bề rộng dải panel không tính hao hụt.
-                    if (overlapWidth < stripWidth - 1.0)
-                    {
-                        var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
-                        if (openingWasteGroups.ContainsKey(wasteKey))
-                            openingWasteGroups[wasteKey]++;
-                        else
-                            openingWasteGroups[wasteKey] = 1;
-                    }
+                    var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
+                    if (openingWasteGroups.ContainsKey(wasteKey))
+                        openingWasteGroups[wasteKey]++;
+                    else
+                        openingWasteGroups[wasteKey] = 1;
                 }
 
             }

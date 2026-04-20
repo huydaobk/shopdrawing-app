@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.25 Tender Opening CAD Projection Fix 🔧
+### Fixed
+- **CAD Projection**: Sửa lỗi sai tọa độ lỗ mở khi bấm "Vẽ CAD" trong chế độ "Pick Dài" bằng cách bắt tuân thủ tọa độ chuẩn Unroll thay vì tọa độ chuột tuyệt đối.
+
 ## [2026-04-20] - v0.2.24 Tender Project Folder Structure 📁
 ### Changed
 - Cập nhật cấu trúc thư mục dữ liệu dự án từ `ShopDrawingData` sang `Project Data` để bao quát hơn (chứa Tender, Shopdrawing, Production).

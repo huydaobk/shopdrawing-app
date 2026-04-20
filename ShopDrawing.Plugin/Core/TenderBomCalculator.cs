@@ -102,7 +102,7 @@ namespace ShopDrawing.Plugin.Core
                 {
                     double netArea = g.Sum(w => w.NetAreaM2);
                     double orderedArea = g.Sum(w => w.OrderedAreaM2);
-                    double wasteArea = Math.Max(0, orderedArea - netArea);
+                    double wasteArea = g.Sum(w => w.WasteAreaM2);
                     double wastePct = orderedArea > 0 ? wasteArea / orderedArea * 100.0 : 0;
                     int reducedPanels = g.Sum(w => w
                         .GetPanelBreakdown()
@@ -110,8 +110,7 @@ namespace ShopDrawing.Plugin.Core
                         .Sum(entry => entry.Count));
                     int wastePieces = g.Sum(w => w
                         .GetPanelBreakdown()
-                        .Where(entry => !string.IsNullOrWhiteSpace(entry.Label)
-                            && entry.Label.Trim().StartsWith("Hao hụt", StringComparison.OrdinalIgnoreCase))
+                        .Where(entry => TenderWall.IsWasteLabel(entry.Label))
                         .Sum(entry => entry.Count));
 
                     return new PanelSummaryRow

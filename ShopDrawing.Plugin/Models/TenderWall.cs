@@ -41,7 +41,7 @@ namespace ShopDrawing.Plugin.Models
         private const string WasteLabelPrefix = "Hao hụt";
         private const string WasteLabelOpening = "Hao hụt (Lỗ mở)";
 
-        private static bool IsWasteLabel(string? label)
+        public static bool IsWasteLabel(string? label)
         {
             if (string.IsNullOrWhiteSpace(label))
                 return false;
@@ -1061,7 +1061,19 @@ namespace ShopDrawing.Plugin.Models
                 if (breakdown.Count == 0)
                     return EstimatedPanelCount * PanelWidth * PanelSpan / 1_000_000.0;
 
-                return breakdown.Sum(e => e.AreaM2);
+                return breakdown.Where(e => !IsWasteLabel(e.Label)).Sum(e => e.AreaM2);
+            }
+        }
+
+        public double WasteAreaM2
+        {
+            get
+            {
+                var breakdown = GetPanelBreakdown();
+                if (breakdown.Count == 0)
+                    return 0.0;
+
+                return breakdown.Where(e => IsWasteLabel(e.Label)).Sum(e => e.AreaM2);
             }
         }
 

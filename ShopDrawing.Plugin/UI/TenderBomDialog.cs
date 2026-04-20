@@ -558,7 +558,7 @@ namespace ShopDrawing.Plugin.UI
             _panelSummaryGrid.Columns.Add(Col("T\u1ed5ng d\u00e0i (m)", "TotalLengthM", 85, "F1"));
             _panelSummaryGrid.Columns.Add(Col("DT h\u00ecnh h\u1ecdc (m2)", "WallAreaM2", 95, "F2"));
             _panelSummaryGrid.Columns.Add(Col("DT l\u1ed7 m\u1edf (m2)", "OpeningAreaM2", 105, "F2"));
-            _panelSummaryGrid.Columns.Add(Col("DT net (m2)", "NetAreaM2", 85, "F2"));
+            _panelSummaryGrid.Columns.Add(Col("DT nghiệm thu (m2)", "NetAreaM2", 85, "F2"));
             _panelSummaryGrid.Columns.Add(Col("S\u1ed1 t\u1ea5m", "EstimatedPanels", 55));
             var wasteStyle = new Style(typeof(DataGridCell));
             wasteStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, AccentOrange));

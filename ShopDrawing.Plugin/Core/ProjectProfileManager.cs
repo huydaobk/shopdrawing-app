@@ -81,7 +81,7 @@ namespace ShopDrawing.Plugin.Core
 
             try
             {
-                string tenderProjectsDirectory = Path.Combine(dataDirectory, "tender_projects");
+                string tenderProjectsDirectory = Path.Combine(dataDirectory, "tender_project");
                 if (Directory.Exists(tenderProjectsDirectory))
                 {
                     string? latestTenderFile = Directory

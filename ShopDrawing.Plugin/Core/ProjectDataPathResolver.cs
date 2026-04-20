@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -8,8 +8,8 @@ namespace ShopDrawing.Plugin.Core
     internal static class ProjectDataPathResolver
     {
         private const string MarkerFileName = ".shopdrawing-project.json";
-        private const string DataFolderName = "ShopDrawingData";
-        private const string LogsFolderName = "logs";
+        private const string DataFolderName = "Project Data";
+        private const string LogsFolderName = "Log";
         private const string LogFileName = "shopdrawing_plugin.log";
 
         private static readonly string AppDataRoot = Path.Combine(
@@ -135,7 +135,16 @@ namespace ShopDrawing.Plugin.Core
             Directory.CreateDirectory(drawingsDirectory);
             Directory.CreateDirectory(dataDirectory);
             Directory.CreateDirectory(logsDirectory);
-            Directory.CreateDirectory(Path.Combine(dataDirectory, "tender_projects"));
+            
+            Directory.CreateDirectory(Path.Combine(dataDirectory, "tender_project"));
+            Directory.CreateDirectory(Path.Combine(dataDirectory, "shopdrawing_project"));
+            Directory.CreateDirectory(Path.Combine(dataDirectory, "production_project"));
+            
+            string boqDirectory = Path.Combine(dataDirectory, "BOQ");
+            Directory.CreateDirectory(boqDirectory);
+            Directory.CreateDirectory(Path.Combine(boqDirectory, "Tender"));
+            Directory.CreateDirectory(Path.Combine(boqDirectory, "Shopdrawing"));
+            Directory.CreateDirectory(Path.Combine(boqDirectory, "Production"));
 
             EnsureMarkerFile(normalizedRoot);
             return normalizedRoot;

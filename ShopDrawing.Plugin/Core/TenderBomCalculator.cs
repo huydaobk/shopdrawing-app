@@ -1040,7 +1040,7 @@ namespace ShopDrawing.Plugin.Core
                 AccessoryCalcRule.PER_OPENING_SILL_LENGTH =>
                     $"cạnh sill/ngưỡng dưới = {basisValue:F2} md",
                 AccessoryCalcRule.PER_NET_AREA =>
-                    $"DT net = {wall.NetAreaM2:F2} m²",
+                    $"DT nghiệm thu = {wall.NetAreaM2:F2} m²",
                 AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH =>
                     BuildSuspensionLengthWallNote(accessory, wall, basisValue, autoQuantity, false, "chiều dài tuyến thanh T"),
                 AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY =>
@@ -1168,7 +1168,7 @@ namespace ShopDrawing.Plugin.Core
                 AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT =>
                     $"tổng khe đứng x chiều cao = {totalBasis:F2} md",
                 AccessoryCalcRule.PER_NET_AREA =>
-                    $"tổng DT net = {totalBasis:F2} m²",
+                    $"tổng DT nghiệm thu = {totalBasis:F2} m²",
                 AccessoryCalcRule.PER_TEK_SCREW_QTY =>
                     $"tổng vít tự tính = {totalAuto:F0} cái",
                 AccessoryCalcRule.PER_PANEL_SUPPORT_BRACKET_QTY =>

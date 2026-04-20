@@ -2523,6 +2523,9 @@ namespace ShopDrawing.Plugin.UI
 
                 // Hoi vi tri luu file
 
+                string initDir = System.IO.Path.Combine(ShopDrawing.Plugin.Core.ProjectDataPathResolver.GetDataDirectory(), "BOQ", "Shopdrawing");
+                try { System.IO.Directory.CreateDirectory(initDir); } catch { initDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop); }
+
                 var dlg = new Microsoft.Win32.SaveFileDialog
 
                 {
@@ -2533,7 +2536,7 @@ namespace ShopDrawing.Plugin.UI
 
                     FileName = $"ShopDrawing_BOM_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
 
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                    InitialDirectory = initDir
 
                 };
 

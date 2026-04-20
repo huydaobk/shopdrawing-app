@@ -723,29 +723,21 @@ namespace ShopDrawing.Plugin.UI
 
 
             try
-
             {
+                string initDir = Path.Combine(ShopDrawing.Plugin.Core.ProjectDataPathResolver.GetDataDirectory(), "BOQ", "Tender");
+                try { System.IO.Directory.CreateDirectory(initDir); } catch { initDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop); }
 
                 var dlg = new Microsoft.Win32.SaveFileDialog
-
                 {
-
                 Title = "Chọn nơi lưu file Excel",
-
                     Filter = "Excel Files (*.xlsx)|*.xlsx",
-
                     FileName = $"Tender_{SanitizeName(_currentProject.ProjectName)}_{DateTime.Now:yyyyMMdd}.xlsx",
-
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-
+                    InitialDirectory = initDir
                 };
 
                 if (dlg.ShowDialog() != true)
-
                 {
-
                     return;
-
                 }
 
 
@@ -806,7 +798,7 @@ namespace ShopDrawing.Plugin.UI
 
                     FileName = defaultName,
 
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                    InitialDirectory = _projectManager.ProjectsFolder
 
                 };
 

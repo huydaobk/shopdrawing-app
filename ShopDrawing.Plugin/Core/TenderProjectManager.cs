@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -145,7 +145,7 @@ namespace ShopDrawing.Plugin.Core
 
         private static string GetProjectsFolder()
         {
-            return Path.Combine(PluginLogger.GetDataDirectory(), "tender_projects");
+            return Path.Combine(PluginLogger.GetDataDirectory(), "tender_project");
         }
 
         private static void EnsureProjectsFolder()

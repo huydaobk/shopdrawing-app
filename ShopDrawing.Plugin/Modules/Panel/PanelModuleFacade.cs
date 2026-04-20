@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -56,12 +56,15 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 Document? doc = Application.DocumentManager.MdiActiveDocument;
                 if (doc == null) return;
 
+                string initDir = Path.Combine(ShopDrawing.Plugin.Core.ProjectDataPathResolver.GetDataDirectory(), "BOQ", "Shopdrawing");
+                try { System.IO.Directory.CreateDirectory(initDir); } catch { initDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop); }
+
                 var dlg = new Microsoft.Win32.SaveFileDialog
                 {
                     Title = "Chọn nơi lưu file BOM Excel",
                     Filter = "Excel Files (*.xlsx)|*.xlsx",
                     FileName = $"ShopDrawing_BOM_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                    InitialDirectory = initDir
                 };
                 if (dlg.ShowDialog() != true) return;
 

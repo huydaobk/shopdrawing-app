@@ -102,7 +102,7 @@ namespace ShopDrawing.Plugin.UI
 
             var colArea = Col("DT hình học (m²)", "WallAreaM2Display", 115); colArea.IsReadOnly = true; colArea.CellStyle = cellStyleBold;
             var colOp = Col("DT lỗ mở (m²)", "OpeningAreaM2Display", 100); colOp.IsReadOnly = true; colOp.CellStyle = cellStyleBold;
-            var colNet = Col("DT Net (m²)", "NetAreaM2Display", 95); colNet.IsReadOnly = true; colNet.CellStyle = cellStyleBold;
+            var colNet = Col("DT nghiệm thu (m²)", "NetAreaM2Display", 95); colNet.IsReadOnly = true; colNet.CellStyle = cellStyleBold;
             var colPanels = Col("Số tấm", "EstimatedPanelCountDisplay", 68); colPanels.IsReadOnly = true; colPanels.CellStyle = cellStyleBold;
 
 

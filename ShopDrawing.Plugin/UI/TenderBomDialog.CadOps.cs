@@ -865,9 +865,10 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             bool horizontalLine,
             Brush brush,
             double thickness,
-            Func<double[], Point> map)
+            Func<double[], Point> map,
+            IEnumerable<List<double[]>> openings = null)
         {
-            foreach (var segment in GetScanSegments(vertices, pos, horizontalLine))
+            foreach (var segment in GetScanSegments(vertices, pos, horizontalLine, openings))
             {
                 var p1 = horizontalLine ? map(new[] { segment.Start, pos }) : map(new[] { pos, segment.Start });
                 var p2 = horizontalLine ? map(new[] { segment.End, pos }) : map(new[] { pos, segment.End });
@@ -965,9 +966,14 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             {
                 double minAxis = horizontalLayout ? minY : minX;
                 double maxAxis = horizontalLayout ? maxY : maxX;
+                
+                var openingPolygons = openings?.Where(o => o?.OpeningPolygon != null)
+                                              .Select(o => o.OpeningPolygon)
+                                              .ToList();
+
                 for (double pos = minAxis + panelWidthMm; pos < maxAxis - 1.0; pos += panelWidthMm)
                 {
-                    DrawPreviewScanSegments(canvas, vertices, pos, horizontalLayout, Brushes.DarkSlateGray, 1.0, Map);
+                    DrawPreviewScanSegments(canvas, vertices, pos, horizontalLayout, Brushes.DarkSlateGray, 1.0, Map, openingPolygons);
                     
                     double center = pos - panelWidthMm / 2.0;
                     var pText = new TextBlock { Text = $"{panelWidthMm}", FontSize = 9, Foreground = Brushes.Gray };
@@ -3476,10 +3482,15 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     double minCrossAxis = horizontal ? localVertices.Min(v => v[0]) : localVertices.Min(v => v[1]);
                     if (row.PanelWidth > 0)
                     {
+                        var localOpenings = row.Openings?
+                            .Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3)
+                            .Select(o => o.OpeningPolygon!.Select(v => new[] { v[0] - globalOffsetX, v[1] - globalOffsetY }).ToList())
+                            .ToList();
+                            
                         double pos = minAxis + row.PanelWidth;
                         for (; pos < maxAxis - 1.0; pos += row.PanelWidth)
                         {
-                            foreach (var segment in GetScanSegments(localVertices, pos, horizontal))
+                            foreach (var segment in GetScanSegments(localVertices, pos, horizontal, localOpenings))
                             {
                                 var a = horizontal ? new[] { segment.Start, pos } : new[] { pos, segment.Start };
                                 var b = horizontal ? new[] { segment.End, pos } : new[] { pos, segment.End };

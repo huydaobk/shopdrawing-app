@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ShopDrawing.Plugin.Models;
@@ -21,7 +21,7 @@ namespace ShopDrawing.Plugin.Core
         /// <param name="isHorizontal">true = xếp ngang (quét theo Y), false = xếp dọc (quét theo X)</param>
         /// <returns>Danh sách TenderPanelEntry</returns>
         public static List<TenderPanelEntry> Analyze(
-            List<double[]> vertices, int panelWidth, bool isHorizontal)
+            List<double[]> vertices, int panelWidth, bool isHorizontal, IReadOnlyList<TenderOpening> openings = null)
         {
             if (vertices == null || vertices.Count < 3 || panelWidth <= 0)
                 return new List<TenderPanelEntry>();
@@ -60,31 +60,28 @@ namespace ShopDrawing.Plugin.Core
 
                 // Clamp vào bounding box (tấm cuối có thể ngắn hơn PanelWidth)
                 panelEnd = Math.Min(panelEnd, scanMax);
+                double stripeW = panelEnd - panelStart;
+                if (stripeW < 1.0) continue;
 
-                // Quét 2 biên trái/phải của dải tấm, lấy MAX
-                double epsilon = (panelEnd - panelStart) * 0.01;
-                var scanPositions = new[]
-                {
-                    panelStart + epsilon, // mép trái
-                    panelEnd   - epsilon  // mép phải
-                };
+                // Sử dụng nhiều đường scan bên trong dải tấm để bù trừ biên dạng xiên
+                int numScans = 5;
+                double step = stripeW / (numScans + 1);
+                var allStripes = new List<(double Start, double End)>();
 
-                double maxPanelLength = 0;
-                foreach (var scanPos in scanPositions)
+                for (int s = 1; s <= numScans; s++)
                 {
-                    var intersections = GetIntersections(pts, scanPos, isHorizontal);
-                    if (intersections.Count >= 2)
-                    {
-                        intersections.Sort();
-                        double totalLength = 0;
-                        for (int j = 0; j + 1 < intersections.Count; j += 2)
-                            totalLength += intersections[j + 1] - intersections[j];
-                        maxPanelLength = Math.Max(maxPanelLength, totalLength);
-                    }
+                    double scanPos = panelStart + s * step;
+                    var solidSegs = GetSolidSegments(pts, scanPos, isHorizontal, openings);
+                    allStripes.AddRange(solidSegs);
                 }
 
-                if (maxPanelLength > 0)
-                    panelLengths.Add(Math.Round(maxPanelLength));
+                var finalPieces = UnionSegments(allStripes);
+                foreach (var piece in finalPieces)
+                {
+                    double len = Math.Round(piece.End - piece.Start);
+                    if (len > 0)
+                        panelLengths.Add(len);
+                }
             }
 
             // Nhóm theo chiều dài giống nhau → gọn bảng
@@ -130,6 +127,88 @@ namespace ShopDrawing.Plugin.Core
             }
 
             return intersections;
+        }
+
+        private static List<(double Start, double End)> GetSolidSegments(
+            List<(double X, double Y)> wallPts, 
+            double scanPos, 
+            bool isHorizontal, 
+            IReadOnlyList<TenderOpening> openings)
+        {
+            var intersections = GetIntersections(wallPts, scanPos, isHorizontal);
+            intersections.Sort();
+            var segments = new List<(double Start, double End)>();
+            for (int j = 0; j + 1 < intersections.Count; j += 2)
+            {
+                 if (intersections[j+1] - intersections[j] > 1.0)
+                     segments.Add((intersections[j], intersections[j + 1]));
+            }
+
+            if (openings != null)
+            {
+                foreach (var op in openings.Where(o => o?.OpeningPolygon != null && o.OpeningPolygon.Count >= 3))
+                {
+                    var opPts = op.OpeningPolygon.Select(v => (X: v[0], Y: v[1])).ToList();
+                    var opIntersections = GetIntersections(opPts, scanPos, isHorizontal);
+                    opIntersections.Sort();
+                    for (int j = 0; j + 1 < opIntersections.Count; j += 2)
+                    {
+                        SubtractSegment(segments, opIntersections[j], opIntersections[j + 1]);
+                    }
+                }
+            }
+            return segments;
+        }
+
+        private static void SubtractSegment(List<(double Start, double End)> segments, double cutStart, double cutEnd)
+        {
+            for (int i = segments.Count - 1; i >= 0; i--)
+            {
+                var seg = segments[i];
+                if (cutEnd <= seg.Start || cutStart >= seg.End)
+                    continue;
+
+                segments.RemoveAt(i);
+                
+                if (cutStart > seg.Start + 1.0 && cutEnd < seg.End - 1.0)
+                {
+                    segments.Insert(i, (cutEnd, seg.End));
+                    segments.Insert(i, (seg.Start, cutStart));
+                }
+                else if (cutStart <= seg.Start + 1.0 && cutEnd < seg.End - 1.0)
+                {
+                    segments.Insert(i, (cutEnd, seg.End));
+                }
+                else if (cutStart > seg.Start + 1.0 && cutEnd >= seg.End - 1.0)
+                {
+                    segments.Insert(i, (seg.Start, cutStart));
+                }
+            }
+        }
+
+        private static List<(double Start, double End)> UnionSegments(List<(double Start, double End)> segments)
+        {
+            if (segments.Count == 0) return new List<(double, double)>();
+            
+            var sorted = segments.OrderBy(s => s.Start).ToList();
+            var result = new List<(double Start, double End)>();
+            
+            var current = sorted[0];
+            for (int i = 1; i < sorted.Count; i++)
+            {
+                var next = sorted[i];
+                if (next.Start <= current.End)
+                {
+                    current.End = Math.Max(current.End, next.End);
+                }
+                else
+                {
+                    result.Add(current);
+                    current = next;
+                }
+            }
+            result.Add(current);
+            return result;
         }
 
         /// <summary>

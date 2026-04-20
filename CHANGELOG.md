@@ -1,5 +1,14 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.23 Tender Net Area Relabeling 🏷️
+### Changed
+- **UI Label Update**: Đổi tên cột tiêu đề `DT net (m²)` thành `DT nghiệm thu (m²)` trong form xuất báo cáo Excel BOM để trở nên trực quan và dễ hiểu hơn đối với nghiệp vụ nghiệm thu công trường, giữ nguyên tính đúng đắn của logic tính toán.
+
+## [2026-04-18] - v0.2.22 Panel Splitting Optimization ✂️
+### Added
+- **Tính năng mới**: Tối ưu tự động chia tấm (splitting panel) khi đi qua lỗ mở "nguyên khổ". `ScanLineAnalyzer` hiện tại đã tính toán chính xác để phân tách đoạn trên và dưới, và nhảy nhịp (skip) ở vùng đi qua lỗ mở.
+- **Cải thiện UI**: Đường chia nhịp trên giao diện xem trước (CAD preview) tự động không đi xuyên qua không gian lỗ mở.
+
 ## [2026-04-18] - v0.2.21 Tender Excel Geometric Area Export 📊
 ### Changed
 - **Tender UI Optimization** - Đồng bộ hóa giá trị diện tích hình học thực tế (từ Pick Vùng/Pick Dài) hiển thị trực tiếp vào file Excel xuất BOM thay vì áp dụng công thức Dài x Rộng cũ, giúp đồng nhất dữ liệu hiển thị (source of truth) giữa AutoCAD, App và Excel. Ghi chú tại Excel cũng cập nhật thông báo rõ gốc trích xuất từ mô hình CAD.

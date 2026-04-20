@@ -415,7 +415,7 @@ namespace ShopDrawing.Plugin.Models
             if (PolygonVertices != null && PolygonVertices.Count >= 3)
             {
                 bool isHorizontal = LayoutDirection == "Ngang";
-                return ScanLineAnalyzer.Analyze(PolygonVertices, PanelWidth, isHorizontal);
+                return ScanLineAnalyzer.Analyze(PolygonVertices, PanelWidth, isHorizontal, Openings);
             }
 
             // Vách đa cao độ + lắp dọc: trải tấm liên tục toàn tuyến (không reset theo từng nhịp).

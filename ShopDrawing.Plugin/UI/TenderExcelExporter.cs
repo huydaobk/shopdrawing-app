@@ -203,7 +203,7 @@ namespace ShopDrawing.Plugin.UI
             string[] headers =
             {
                 "STT", "T\u1EA7ng", "H\u1EA1ng m\u1EE5c", "M\u00E3 spec", "S\u1ED1 v\u00F9ng",
-                "DT h\u00ECnh h\u1ECDc (m\u00B2)", "DT l\u1ED7 m\u1EDF (m\u00B2)", "DT net (m\u00B2)",
+                "DT h\u00ECnh h\u1ECDc (m\u00B2)", "DT l\u1ED7 m\u1EDF (m\u00B2)", "DT nghi\u1EC7m thu (m\u00B2)",
                 "DT d\u1EF1 ki\u1EBFn c\u1EA5p (m\u00B2)", "Kh\u1ED1i l\u01B0\u1EE3ng hao h\u1EE5t t\u1ED5ng (m\u00B2)", "Hao h\u1EE5t (%)"
             };
 

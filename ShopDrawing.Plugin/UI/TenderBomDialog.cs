@@ -2319,6 +2319,27 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         private static List<(double Start, double End)> GetScanSegments(
             List<double[]> vertices,
             double scanPos,
+            bool horizontalLine,
+            IEnumerable<List<double[]>> openings = null)
+        {
+            var wallSegments = GetRawScanSegments(vertices, scanPos, horizontalLine);
+            if (openings == null || !openings.Any())
+                return wallSegments;
+
+            foreach (var op in openings.Where(o => o != null && o.Count >= 3))
+            {
+                var opSegments = GetRawScanSegments(op, scanPos, horizontalLine);
+                foreach (var cut in opSegments)
+                {
+                    SubtractSegment(wallSegments, cut.Start, cut.End);
+                }
+            }
+            return wallSegments;
+        }
+
+        private static List<(double Start, double End)> GetRawScanSegments(
+            List<double[]> vertices,
+            double scanPos,
             bool horizontalLine)
         {
             var intersections = new List<double>();
@@ -2352,6 +2373,32 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             }
 
             return segments;
+        }
+
+        private static void SubtractSegment(List<(double Start, double End)> segments, double cutStart, double cutEnd)
+        {
+            for (int i = segments.Count - 1; i >= 0; i--)
+            {
+                var seg = segments[i];
+                if (cutEnd <= seg.Start || cutStart >= seg.End)
+                    continue;
+
+                segments.RemoveAt(i);
+                
+                if (cutStart > seg.Start + 1.0 && cutEnd < seg.End - 1.0)
+                {
+                    segments.Insert(i, (cutEnd, seg.End));
+                    segments.Insert(i, (seg.Start, cutStart));
+                }
+                else if (cutStart <= seg.Start + 1.0 && cutEnd < seg.End - 1.0)
+                {
+                    segments.Insert(i, (cutEnd, seg.End));
+                }
+                else if (cutStart > seg.Start + 1.0 && cutEnd >= seg.End - 1.0)
+                {
+                    segments.Insert(i, (seg.Start, cutStart));
+                }
+            }
         }
 
         private void AddPreviewLine(

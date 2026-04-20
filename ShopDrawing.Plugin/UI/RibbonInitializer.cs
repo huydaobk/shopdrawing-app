@@ -133,6 +133,15 @@ namespace ShopDrawing.Plugin.UI
                 "ShopDrawing.Plugin.Resources.Icons.icon_system.png",
                 isLarge: true));
 
+            panelSource.Items.Add(new RibbonSeparator());
+
+            panelSource.Items.Add(CreateButton(
+                "Manual",
+                "Huong dan su dung tinh nang.",
+                "SD_MANUAL",
+                "ShopDrawing.Plugin.Resources.Icons.icon_system.png",
+                isLarge: true));
+
             tab.Panels.Add(new RibbonPanel { Source = panelSource });
         }
 

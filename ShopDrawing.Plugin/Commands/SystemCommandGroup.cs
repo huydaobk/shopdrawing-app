@@ -19,5 +19,11 @@ namespace ShopDrawing.Plugin.Commands
         {
             _actions.InputProjectInfo();
         }
+
+        [CommandMethod("SD_MANUAL")]
+        public void ShowManual()
+        {
+            _actions.ShowManual();
+        }
     }
 }

@@ -33,5 +33,11 @@ namespace ShopDrawing.Plugin.Commands
                 }
             }
         }
+
+        public void ShowManual()
+        {
+            var manualWindow = new ShopDrawing.Plugin.UI.Manual.ManualWindow();
+            Application.ShowModalWindow(manualWindow);
+        }
     }
 }

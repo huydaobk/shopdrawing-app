@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.27 Tender Polygon Waste & Preview UI 🚀
+### Changed
+- **Tender Waste Logic**: Tối ưu logic tính toán khối lượng hao hụt cho vách "Pick Vùng" (Polygon) đồng nhất với Pick vách. Bắt chính xác lượng "Hao hụt (Lỗ mở)" (Grazing Waste) do lỗ cắt lẹm 1 phần, và sửa lỗi tính mẩu vụn tấm cuối không chính xác khi dải tấm bị chia cắt.
+- **Tender CAD Preview**: Tối ưu đường ghép tấm trên lưới CAD/WPF, tự động loại bỏ các đoạn thẳng đi xuyên qua không gian lỗ mở, giúp bản vẽ mô phỏng trực quan hơn.
+
 ## [2026-04-20] - v0.2.26 Tender Excel Export Synchronization 📊
 ### Fixed
 - **Excel Reference Bug**: Cập nhật lại logic xuất báo cáo Excel cho chức năng Tender, đảm bảo tham chiếu chỉ số chính xác ở phần tổng (Tổng diện tích dự kiến cấp và Khối lượng hao hụt) đến đúng các cột dữ liệu thay vì cột số lượng tấm.

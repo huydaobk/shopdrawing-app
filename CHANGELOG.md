@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.29 Manual Icon & Panel Refinement 🎨
+### Changed
+- **Manual CUI Integration**: Tách nút "Manual" ra khỏi nhóm "System" tạo thành Panel "Manual" riêng biệt. Cập nhật Icon cuốn cẩm nang mới 3D trực quan hơn.
+
 ## [2026-04-20] - v0.2.28 Manual CUI Integration 📖
 ### Added
 - **Manual CUI Integration**: Thêm nút "Manual" vào System Ribbon để mở bảng hướng dẫn sử dụng.

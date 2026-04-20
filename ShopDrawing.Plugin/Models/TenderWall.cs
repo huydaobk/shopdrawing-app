@@ -601,140 +601,130 @@ namespace ShopDrawing.Plugin.Models
             if (PanelWidth <= 0 || DivisionSpan <= 0 || PanelSpan <= 0)
                 return entries;
 
-            int totalPanels = (int)Math.Ceiling(DivisionSpan / PanelWidth);
-            if (totalPanels <= 0)
+            int stripCount = (int)Math.Ceiling(DivisionSpan / PanelWidth);
+            if (stripCount <= 0)
                 return entries;
 
-            var reducedGroups = new Dictionary<double, int>();
+            var openingRanges = BuildOpeningRanges(openings);
+            
+            var normalGroups = new Dictionary<(double Width, double Length), int>();
+            var reducedGroups = new Dictionary<(double Width, double Length), int>();
             var wasteGroups = new Dictionary<(double Width, double Length), int>();
             var openingWasteGroups = new Dictionary<(double Width, double Length), int>();
-            int normalPanels = 0;
 
-            var openingRanges = BuildOpeningRanges(openings)
-                .Select(o =>
-                {
-                    double start = Math.Max(0, Math.Min(PanelSpan, o.Start));
-                    double end = Math.Max(start, Math.Min(PanelSpan, o.End));
-                    double bottom = Math.Max(0, Math.Min(DivisionSpan, o.Bottom));
-                    double top = Math.Max(bottom, Math.Min(DivisionSpan, o.Top));
-                    return (Start: start, End: end, Bottom: bottom, Top: top);
-                })
-                .Where(o => o.End - o.Start > 1.0 && o.Top - o.Bottom > 1.0)
-                .ToList();
-
-            for (int panelIndex = 0; panelIndex < totalPanels; panelIndex++)
+            for (int strip = 0; strip < stripCount; strip++)
             {
-                double divStart = panelIndex * PanelWidth;
-                double divEnd = Math.Min((panelIndex + 1) * PanelWidth, DivisionSpan);
-                double installedDiv = Math.Max(0, divEnd - divStart);
+                double stripStart = strip * PanelWidth;
+                double stripEnd = Math.Min((strip + 1) * PanelWidth, DivisionSpan);
+                double installedDiv = Math.Max(0, stripEnd - stripStart);
                 if (installedDiv <= 0.5)
                     continue;
 
-                double removedArea = 0;
-                double remnantDiv = Math.Max(0, PanelWidth - installedDiv);
-                if (remnantDiv > 1.0)
-                {
-                    removedArea += remnantDiv * PanelSpan;
-                    AddWaste(remnantDiv, PanelSpan, wasteGroups);
-                }
-
+                var solidPieces = new List<(double Bottom, double Top)> { (0, PanelSpan) };
+                var partialOpenings = new List<(double OverlapDiv, double Start, double End)>();
+                
                 foreach (var opening in openingRanges)
                 {
-                    double overlapDiv = Math.Max(0, Math.Min(divEnd, opening.Top) - Math.Max(divStart, opening.Bottom));
-                    if (overlapDiv <= 1.0)
+                    double overlapDiv = Math.Max(0, Math.Min(stripEnd, opening.Top) - Math.Max(stripStart, opening.Bottom));
+                    if (overlapDiv <= 0)
                         continue;
 
-                    double overlapSpan = Math.Max(0, Math.Min(PanelSpan, opening.End) - Math.Max(0, opening.Start));
-                    if (overlapSpan <= 1.0)
-                        continue;
-
-                    removedArea += overlapDiv * overlapSpan;
-                    // Cắt trọn bề rộng dải panel (kể cả dải cuối không đủ khổ) không tính hao hụt.
-                    if (overlapDiv < installedDiv - 1.0)
-                        AddWaste(overlapDiv, overlapSpan, openingWasteGroups);
-                }
-
-                double nominalArea = PanelWidth * PanelSpan;
-                removedArea = Math.Max(0, Math.Min(nominalArea, removedArea));
-                if (removedArea <= 1.0)
-                {
-                    normalPanels++;
-                    continue;
-                }
-
-                double remainingLength = (nominalArea - removedArea) / PanelWidth;
-                if (remainingLength > 1.0)
-                {
-                    double key = Math.Round(remainingLength);
-                    if (reducedGroups.ContainsKey(key))
-                        reducedGroups[key]++;
+                    if (overlapDiv >= installedDiv - 1.0)
+                        SubtractRangeFromPieces(solidPieces, Math.Max(0, opening.Start), Math.Min(PanelSpan, opening.End));
                     else
-                        reducedGroups[key] = 1;
+                        partialOpenings.Add((overlapDiv, Math.Max(0, opening.Start), Math.Min(PanelSpan, opening.End)));
+                }
+
+                double remnantDiv = Math.Max(0, PanelWidth - installedDiv);
+
+                foreach (var piece in solidPieces)
+                {
+                    double pieceSpan = piece.Top - piece.Bottom;
+                    if (pieceSpan <= 1.0)
+                        continue;
+
+                    var orderedKey = (Width: Math.Round((double)PanelWidth), Length: Math.Round(pieceSpan));
+                    
+                    bool isReduced = Math.Abs(pieceSpan - PanelSpan) > 1.0;
+                    var targetGroup = isReduced ? reducedGroups : normalGroups;
+
+                    if (targetGroup.ContainsKey(orderedKey))
+                        targetGroup[orderedKey]++;
+                    else
+                        targetGroup[orderedKey] = 1;
+
+                    if (remnantDiv > 1.0)
+                    {
+                        var wasteKey = (Width: Math.Round(remnantDiv), Length: Math.Round(pieceSpan));
+                        if (wasteGroups.ContainsKey(wasteKey))
+                            wasteGroups[wasteKey]++;
+                        else
+                            wasteGroups[wasteKey] = 1;
+                    }
+
+                    foreach (var partial in partialOpenings)
+                    {
+                        double cutEnd = Math.Min(piece.Top, partial.End);
+                        double cutStart = Math.Max(piece.Bottom, partial.Start);
+                        double intersectionSpan = cutEnd - cutStart;
+
+                        if (intersectionSpan > 1.0)
+                        {
+                            var wasteKey = (Width: Math.Round(partial.OverlapDiv), Length: Math.Round(intersectionSpan));
+                            if (openingWasteGroups.ContainsKey(wasteKey))
+                                openingWasteGroups[wasteKey]++;
+                            else
+                                openingWasteGroups[wasteKey] = 1;
+                        }
+                    }
                 }
             }
 
-            if (normalPanels > 0)
+            foreach (var pair in normalGroups.OrderByDescending(p => p.Key.Length).ThenByDescending(p => p.Key.Width))
             {
                 entries.Add(new TenderPanelEntry
                 {
-                    WidthMm = PanelWidth,
-                    LengthMm = PanelSpan,
-                    Count = normalPanels,
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.Length,
+                    Count = pair.Value,
                     Label = "Nguyên"
                 });
             }
 
-            foreach (var kv in reducedGroups.OrderByDescending(x => x.Key))
+            foreach (var pair in reducedGroups.OrderByDescending(p => p.Key.Length).ThenByDescending(p => p.Key.Width))
             {
                 entries.Add(new TenderPanelEntry
                 {
-                    WidthMm = PanelWidth,
-                    LengthMm = kv.Key,
-                    Count = kv.Value,
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.Length,
+                    Count = pair.Value,
                     Label = "Giảm (lỗ mở)"
                 });
             }
 
-            foreach (var kv in openingWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            foreach (var pair in openingWasteGroups.OrderByDescending(p => p.Key.Length).ThenByDescending(p => p.Key.Width))
             {
                 entries.Add(new TenderPanelEntry
                 {
-                    WidthMm = kv.Key.Width,
-                    LengthMm = kv.Key.Length,
-                    Count = kv.Value,
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.Length,
+                    Count = pair.Value,
                     Label = WasteLabelOpening
                 });
             }
 
-            foreach (var kv in wasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            foreach (var pair in wasteGroups.OrderByDescending(p => p.Key.Length).ThenByDescending(p => p.Key.Width))
             {
                 entries.Add(new TenderPanelEntry
                 {
-                    WidthMm = kv.Key.Width,
-                    LengthMm = kv.Key.Length,
-                    Count = kv.Value,
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.Length,
+                    Count = pair.Value,
                     Label = "Hao hụt"
                 });
             }
 
             return entries;
-
-            static void AddWaste(
-                double wasteWidth,
-                double wasteLength,
-                Dictionary<(double Width, double Length), int> dict)
-            {
-                double widthKey = Math.Round(wasteWidth);
-                double lengthKey = Math.Round(wasteLength);
-                if (widthKey <= 0 || lengthKey <= 0)
-                    return;
-
-                var key = (Width: widthKey, Length: lengthKey);
-                if (dict.ContainsKey(key))
-                    dict[key]++;
-                else
-                    dict[key] = 1;
-            }
         }
 
         private List<TenderPanelEntry> BuildContinuousVerticalBreakdown(
@@ -751,7 +741,9 @@ namespace ShopDrawing.Plugin.Models
 
             var ranges = BuildSegmentRanges(segments);
             var openingRanges = BuildOpeningRanges(openings);
-            var orderedGroups = new Dictionary<(double Width, double Height), int>();
+            
+            var normalGroups = new Dictionary<(double Width, double Height), int>();
+            var reducedGroups = new Dictionary<(double Width, double Height), int>();
             var wasteGroups = new Dictionary<(double Width, double WasteHeight), int>();
             var openingWasteGroups = new Dictionary<(double Width, double WasteHeight), int>();
 
@@ -764,62 +756,94 @@ namespace ShopDrawing.Plugin.Models
                     continue;
 
                 double maxHeight = 0;
-                double netArea = 0;
-
                 foreach (var range in ranges)
                 {
                     double overlap = Math.Max(0, Math.Min(stripEnd, range.End) - Math.Max(stripStart, range.Start));
-                    if (overlap <= 0)
-                        continue;
-
-                    maxHeight = Math.Max(maxHeight, range.HeightMm);
-                    netArea += overlap * range.HeightMm;
+                    if (overlap > 0)
+                        maxHeight = Math.Max(maxHeight, range.HeightMm);
                 }
 
                 if (maxHeight <= 0)
                     continue;
 
-                // Khối lượng cấp: mỗi dải lấy theo cao độ max trong dải.
-                var orderedKey = (Width: Math.Round((double)PanelWidth), Height: Math.Round(maxHeight));
-                if (orderedGroups.ContainsKey(orderedKey))
-                    orderedGroups[orderedKey]++;
-                else
-                    orderedGroups[orderedKey] = 1;
-
-                // Hao hụt giao bậc trong dải (không tính lỗ mở).
-                double orderedArea = PanelWidth * maxHeight;
-                double stepWasteArea = Math.Max(0, orderedArea - netArea);
-                if (stepWasteArea > 1.0)
-                {
-                    double wasteHeight = stepWasteArea / PanelWidth;
-                    var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
-                    if (wasteGroups.ContainsKey(wasteKey))
-                        wasteGroups[wasteKey]++;
-                    else
-                        wasteGroups[wasteKey] = 1;
-                }
-
-                // Hao hụt do lỗ mở: lưu theo kích thước cắt thực tế trên từng dải tấm.
+                var solidPieces = new List<(double Bottom, double Top)> { (0, maxHeight) };
+                var partialOpenings = new List<(double OverlapWidth, double Bottom, double Top)>();
+                
                 foreach (var opening in openingRanges)
                 {
                     double overlapWidth = Math.Max(0, Math.Min(stripEnd, opening.End) - Math.Max(stripStart, opening.Start));
                     if (overlapWidth <= 0)
                         continue;
 
-                    double cutHeight = Math.Max(0, Math.Min(maxHeight, opening.Top) - Math.Max(0, opening.Bottom));
-                    if (cutHeight <= 0)
-                        continue;
-
-                    var wasteKey = (Width: Math.Round(overlapWidth), WasteHeight: Math.Round(cutHeight));
-                    if (openingWasteGroups.ContainsKey(wasteKey))
-                        openingWasteGroups[wasteKey]++;
+                    if (overlapWidth >= stripWidth - 1.0)
+                        SubtractRangeFromPieces(solidPieces, opening.Bottom, opening.Top);
                     else
-                        openingWasteGroups[wasteKey] = 1;
+                        partialOpenings.Add((overlapWidth, Math.Max(0, opening.Bottom), Math.Min(maxHeight, opening.Top)));
                 }
 
+                foreach (var piece in solidPieces)
+                {
+                    double pieceHeight = piece.Top - piece.Bottom;
+                    if (pieceHeight <= 1.0)
+                        continue;
+
+                    var orderedKey = (Width: Math.Round((double)PanelWidth), Height: Math.Round(pieceHeight));
+                    
+                    bool isReduced = Math.Abs(pieceHeight - maxHeight) > 1.0;
+                    var targetGroup = isReduced ? reducedGroups : normalGroups;
+                    
+                    if (targetGroup.ContainsKey(orderedKey))
+                        targetGroup[orderedKey]++;
+                    else
+                        targetGroup[orderedKey] = 1;
+
+                    // Hao hụt giao bậc
+                    double netAreaInPiece = 0;
+                    foreach (var range in ranges)
+                    {
+                        double overlapX = Math.Max(0, Math.Min(stripEnd, range.End) - Math.Max(stripStart, range.Start));
+                        if (overlapX <= 0)
+                            continue;
+
+                        double rectTop = Math.Min(piece.Top, range.HeightMm);
+                        double rectBottom = Math.Max(piece.Bottom, 0);
+                        if (rectTop > rectBottom)
+                            netAreaInPiece += overlapX * (rectTop - rectBottom);
+                    }
+
+                    double pieceOrderedArea = PanelWidth * pieceHeight; 
+                    double stepWasteArea = Math.Max(0, pieceOrderedArea - netAreaInPiece);
+
+                    if (stepWasteArea > 1.0)
+                    {
+                        double wasteHeight = stepWasteArea / PanelWidth;
+                        var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
+                        if (wasteGroups.ContainsKey(wasteKey))
+                            wasteGroups[wasteKey]++;
+                        else
+                            wasteGroups[wasteKey] = 1;
+                    }
+
+                    // Hao hụt do lỗ mở lẹm
+                    foreach (var partial in partialOpenings)
+                    {
+                        double cutTop = Math.Min(piece.Top, partial.Top);
+                        double cutBottom = Math.Max(piece.Bottom, partial.Bottom);
+                        double intersectionHeight = cutTop - cutBottom;
+
+                        if (intersectionHeight > 1.0)
+                        {
+                            var wasteKey = (Width: Math.Round(partial.OverlapWidth), WasteHeight: Math.Round(intersectionHeight));
+                            if (openingWasteGroups.ContainsKey(wasteKey))
+                                openingWasteGroups[wasteKey]++;
+                            else
+                                openingWasteGroups[wasteKey] = 1;
+                        }
+                    }
+                }
             }
 
-            foreach (var pair in orderedGroups.OrderByDescending(p => p.Key.Height).ThenByDescending(p => p.Key.Width))
+            foreach (var pair in normalGroups.OrderByDescending(p => p.Key.Height).ThenByDescending(p => p.Key.Width))
             {
                 entries.Add(new TenderPanelEntry
                 {
@@ -827,6 +851,17 @@ namespace ShopDrawing.Plugin.Models
                     LengthMm = pair.Key.Height,
                     Count = pair.Value,
                     Label = "Nguyên"
+                });
+            }
+
+            foreach (var pair in reducedGroups.OrderByDescending(p => p.Key.Height).ThenByDescending(p => p.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = pair.Key.Width,
+                    LengthMm = pair.Key.Height,
+                    Count = pair.Value,
+                    Label = "Giảm (lỗ mở)"
                 });
             }
 
@@ -853,6 +888,43 @@ namespace ShopDrawing.Plugin.Models
             }
 
             return entries;
+        }
+
+        private static void SubtractRangeFromPieces(List<(double Bottom, double Top)> pieces, double cutBottom, double cutTop)
+        {
+            var result = new List<(double Bottom, double Top)>();
+            foreach (var piece in pieces)
+            {
+                if (cutTop <= piece.Bottom || cutBottom >= piece.Top)
+                {
+                    result.Add(piece);
+                    continue;
+                }
+
+                if (cutBottom <= piece.Bottom && cutTop >= piece.Top)
+                    continue;
+
+                if (cutBottom > piece.Bottom && cutTop < piece.Top)
+                {
+                    result.Add((piece.Bottom, cutBottom));
+                    result.Add((cutTop, piece.Top));
+                    continue;
+                }
+
+                if (cutBottom <= piece.Bottom && cutTop > piece.Bottom)
+                {
+                    result.Add((cutTop, piece.Top));
+                    continue;
+                }
+
+                if (cutBottom < piece.Top && cutTop >= piece.Top)
+                {
+                    result.Add((piece.Bottom, cutBottom));
+                    continue;
+                }
+            }
+            pieces.Clear();
+            pieces.AddRange(result);
         }
 
         private static IReadOnlyList<(double Start, double End, double HeightMm)> BuildSegmentRanges(

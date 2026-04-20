@@ -82,51 +82,91 @@ namespace ShopDrawing.Plugin.UI
 
 
 
+            // Grid Layout cho Project Info để co giãn linh hoạt theo chiều ngang
+
+            var gridInfo = new Grid { Margin = new Thickness(0, 0, 0, 5) };
+
+            gridInfo.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+
+            gridInfo.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            
+
+            gridInfo.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            gridInfo.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+
+
             // Du an
 
-            var stackProject = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
+            var lblProject = MakeLabel("Dự án:");
 
-            stackProject.Children.Add(MakeLabel("Dự án:", 80));
+            lblProject.Margin = new Thickness(0, 0, 0, 5);
+
+            Grid.SetRow(lblProject, 0);
+
+            Grid.SetColumn(lblProject, 0);
+
+            gridInfo.Children.Add(lblProject);
+
+
 
             _txtProjectName = new TextBox
 
             {
 
-                Width = 140,
-
                 VerticalContentAlignment = VerticalAlignment.Center,
 
-                ToolTip = "Tên dự án chào giá"
+                ToolTip = "Tên dự án chào giá",
+
+                Margin = new Thickness(0, 0, 0, 5),
+
+                HorizontalAlignment = HorizontalAlignment.Stretch
 
             };
 
-            stackProject.Children.Add(_txtProjectName);
+            Grid.SetRow(_txtProjectName, 0);
 
-            projectSection.Children.Add(stackProject);
+            Grid.SetColumn(_txtProjectName, 1);
+
+            gridInfo.Children.Add(_txtProjectName);
 
 
 
             // Khach hang
 
-            var stackCustomer = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
+            var lblCustomer = MakeLabel("Khách hàng:");
 
-            stackCustomer.Children.Add(MakeLabel("Khách hàng:", 80));
+            Grid.SetRow(lblCustomer, 1);
+
+            Grid.SetColumn(lblCustomer, 0);
+
+            gridInfo.Children.Add(lblCustomer);
+
+
 
             _txtCustomerName = new TextBox
 
             {
 
-                Width = 140,
-
                 VerticalContentAlignment = VerticalAlignment.Center,
 
-                ToolTip = "Tên khách hàng"
+                ToolTip = "Tên khách hàng",
+
+                HorizontalAlignment = HorizontalAlignment.Stretch
 
             };
 
-            stackCustomer.Children.Add(_txtCustomerName);
+            Grid.SetRow(_txtCustomerName, 1);
 
-            projectSection.Children.Add(stackCustomer);
+            Grid.SetColumn(_txtCustomerName, 1);
+
+            gridInfo.Children.Add(_txtCustomerName);
+
+
+
+            projectSection.Children.Add(gridInfo);
 
 
 

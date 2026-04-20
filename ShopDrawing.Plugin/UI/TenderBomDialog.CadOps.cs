@@ -3549,18 +3549,24 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     double minCrossAxis = horizontal ? localVertices.Min(v => v[0]) : localVertices.Min(v => v[1]);
                     if (row.PanelWidth > 0)
                     {
-                        var localOpenings = row.Openings?
-                            .Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3)
-                            .Select(o => o.OpeningPolygon!.Select(v => new[] { v[0] - globalOffsetX, v[1] - globalOffsetY }).ToList())
-                            .ToList() ?? new List<List<double[]>>();
+                        bool isPolygonMode = result.Mode == TenderPopupGeometryMode.WallPolygon || result.Mode == TenderPopupGeometryMode.CeilingPolygon;
+                        
+                        var localOpenings = new List<List<double[]>>();
+                        if (isPolygonMode && row.Openings != null)
+                        {
+                            localOpenings = row.Openings
+                                .Where(o => o.OpeningPolygon != null && o.OpeningPolygon.Count >= 3)
+                                .Select(o => o.OpeningPolygon!.Select(v => new[] { v[0] - globalOffsetX, v[1] - globalOffsetY }).ToList())
+                                .ToList();
+                        }
 
                         if (stationOpeningMode && row.Openings != null)
                         {
                             foreach (var opening in row.Openings)
                             {
-                                if ((opening.OpeningPolygon == null || opening.OpeningPolygon.Count < 3) && opening.Width > 0 && opening.Height > 0)
+                                if ((!isPolygonMode || opening.OpeningPolygon == null || opening.OpeningPolygon.Count < 3) && opening.Width > 0 && opening.Height > 0)
                                 {
-                                    double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                                    double left = opening.StationStartMm >= 0 ? opening.StationStartMm : (opening.CenterStationMm >= 0 ? opening.CenterStationMm - opening.Width / 2.0 : 0);
                                     if (left < 0) continue;
                                     double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;
                                     double bottom = Math.Max(0, opening.BottomElevationMm);
@@ -3634,7 +3640,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         }
                         else if (stationOpeningMode && opening.Width > 0 && opening.Height > 0)
                         {
-                            double left = opening.StationStartMm >= 0 ? opening.StationStartMm : opening.CenterStationMm;
+                            double left = opening.StationStartMm >= 0 ? opening.StationStartMm : (opening.CenterStationMm >= 0 ? opening.CenterStationMm - opening.Width / 2.0 : 0);
                             if (left < 0)
                                 continue;
                             double right = opening.StationEndMm >= left ? opening.StationEndMm : left + opening.Width;

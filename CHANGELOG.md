@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-20] - v0.2.30 Perfect Manual Icon 🎨
+### Fixed
+- **UI Resources**: Cắt bỏ viền thừa và loại bỏ hoàn toàn phông nền (tạo độ trong suốt) cho icon Manual, chuẩn hóa hiển thị kích thước lớn (LargeImage 32x32) đồng bộ trên Ribbon.
+
 ## [2026-04-20] - v0.2.29 Manual Icon & Panel Refinement 🎨
 ### Changed
 - **Manual CUI Integration**: Tách nút "Manual" ra khỏi nhóm "System" tạo thành Panel "Manual" riêng biệt. Cập nhật Icon cuốn cẩm nang mới 3D trực quan hơn.

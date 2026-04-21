@@ -40,7 +40,7 @@ namespace ShopDrawing.Plugin.UI
 
             var wallSection = new StackPanel();
             wallSection.Children.Add(SdPaletteStyles.CreateSectionHeader("CÔNG CỤ TƯỜNG"));
-            wallSection.Children.Add(CreateCommandButton("Tạo tường mới", "_SD_WALL_QUICK", SdPaletteStyles.AccentBlueBrush));
+            wallSection.Children.Add(CreateCommandButton("Tạo tường mặt đứng", "_SD_WALL_QUICK", SdPaletteStyles.AccentBlueBrush));
             wallSection.Children.Add(CreateCommandButton("Tạo tường mặt bằng", "_SD_WALL_PLAN_QUICK", SdPaletteStyles.AccentBlueBrush));
             wallSection.Children.Add(CreateCommandButton("Pick góc ngoài", "_SD_PICK_OUTSIDE_CORNER", SdPaletteStyles.AccentOrangeBrush));
             wallSection.Children.Add(CreateCommandButton("Pick góc trong", "_SD_PICK_INSIDE_CORNER", SdPaletteStyles.AccentGreenBrush));

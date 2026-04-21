@@ -138,42 +138,44 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 return ObjectId.Null;
             }
 
-            var selectionOptions = new PromptSelectionOptions
-            {
-                MessageForAdding = "\nQuét chọn các cửa cắt qua mép tường (Enter để bỏ qua):",
-                MessageForRemoval = string.Empty
-            };
-            var selRes = ed.GetSelection(selectionOptions);
             var tempOpenings = new List<(double st, double w, double sill, double oh)>();
-
-            if (selRes.Status == PromptStatus.OK && selRes.Value != null)
+            var dir = (ptEnd - ptStart).GetNormal();
+            
+            int openIndex = 1;
+            while (true)
             {
-                var dir = (ptEnd - ptStart).GetNormal();
-                using var tr = doc.Database.TransactionManager.StartTransaction();
-                foreach (ObjectId id in selRes.Value.GetObjectIds())
+                var ppoOp1 = new PromptPointOptions($"\nLỗ mở #{openIndex}: Chọn điểm thứ nhất lọt lòng lỗ mở (Enter/Chuột phải để bỏ qua/kết thúc): ")
                 {
-                    if (tr.GetObject(id, OpenMode.ForRead) is Entity ent)
+                    AllowNone = true
+                };
+                var ppoOp1Res = ed.GetPoint(ppoOp1);
+                
+                if (ppoOp1Res.Status == PromptStatus.None || ppoOp1Res.Status == PromptStatus.Cancel) break;
+                
+                if (ppoOp1Res.Status == PromptStatus.OK)
+                {
+                    var ptOp1 = ppoOp1Res.Value;
+                    
+                    var ppoOp2 = new PromptPointOptions($"\nLỗ mở #{openIndex}: Chọn điểm thứ hai lọt lòng lỗ mở: ")
                     {
-                        var ext = ent.GeometricExtents;
-                        var bMin = ext.MinPoint;
-                        var bMax = ext.MaxPoint;
-                        
-                        var corners = new[] {
-                            new Autodesk.AutoCAD.Geometry.Point3d(bMin.X, bMin.Y, 0),
-                            new Autodesk.AutoCAD.Geometry.Point3d(bMax.X, bMin.Y, 0),
-                            new Autodesk.AutoCAD.Geometry.Point3d(bMax.X, bMax.Y, 0),
-                            new Autodesk.AutoCAD.Geometry.Point3d(bMin.X, bMax.Y, 0)
-                        };
+                        UseBasePoint = true,
+                        BasePoint = ptOp1,
+                        UseDashedLine = true,
+                        AllowNone = true
+                    };
+                    var ppoOp2Res = ed.GetPoint(ppoOp2);
+                    
+                    if (ppoOp2Res.Status == PromptStatus.None || ppoOp2Res.Status == PromptStatus.Cancel) break;
+                    
+                    if (ppoOp2Res.Status == PromptStatus.OK)
+                    {
+                        var ptOp2 = ppoOp2Res.Value;
 
-                        double minProj = double.MaxValue;
-                        double maxProj = double.MinValue;
-                        foreach(var corner in corners)
-                        {
-                            var vec = corner - ptStart;
-                            double dot = vec.DotProduct(dir);
-                            if (dot < minProj) minProj = dot;
-                            if (dot > maxProj) maxProj = dot;
-                        }
+                        var offset1 = (ptOp1 - ptStart).DotProduct(dir);
+                        var offset2 = (ptOp2 - ptStart).DotProduct(dir);
+
+                        double minProj = Math.Min(offset1, offset2);
+                        double maxProj = Math.Max(offset1, offset2);
 
                         double startOffset = Math.Max(0, minProj);
                         double endOffset = Math.Min(length, maxProj);
@@ -184,21 +186,27 @@ namespace ShopDrawing.Plugin.Modules.Panel
                             double sill = 0;
                             double openH = 2200;
                             
-                            var pdoSill = new PromptDoubleOptions($"\nCửa ở đoạn x={startOffset:F0} (Rộng {openW:F0}). Nhập khoảng cách chân sàn (Sill): ") 
+                            var pdoSill = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập khoảng cách chân sàn (Sill): ") 
                             { DefaultValue = 0, UseDefaultValue = true };
                             var rSill = ed.GetDouble(pdoSill);
+                            if (rSill.Status == PromptStatus.Cancel) break;
                             if (rSill.Status == PromptStatus.OK) sill = rSill.Value;
                             
-                            var pdoHeight = new PromptDoubleOptions($"\nCửa ở đoạn x={startOffset:F0}. Nhập chiều cao cửa H: ") 
+                            var pdoHeight = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập chiều cao lỗ mở H: ") 
                             { DefaultValue = 2200, UseDefaultValue = true };
                             var rHeight = ed.GetDouble(pdoHeight);
+                            if (rHeight.Status == PromptStatus.Cancel) break;
                             if (rHeight.Status == PromptStatus.OK) openH = rHeight.Value;
 
                             tempOpenings.Add((startOffset, openW, sill, openH));
+                            openIndex++;
+                        }
+                        else
+                        {
+                            ed.WriteMessage("\nKích thước lỗ mở quá bé (< 10), vui lòng chọn lại!");
                         }
                     }
                 }
-                tr.Commit();
             }
 
             var ppoIns = new PromptPointOptions("\nChọn vị trí click gốc trục tọa độ để Drop xuất Shopdrawing mặt đứng tường:");

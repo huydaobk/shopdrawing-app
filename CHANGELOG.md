@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-21] - v0.2.37 Enhanced UX for Openings and UI Labels 🔄
+### Changed
+- **Opening Selection UX**: Cải tiến hoàn toàn phần bắt lỗ mở cho tính năng "Tạo tường mặt bằng" (`_SD_WALL_PLAN_QUICK`). Thay thế phương pháp quét đối tượng (`PromptSelectionOptions`) trước đây bằng vòng lặp Pick 2 điểm lọt lòng (`PromptPointOptions`). Phương pháp mới không bị phụ thuộc vào chất lượng vẽ kiến trúc và tăng độ linh hoạt/chính xác tối đa.
+- **UI Labels**: Đổi tên nút "Tạo tường mới" thành "Tạo tường mặt đứng" trên Palette chính giúp tường minh dễ hiểu hơn khi đặt cạnh "Tạo tường mặt bằng".
+
 ## [2026-04-21] - v0.2.36 Plan-Based Wall Layout (Pick Dài) 🚀
 ### Added
 - **Plan-based Layout**: Thêm tính năng "Tạo tường theo mặt bằng" (`_SD_WALL_PLAN_QUICK`) cho phép vẽ tường bằng cách chọn các đường/điểm trên mặt bằng sàn và nhập chiều cao tổng. Tính năng sử dụng `QuickPlanWallCommandService` được thiết kế tương thích hoàn toàn với lõi tính toán hao hụt và LayoutEngine hiện có. Dễ dàng truy cập từ nút "Tạo tường mặt bằng" trên bảng Palette chính.

@@ -2327,7 +2327,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
             List<double[]> vertices,
             double scanPos,
             bool horizontalLine,
-            IEnumerable<List<double[]>> openings = null)
+            IEnumerable<List<double[]>>? openings = null)
         {
             var wallSegments = GetRawScanSegments(vertices, scanPos, horizontalLine);
             if (openings == null || !openings.Any())

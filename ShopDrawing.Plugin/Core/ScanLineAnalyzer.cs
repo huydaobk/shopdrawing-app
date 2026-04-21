@@ -21,7 +21,7 @@ namespace ShopDrawing.Plugin.Core
         /// <param name="isHorizontal">true = xếp ngang (quét theo Y), false = xếp dọc (quét theo X)</param>
         /// <returns>Danh sách TenderPanelEntry</returns>
         public static List<TenderPanelEntry> Analyze(
-            List<double[]> vertices, int panelWidth, bool isHorizontal, IReadOnlyList<TenderOpening> openings = null)
+            List<double[]> vertices, int panelWidth, bool isHorizontal, IReadOnlyList<TenderOpening>? openings = null)
         {
             if (vertices == null || vertices.Count < 3 || panelWidth <= 0)
                 return new List<TenderPanelEntry>();
@@ -54,6 +54,7 @@ namespace ShopDrawing.Plugin.Core
             var panelLengths = new List<double>(); // chiều dài thực tế mỗi tấm
             var openingWasteGroups = new Dictionary<(double Width, double Length), int>(); // thống kê hao hụt lỗ mở lẹm
             var stepWasteGroups = new Dictionary<(double Width, double Length), int>(); // thống kê hao hụt chéo/đỉnh mái
+            var remnantWasteGroups = new Dictionary<(double Width, double Length), int>(); // thống kê hao hụt cắt dọc (tấm cuối)
 
             for (int i = 0; i < totalPanels; i++)
             {
@@ -74,7 +75,7 @@ namespace ShopDrawing.Plugin.Core
                 for (int s = 1; s <= numScans; s++)
                 {
                     double scanPos = panelStart + s * step;
-                    var solidSegs = GetSolidSegments(pts, scanPos, isHorizontal, null);
+                    var solidSegs = GetSolidSegments(pts, scanPos, isHorizontal, null!);
                     scanLineSegments.Add(solidSegs);
                 }
                 var rawStripes = scanLineSegments.SelectMany(x => x).ToList();
@@ -166,10 +167,42 @@ namespace ShopDrawing.Plugin.Core
                         }
                     }
                 }
+
+                // Hao hụt cắt dọc (Remnant): phần hụt khi tấm cuối không đủ khổ PanelWidth
+                // Dùng stripeW đã clamp qua Math.Min(panelEnd, scanMax) → miễn nhiễm sai số CAD float
+                double remnantWidth = panelWidth - stripeW;
+                if (remnantWidth > 1.0)
+                {
+                    // Chiều dài của mảnh remnant = chiều dài TỐI ĐA quét được trong dải này
+                    double lastPieceSpan = panelLengths.Count > 0
+                        ? panelLengths.Last()
+                        : panelLengths.DefaultIfEmpty(0).Last();
+
+                    if (lastPieceSpan > 0)
+                    {
+                        var remKey = (Width: Math.Round(remnantWidth), Length: lastPieceSpan);
+                        if (remnantWasteGroups.ContainsKey(remKey))
+                            remnantWasteGroups[remKey]++;
+                        else
+                            remnantWasteGroups[remKey] = 1;
+                    }
+                }
             }
 
             // Nhóm theo chiều dài giống nhau → gọn bảng
-            var entries = GroupPanelEntries(panelLengths, panelWidth, totalScanSpan, totalPanels, openingWasteGroups);
+            var entries = GroupPanelEntries(panelLengths, panelWidth, openingWasteGroups);
+
+            // Bổ sung hao hụt cắt dọc (remnant tấm cuối) vào BOM
+            foreach (var kv in remnantWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = kv.Key.Width,
+                    LengthMm = kv.Key.Length,
+                    Count = kv.Value,
+                    Label = "Hao hụt"
+                });
+            }
 
             // Bổ sung hao hụt giật cấp / cắt xiên vào BOM
             foreach (var kv in stepWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
@@ -246,7 +279,7 @@ namespace ShopDrawing.Plugin.Core
             {
                 foreach (var op in openings.Where(o => o?.OpeningPolygon != null && o.OpeningPolygon.Count >= 3))
                 {
-                    var opPts = op.OpeningPolygon.Select(v => (X: v[0], Y: v[1])).ToList();
+                    var opPts = op.OpeningPolygon!.Select(v => (X: v[0], Y: v[1])).ToList();
                     var opIntersections = GetIntersections(opPts, scanPos, isHorizontal);
                     opIntersections.Sort();
                     for (int j = 0; j + 1 < opIntersections.Count; j += 2)
@@ -314,7 +347,7 @@ namespace ShopDrawing.Plugin.Core
         /// Panels cùng chiều dài (tolerance 50mm) → gộp thành 1 dòng.
         /// </summary>
         private static List<TenderPanelEntry> GroupPanelEntries(
-            List<double> panelLengths, int panelWidth, double totalScanSpan, int totalStripes,
+            List<double> panelLengths, int panelWidth,
             Dictionary<(double Width, double Length), int> openingWasteGroups)
         {
             var entries = new List<TenderPanelEntry>();
@@ -352,28 +385,8 @@ namespace ShopDrawing.Plugin.Core
                     Label = "Nguyên"
                 });
             }
-
-            // Tính hao hụt tấm cuối (remnant) bằng logic tương đương Pick Vách
-            double remnantW = totalScanSpan - (totalStripes - 1) * panelWidth;
-            if (remnantW > 0 && remnantW < panelWidth - 1)
-            {
-                double wasteW = panelWidth - remnantW;
-                if (wasteW > 1)
-                {
-                    // Lấy chiều dài của tấm cuối cùng sinh ra
-                    double lastPanelLength = panelLengths.LastOrDefault();
-                    if (lastPanelLength > 0)
-                    {
-                        entries.Add(new TenderPanelEntry
-                        {
-                            WidthMm = Math.Round(wasteW),
-                            LengthMm = lastPanelLength,
-                            Count = 1,
-                            Label = "Hao hụt"
-                        });
-                    }
-                }
-            }
+            // Ghi chú: remnant tấm cuối đã được trích xuất trực tiếp trong vòng lặp Analyze()
+            // bằng biến stripeW (đã clamp qua scanMax) → không còn dùng formula totalScanSpan tại đây
 
             if (openingWasteGroups != null)
             {

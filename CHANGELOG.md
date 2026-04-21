@@ -1,5 +1,24 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-21] - v0.2.35 Pick Vùng Remnant Waste Fix 🔧
+### Fixed
+- **Pick Vùng - Hao hụt tấm cuối**: Loại bỏ hoàn toàn lỗi xuất hiện tấm "Hao hụt 1100mm" giả tạo ở tấm cuối khi dùng chế độ Pick Vùng. Nguyên nhân gốc rễ là công thức `totalScanSpan - (totalStripes-1) * panelWidth` nhạy cảm với sai số float CAD; đã thay bằng cách trích xuất trực tiếp từ biến `stripeW` (đã clamp cứng theo `scanMax`) bên trong vòng lặp quét, đồng bộ 100% với cơ chế Pick Dài.
+- **Code Quality**: Sửa toàn bộ 16 cảnh báo nullability (CS8602, CS8604, CS8620, CS8625) trên `ScanLineAnalyzer.cs`, `TenderBomDialog.cs`, `TenderBomDialog.CadOps.cs`. Build đạt 0 Warning, 0 Error.
+
+## [2026-04-21] - v0.2.34 Step Waste Extraction Fix
+### Fixed
+- **Pick Vùng**: Fix step waste extraction logic cho chế độ Pick vùng.
+
+## [2026-04-21] - v0.2.33 UI Refinements
+### Changed
+- **Tender Palette**: Cải thiện layout bảng thống kê, wrap text và Auto grid width.
+### Fixed
+- **Lỗ mở Pick Dài**: Sửa panel line trimming logic quanh lỗ mở cho Pick Dài.
+
+## [2026-04-21] - v0.2.32
+### Changed
+- Cập nhật Git Ignore để bỏ qua các file test rác.
+
 ## [2026-04-20] - v0.2.31 Rollback Release ⏪
 ### Fixed
 - **System Stability**: Tự động rollback hệ thống về trạng thái ổn định nhất (tương đương với mã nguồn phiên bản v0.2.27). Tính năng Manual CUI đang trong quá trình hoàn thiện sẽ được tiếp tục phát triển ở một nhánh riêng biệt, đảm bảo không ảnh hưởng đến trải nghiệm người dùng hiện tại trên phiên bản chính thức. Phiên bản này được phát hành để máy của người dùng tự động hạ cấp từ các phiên bản lỗi.

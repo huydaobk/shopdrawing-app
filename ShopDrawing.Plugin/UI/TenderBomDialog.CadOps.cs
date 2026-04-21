@@ -866,7 +866,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             Brush brush,
             double thickness,
             Func<double[], Point> map,
-            IEnumerable<List<double[]>> openings = null)
+            IEnumerable<List<double[]>>? openings = null)
         {
             foreach (var segment in GetScanSegments(vertices, pos, horizontalLine, openings))
             {
@@ -973,7 +973,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 for (double pos = minAxis + panelWidthMm; pos < maxAxis - 1.0; pos += panelWidthMm)
                 {
-                    DrawPreviewScanSegments(canvas, vertices, pos, horizontalLayout, Brushes.DarkSlateGray, 1.0, Map, openingPolygons);
+                    DrawPreviewScanSegments(canvas, vertices, pos, horizontalLayout, Brushes.DarkSlateGray, 1.0, Map, openingPolygons?.Cast<List<double[]>>());
                     
                     double center = pos - panelWidthMm / 2.0;
                     var pText = new TextBlock { Text = $"{panelWidthMm}", FontSize = 9, Foreground = Brushes.Gray };
@@ -3623,7 +3623,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             }
                         }
                     }
-                    foreach (var opening in row.Openings)
+                    foreach (var opening in row.Openings ?? Enumerable.Empty<TenderOpening>())
                     {
                         bool isPolygonMode = result.Mode == TenderPopupGeometryMode.WallPolygon || result.Mode == TenderPopupGeometryMode.CeilingPolygon;
                         if (isPolygonMode && opening.OpeningPolygon != null && opening.OpeningPolygon.Count >= 3)

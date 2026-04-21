@@ -51,3 +51,10 @@ artifacts/
 ## Secrets / local config
 appsettings.Development.json
 *.env
+
+## Scratch / temp test files
+TestScanLine/
+test_scanline.cs
+view_images.html
+build_warnings.txt
+*.html

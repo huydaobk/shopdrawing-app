@@ -797,31 +797,37 @@ namespace ShopDrawing.Plugin.Models
                     else
                         targetGroup[orderedKey] = 1;
 
-                    // Hao hụt giao bậc
-                    double netAreaInPiece = 0;
+                    // 1. Hao hụt cắt dọc (tấm cuối đoạn)
+                    double remnantWidth = PanelWidth - stripWidth;
+                    if (remnantWidth > 1.0)
+                    {
+                        var remnantKey = (Width: Math.Round(remnantWidth), WasteHeight: Math.Round(pieceHeight));
+                        if (wasteGroups.ContainsKey(remnantKey))
+                            wasteGroups[remnantKey]++;
+                        else
+                            wasteGroups[remnantKey] = 1;
+                    }
+
+                    // 2. Hao hụt giao bậc (cắt ngang / giật cao độ)
                     foreach (var range in ranges)
                     {
                         double overlapX = Math.Max(0, Math.Min(stripEnd, range.End) - Math.Max(stripStart, range.Start));
-                        if (overlapX <= 0)
+                        if (overlapX <= 1.0)
                             continue;
 
                         double rectTop = Math.Min(piece.Top, range.HeightMm);
                         double rectBottom = Math.Max(piece.Bottom, 0);
-                        if (rectTop > rectBottom)
-                            netAreaInPiece += overlapX * (rectTop - rectBottom);
-                    }
+                        double usedHeight = Math.Max(0, rectTop - rectBottom);
+                        double wasteHeight = pieceHeight - usedHeight;
 
-                    double pieceOrderedArea = PanelWidth * pieceHeight; 
-                    double stepWasteArea = Math.Max(0, pieceOrderedArea - netAreaInPiece);
-
-                    if (stepWasteArea > 1.0)
-                    {
-                        double wasteHeight = stepWasteArea / PanelWidth;
-                        var wasteKey = (Width: Math.Round((double)PanelWidth), WasteHeight: Math.Round(wasteHeight));
-                        if (wasteGroups.ContainsKey(wasteKey))
-                            wasteGroups[wasteKey]++;
-                        else
-                            wasteGroups[wasteKey] = 1;
+                        if (wasteHeight > 1.0)
+                        {
+                            var stepWasteKey = (Width: Math.Round(overlapX), WasteHeight: Math.Round(wasteHeight));
+                            if (wasteGroups.ContainsKey(stepWasteKey))
+                                wasteGroups[stepWasteKey]++;
+                            else
+                                wasteGroups[stepWasteKey] = 1;
+                        }
                     }
 
                     // Hao hụt do lỗ mở lẹm

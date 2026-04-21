@@ -1,0 +1,729 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="eda030b8-78e9-43ee-be45-ad1a3db30e16" name="Administrator@NGOC_HUY 2026-04-20 10:33:13" runUser="NGOC_HUY\Administrator" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-04-20T10:33:13.0676551+07:00" queuing="2026-04-20T10:33:13.0676555+07:00" start="2026-04-20T10:33:11.6726634+07:00" finish="2026-04-20T10:33:14.9070580+07:00" />
+  <TestSettings name="default" id="cf07c3a8-7db4-4e14-9de2-04a452a601d0">
+    <Deployment runDeploymentRoot="Administrator_NGOC_HUY_2026-04-20_10_33_13" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="a9fdda5a-67cf-40a1-8df4-7d77bbb22593" testId="2aa422ba-510d-469d-9e55-a47244e877b3" testName="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;&quot;, expected: &quot;A&quot;)" computerName="NGOC_HUY" duration="00:00:00.0042218" startTime="2026-04-20T10:33:12.9929051+07:00" endTime="2026-04-20T10:33:12.9929351+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a9fdda5a-67cf-40a1-8df4-7d77bbb22593" />
+    <UnitTestResult executionId="3b211c4a-9b5f-4d96-a487-69aba788efdf" testId="5ea691d3-9e36-66ed-3801-99e01bc45b67" testName="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;MẶT ĐỨNG VÁCH - W1 (PHẦN 1/2)&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W1&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000186" startTime="2026-04-20T10:33:13.0598338+07:00" endTime="2026-04-20T10:33:13.0598339+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3b211c4a-9b5f-4d96-a487-69aba788efdf" />
+    <UnitTestResult executionId="a3080e3b-c621-492d-af57-aa4465ebb113" testId="f8ab28ae-5c14-b047-c7f3-289036ed9be1" testName="ShopDrawing.Tests.TenderBomCalculatorTests.Export_ShouldWriteVietnameseAccessorySections" computerName="NGOC_HUY" duration="00:00:01.7502899" startTime="2026-04-20T10:33:14.8178618+07:00" endTime="2026-04-20T10:33:14.8178619+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a3080e3b-c621-492d-af57-aa4465ebb113" />
+    <UnitTestResult executionId="f43fdb5e-92a6-4cb9-b0c5-1af488dd829f" testId="3345730b-90a5-a92a-a166-41ba1194b1f5" testName="ShopDrawing.Tests.AccessoryDataManagerTests.NormalizeConfiguredAccessories_ShouldMigrateLegacySealantNamesWithoutPositionExpansion" computerName="NGOC_HUY" duration="00:00:00.0014597" startTime="2026-04-20T10:33:13.0605173+07:00" endTime="2026-04-20T10:33:13.0605173+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f43fdb5e-92a6-4cb9-b0c5-1af488dd829f" />
+    <UnitTestResult executionId="22f8706c-73c0-4bfb-8769-63d3e254f1e3" testId="981a7ebe-b28b-34c2-db9b-e42df9827e08" testName="ShopDrawing.Tests.LayoutPackingServiceTests.TryPackViewport_ShouldPlaceNextViewportToTheRight_WhenTopRowHasSpace" computerName="NGOC_HUY" duration="00:00:00.0186171" startTime="2026-04-20T10:33:13.0603814+07:00" endTime="2026-04-20T10:33:13.0603814+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="22f8706c-73c0-4bfb-8769-63d3e254f1e3" />
+    <UnitTestResult executionId="ee2b2000-f9ac-4be0-8406-e63919d3734a" testId="59dd1858-aa2b-1f95-e0a7-f481e7091bf4" testName="ShopDrawing.Tests.LayoutPackingServiceTests.TryPackViewport_ShouldUseLowerFreeBand_WhenTopRowCannotFit" computerName="NGOC_HUY" duration="00:00:00.0003197" startTime="2026-04-20T10:33:13.0604134+07:00" endTime="2026-04-20T10:33:13.0604134+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ee2b2000-f9ac-4be0-8406-e63919d3734a" />
+    <UnitTestResult executionId="e11356cb-15de-4841-89cf-9a1dcb08070c" testId="61c844c6-6fde-8774-6221-48fcb535d6e6" testName="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldCalculateColdStorageCeilingSuspensionAndWireRope" computerName="NGOC_HUY" duration="00:00:00.0099869" startTime="2026-04-20T10:33:13.0643597+07:00" endTime="2026-04-20T10:33:13.0643598+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e11356cb-15de-4841-89cf-9a1dcb08070c">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values are not within 3 decimal places&#xD;
+Expected: 10 (rounded from 10)&#xD;
+Actual:   5 (rounded from 5)</Message>
+          <StackTrace>   at ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldCalculateColdStorageCeilingSuspensionAndWireRope() in c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderBomCalculatorTests.cs:line 386&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="39c8364b-55a3-46fb-96d2-7e9981a53cf3" testId="57210a86-e991-8202-91e3-68d345f9cb98" testName="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldRespectExposedEdgesAndOutsideCorners" computerName="NGOC_HUY" duration="00:00:00.0002710" startTime="2026-04-20T10:33:13.0629899+07:00" endTime="2026-04-20T10:33:13.0629900+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39c8364b-55a3-46fb-96d2-7e9981a53cf3" />
+    <UnitTestResult executionId="59e2b862-7a47-4964-bcfc-391a3e4a5ce6" testId="5caa274b-2408-60a8-5ecf-dafb3c1ae97f" testName="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;MẶT ĐỨNG VÁCH - W1&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1, W4&quot;)" computerName="NGOC_HUY" duration="00:00:00.0002192" startTime="2026-04-20T10:33:13.0597808+07:00" endTime="2026-04-20T10:33:13.0597809+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="59e2b862-7a47-4964-bcfc-391a3e4a5ce6" />
+    <UnitTestResult executionId="aae34d00-3605-4ef6-a0c4-341641bd3c87" testId="83e39171-f7d0-c754-af27-64ad34f4b4e4" testName="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldSplitOpeningPerimeterAndDoorQuantity" computerName="NGOC_HUY" duration="00:00:00.0027697" startTime="2026-04-20T10:33:13.0629233+07:00" endTime="2026-04-20T10:33:13.0629234+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aae34d00-3605-4ef6-a0c4-341641bd3c87" />
+    <UnitTestResult executionId="eeaa89f9-5dea-4a69-a3b8-12a4e6226b0d" testId="0530d75c-a2c5-49f4-d262-4c4180f05d8e" testName="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig_CurrentContract" computerName="NGOC_HUY" duration="00:00:00.0014587" startTime="2026-04-20T10:33:13.0634853+07:00" endTime="2026-04-20T10:33:13.0634853+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eeaa89f9-5dea-4a69-a3b8-12a4e6226b0d" />
+    <UnitTestResult executionId="d10f4326-175e-40fa-a48e-b4008f4dd0a1" testId="205117db-37b7-a997-e3fc-c62ab0c77565" testName="ShopDrawing.Tests.LayoutEngineTests.AssignIds_ShouldWorkCorrectlty" computerName="NGOC_HUY" duration="00:00:00.0071547" startTime="2026-04-20T10:33:12.9964979+07:00" endTime="2026-04-20T10:33:12.9964980+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d10f4326-175e-40fa-a48e-b4008f4dd0a1" />
+    <UnitTestResult executionId="a7852720-a0ea-42dd-9fa2-939d9e0c0eca" testId="97e7041e-52ec-c135-261d-fbc1870f1f79" testName="ShopDrawing.Tests.TenderBomCalculatorTests.GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505_CurrentContract" computerName="NGOC_HUY" duration="00:00:00.0019922" startTime="2026-04-20T10:33:13.0670451+07:00" endTime="2026-04-20T10:33:13.0670455+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a7852720-a0ea-42dd-9fa2-939d9e0c0eca" />
+    <UnitTestResult executionId="a5e04ab1-a956-467a-a3fb-b06929efbf36" testId="be9350ef-b5b5-7ff9-9069-4287d6276d6c" testName="ShopDrawing.Tests.LayoutManagerRulesTests.InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle(layoutName: &quot;SD-001-W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W4&quot;)" computerName="NGOC_HUY" duration="00:00:00.0008178" startTime="2026-04-20T10:33:13.0388314+07:00" endTime="2026-04-20T10:33:13.0388314+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a5e04ab1-a956-467a-a3fb-b06929efbf36" />
+    <UnitTestResult executionId="76ccdcfc-00e3-4e15-b15a-11b0db808f0f" testId="1a06ac6e-cf15-88aa-fb23-f81ce5b2627c" testName="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;W1/W2&quot;, expected: &quot;W1-W2&quot;)" computerName="NGOC_HUY" duration="00:00:00.0002718" startTime="2026-04-20T10:33:13.0373232+07:00" endTime="2026-04-20T10:33:13.0373232+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76ccdcfc-00e3-4e15-b15a-11b0db808f0f" />
+    <UnitTestResult executionId="4a478d29-c675-42d5-ab0d-361a54e3c1e2" testId="fa68f112-ed20-0e18-372d-f46107e1ea13" testName="ShopDrawing.Tests.LayoutEngineTests.Calculate_ShouldCreateCorrectNumberOfPanels" computerName="NGOC_HUY" duration="00:00:00.0002440" startTime="2026-04-20T10:33:13.0371812+07:00" endTime="2026-04-20T10:33:13.0371813+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a478d29-c675-42d5-ab0d-361a54e3c1e2" />
+    <UnitTestResult executionId="f477ad6d-6fc1-4caf-bdfb-b548b43f4cc1" testId="16712a33-38fe-e570-241c-f57f2719b1fa" testName="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:13.0738321+07:00" endTime="2026-04-20T10:33:13.0738322+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f477ad6d-6fc1-4caf-bdfb-b548b43f4cc1">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="c830e48f-e908-4ae6-8a42-ae98fa69b6f8" testId="3ae88fa5-7105-af10-a377-2384c748b3ef" testName="ShopDrawing.Tests.LayoutManagerRulesTests.GetMergedLayoutTabName_ShouldReturnSdTabNameOnly" computerName="NGOC_HUY" duration="00:00:00.0002785" startTime="2026-04-20T10:33:13.0394823+07:00" endTime="2026-04-20T10:33:13.0394823+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c830e48f-e908-4ae6-8a42-ae98fa69b6f8" />
+    <UnitTestResult executionId="3cd55418-1689-41a7-bdd2-d8e6d764cced" testId="4718375b-99a3-d1d1-aa2d-9b6e115d221c" testName="ShopDrawing.Tests.LayoutManagerRulesTests.InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle(layoutName: &quot;SD-W1-W3&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1, W3&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000736" startTime="2026-04-20T10:33:13.0388868+07:00" endTime="2026-04-20T10:33:13.0388869+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3cd55418-1689-41a7-bdd2-d8e6d764cced" />
+    <UnitTestResult executionId="a354b477-fe13-4725-9df8-87827b4b0e73" testId="1cc0ca2d-5329-6905-6f84-324550bf5194" testName="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:13.0681450+07:00" endTime="2026-04-20T10:33:13.0681454+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a354b477-fe13-4725-9df8-87827b4b0e73">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="75d57e68-3263-4621-96a0-1e97cf406cc8" testId="5152f995-032e-032b-db41-e90dc1d6febf" testName="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;  /  &quot;, expected: &quot;LAYOUT&quot;)" computerName="NGOC_HUY" duration="00:00:00.0009017" startTime="2026-04-20T10:33:13.0372921+07:00" endTime="2026-04-20T10:33:13.0372922+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="75d57e68-3263-4621-96a0-1e97cf406cc8" />
+    <UnitTestResult executionId="42390319-e2e1-4eb3-9f00-d1a978af235d" testId="2357d24f-e42e-9f49-9bf9-d023359879ca" testName="ShopDrawing.Tests.LayoutManagerRulesTests.ScaleHelpers_ShouldNormalizeAndFormat(raw: &quot;1:75&quot;, expectedNormalized: &quot;1:75&quot;, expectedLabel: &quot;TỶ LỆ 1:75&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000105" startTime="2026-04-20T10:33:13.0394447+07:00" endTime="2026-04-20T10:33:13.0394448+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="42390319-e2e1-4eb3-9f00-d1a978af235d" />
+    <UnitTestResult executionId="af62b84f-3adc-4f04-8f20-706019496465" testId="38863778-c9d5-4634-0d9d-76f2123662fe" testName="ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook_CurrentContract" computerName="NGOC_HUY" duration="00:00:01.8315393" startTime="2026-04-20T10:33:14.8174812+07:00" endTime="2026-04-20T10:33:14.8174823+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="af62b84f-3adc-4f04-8f20-706019496465">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 2&#xD;
+Actual:   4</Message>
+          <StackTrace>   at ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook_CurrentContract() in c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderExcelExporterTests.cs:line 143&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="53ea7e11-1f50-4727-8d42-b9678ea81d02" testId="61123aa7-083c-eeeb-d6ff-ea9b45d5b0fe" testName="ShopDrawing.Tests.TenderBomCalculatorTests.GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:13.0736191+07:00" endTime="2026-04-20T10:33:13.0736192+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="53ea7e11-1f50-4727-8d42-b9678ea81d02">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ecadb91c-98e0-4168-8998-810b51a3b1f9" testId="d8c9faca-889d-3a7d-859c-8e7a21a9e137" testName="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_UsesCurrentFolderWhenNoMarkerAndNotInDrawings" computerName="NGOC_HUY" duration="00:00:00.0034487" startTime="2026-04-20T10:33:13.0609502+07:00" endTime="2026-04-20T10:33:13.0609502+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ecadb91c-98e0-4168-8998-810b51a3b1f9" />
+    <UnitTestResult executionId="624c6cec-658c-42ed-ad57-db0a7df7a6f3" testId="1288d739-2217-7423-3837-0c8d8af700ed" testName="ShopDrawing.Tests.LayoutManagerRulesTests.ScaleHelpers_ShouldNormalizeAndFormat(raw: &quot;TỶ LỆ 1:100&quot;, expectedNormalized: &quot;1:100&quot;, expectedLabel: &quot;TỶ LỆ 1:100&quot;)" computerName="NGOC_HUY" duration="00:00:00.0003909" startTime="2026-04-20T10:33:13.0389316+07:00" endTime="2026-04-20T10:33:13.0389316+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="624c6cec-658c-42ed-ad57-db0a7df7a6f3" />
+    <UnitTestResult executionId="942a4159-cb59-4334-bbef-006574f57310" testId="fb3de100-448b-4872-6b7c-0ee8e5843214" testName="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;SD-001&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W4&quot;)" computerName="NGOC_HUY" duration="00:00:00.0010214" startTime="2026-04-20T10:33:13.0597574+07:00" endTime="2026-04-20T10:33:13.0597574+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="942a4159-cb59-4334-bbef-006574f57310" />
+    <UnitTestResult executionId="54d63316-591f-404f-8f4f-e7720a9ca822" testId="bda819cc-3161-7705-3919-60dc5140b73d" testName="ShopDrawing.Tests.PlotStyleInstallerTests.NeedsCopy_ShouldUseContentHashInsteadOfTimestampOnly" computerName="NGOC_HUY" duration="00:00:00.0074699" startTime="2026-04-20T10:33:13.0603210+07:00" endTime="2026-04-20T10:33:13.0603210+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="54d63316-591f-404f-8f4f-e7720a9ca822" />
+    <UnitTestResult executionId="6d90f9f8-1ab9-4e21-ad57-7a6a25456a34" testId="f94a9eae-5537-be92-ba4c-601956f1e0cf" testName="ShopDrawing.Tests.AccessoryDataManagerTests.GetDefaults_ShouldUseMaterialColumnForColdStorageConvention" computerName="NGOC_HUY" duration="00:00:00.0013318" startTime="2026-04-20T10:33:13.0604373+07:00" endTime="2026-04-20T10:33:13.0604374+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6d90f9f8-1ab9-4e21-ad57-7a6a25456a34" />
+    <UnitTestResult executionId="4aaf7560-d203-4636-9834-dce86435f61d" testId="992ec7d3-c27d-43f1-4832-d241f343d41a" testName="ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:14.8178058+07:00" endTime="2026-04-20T10:33:14.8178061+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4aaf7560-d203-4636-9834-dce86435f61d">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="dbe13f12-ca2b-4672-9bee-893fcc8bbd0c" testId="8df95acf-0be2-d108-1947-8ef7763ab292" testName="ShopDrawing.Tests.PlotStyleInstallerTests.ResolvePreferredStyleName_ShouldFallBackToSdBlackThenMonochrome" computerName="NGOC_HUY" duration="00:00:00.0001587" startTime="2026-04-20T10:33:13.0370105+07:00" endTime="2026-04-20T10:33:13.0370107+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dbe13f12-ca2b-4672-9bee-893fcc8bbd0c" />
+    <UnitTestResult executionId="abda218b-4614-426b-a2b2-4a4c5eb734a3" testId="b7145f23-f69a-e17c-26c8-f49dce130d5e" testName="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:13.0734118+07:00" endTime="2026-04-20T10:33:13.0734119+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="abda218b-4614-426b-a2b2-4a4c5eb734a3">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5044f40b-0e4e-4bf6-966e-65d215825c25" testId="3e1e867b-194d-7abc-4d51-f00fefa9ffcf" testName="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_CreatesMarkerAndDataFolders_WhenEnsureExists" computerName="NGOC_HUY" duration="00:00:00.0353755" startTime="2026-04-20T10:33:13.0608905+07:00" endTime="2026-04-20T10:33:13.0608905+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5044f40b-0e4e-4bf6-966e-65d215825c25" />
+    <UnitTestResult executionId="8e878817-b2dc-45c4-af7d-d76a730b37fe" testId="b3853ab5-621d-f5ac-3a98-7687bae8e8d2" testName="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows_CurrentContract" computerName="NGOC_HUY" duration="00:00:00.0043390" startTime="2026-04-20T10:33:14.8241095+07:00" endTime="2026-04-20T10:33:14.8241102+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8e878817-b2dc-45c4-af7d-d76a730b37fe" />
+    <UnitTestResult executionId="e20d934b-c2b4-4f15-8337-80decb4e6304" testId="381d6e4d-7d78-ade8-c760-49803fd7c121" testName="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;SD-001-W4&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W5&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W4, W5&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000262" startTime="2026-04-20T10:33:13.0598601+07:00" endTime="2026-04-20T10:33:13.0598601+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e20d934b-c2b4-4f15-8337-80decb4e6304" />
+    <UnitTestResult executionId="3e1dba02-191e-4a35-8b47-cf6a26093df2" testId="e7e45a04-f096-a5e6-35ba-51874f523d18" testName="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;A&quot;, expected: &quot;B&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000382" startTime="2026-04-20T10:33:13.0370703+07:00" endTime="2026-04-20T10:33:13.0370705+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3e1dba02-191e-4a35-8b47-cf6a26093df2" />
+    <UnitTestResult executionId="3ed6d942-8c63-4d88-8718-5ab792ccd2b9" testId="d7766721-7f43-428e-c889-124badef031c" testName="ShopDrawing.Tests.AccessoryDataManagerTests.NormalizeConfiguredAccessories_ShouldOnlyRenameColdStorageTrimNames" computerName="NGOC_HUY" duration="00:00:00.0163419" startTime="2026-04-20T10:33:13.0604880+07:00" endTime="2026-04-20T10:33:13.0604880+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3ed6d942-8c63-4d88-8718-5ab792ccd2b9" />
+    <UnitTestResult executionId="a8529128-1a57-459f-9271-848b41a1faba" testId="5d21358d-cb9c-fd9b-e996-bd5e312a8cd9" testName="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;Z&quot;, expected: &quot;AA&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000090" startTime="2026-04-20T10:33:13.0371487+07:00" endTime="2026-04-20T10:33:13.0371488+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a8529128-1a57-459f-9271-848b41a1faba" />
+    <UnitTestResult executionId="a769dc31-0c51-4792-947a-e511dc45574b" testId="e852015d-2b4e-07a3-e5a6-763693368b27" testName="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;SD-W1-W3&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1, W3, W4&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000220" startTime="2026-04-20T10:33:13.0598083+07:00" endTime="2026-04-20T10:33:13.0598083+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a769dc31-0c51-4792-947a-e511dc45574b" />
+    <UnitTestResult executionId="a6e446d1-843f-4e9e-aca5-7d3ae81630d6" testId="134cae6d-ee51-fd83-244f-7c9d618f4cf2" testName="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSupportDoorKitAndTwoFaceOpeningTrim" computerName="NGOC_HUY" duration="00:00:00.0565948" startTime="2026-04-20T10:33:13.0622761+07:00" endTime="2026-04-20T10:33:13.0622763+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a6e446d1-843f-4e9e-aca5-7d3ae81630d6">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Filter not matched in collection&#xD;
+Collection: [AccessorySummaryRow { Adjustment = 0, Application = "Kho lạnh", AutoQuantity = 1, BasisLabel = "Số lượng cửa đi", BasisValue = 1, ··· }, AccessorySummaryRow { Adjustment = 0, Application = "Kho lạnh", AutoQuantity = 13.98, BasisLabel = "Chu vi lỗ mở 2 mặt", BasisValue = 13.98, ··· }]</Message>
+          <StackTrace>   at ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSupportDoorKitAndTwoFaceOpeningTrim() in c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderBomCalculatorTests.cs:line 162&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="90e79e7b-cc4f-43bf-82f8-3debab9980fa" testId="316d4b98-705f-3284-92fa-b5ed72874669" testName="ShopDrawing.Tests.LayoutManagerRulesTests.ScaleHelpers_ShouldNormalizeAndFormat(raw: &quot; ty le 1 : 200 &quot;, expectedNormalized: &quot;1:200&quot;, expectedLabel: &quot;TỶ LỆ 1:200&quot;)" computerName="NGOC_HUY" duration="00:00:00.0002071" startTime="2026-04-20T10:33:13.0389565+07:00" endTime="2026-04-20T10:33:13.0389566+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90e79e7b-cc4f-43bf-82f8-3debab9980fa" />
+    <UnitTestResult executionId="44df3980-0eb8-418b-a6ea-fddfadf63123" testId="fbed529f-8a04-1578-27d6-03862fb34db4" testName="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:13.0744095+07:00" endTime="2026-04-20T10:33:13.0744096+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="44df3980-0eb8-418b-a6ea-fddfadf63123">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="412e2f9e-c9a0-4573-8734-7e8b324c0fb4" testId="ae3186a4-82d9-e57c-5236-6b7a47754e88" testName="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldReturnTotalExposedEdgeLength" computerName="NGOC_HUY" duration="00:00:00.0008301" startTime="2026-04-20T10:33:13.0629592+07:00" endTime="2026-04-20T10:33:13.0629593+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="412e2f9e-c9a0-4573-8734-7e8b324c0fb4" />
+    <UnitTestResult executionId="9fdb8080-a3c8-4605-a468-6197e8d03905" testId="10d4a9ef-a8b5-aca4-3c4b-15566104e5df" testName="ShopDrawing.Tests.AccessoryDataManagerTests.GetDefaults_ShouldIncludeDetailedExteriorAndCleanroomSealantRows" computerName="NGOC_HUY" duration="00:00:00.0182707" startTime="2026-04-20T10:33:13.0603497+07:00" endTime="2026-04-20T10:33:13.0603497+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9fdb8080-a3c8-4605-a468-6197e8d03905" />
+    <UnitTestResult executionId="6009938a-cce2-4000-8d33-905da3c219e4" testId="70fff462-0480-f457-8f74-40d23e400b05" testName="ShopDrawing.Tests.PlotStyleInstallerTests.FindPlotStylesDirectoryFromAppData_ShouldFindAutoCadProfilePath" computerName="NGOC_HUY" duration="00:00:00.0082612" startTime="2026-04-20T10:33:13.0604680+07:00" endTime="2026-04-20T10:33:13.0604681+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6009938a-cce2-4000-8d33-905da3c219e4" />
+    <UnitTestResult executionId="f0eadb57-c898-47bc-b963-3548ea1f8c5e" testId="dd49f54c-1a5e-befa-dca1-ba4fbd8aa2dc" testName="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_UsesParentOfDrawingsWhenNoMarker" computerName="NGOC_HUY" duration="00:00:00.0039644" startTime="2026-04-20T10:33:13.0597091+07:00" endTime="2026-04-20T10:33:13.0597092+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f0eadb57-c898-47bc-b963-3548ea1f8c5e" />
+    <UnitTestResult executionId="e8826912-44ea-4899-8468-cf048f23ffeb" testId="cee05050-605a-ad9f-57e8-9904637f9032" testName="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;TRỤC A:B&quot;, expected: &quot;TRỤC A-B&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000101" startTime="2026-04-20T10:33:13.0387174+07:00" endTime="2026-04-20T10:33:13.0387174+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e8826912-44ea-4899-8468-cf048f23ffeb" />
+    <UnitTestResult executionId="f8a23f97-2401-4ae3-90ae-d1afd94f9776" testId="77c78f0b-ab9b-45e7-cb22-cd2c6a820210" testName="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSortByApplicationFirst_CurrentContract" computerName="NGOC_HUY" duration="00:00:00.0008368" startTime="2026-04-20T10:33:13.0649075+07:00" endTime="2026-04-20T10:33:13.0649076+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f8a23f97-2401-4ae3-90ae-d1afd94f9776" />
+    <UnitTestResult executionId="2139bc01-5d3a-452b-943b-b52be54cd03a" testId="867f5df2-8a77-18b6-8be5-aec0514df256" testName="ShopDrawing.Tests.LayoutManagerRulesTests.InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle(layoutName: &quot;MẶT ĐỨNG VÁCH - W9&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W9&quot;)" computerName="NGOC_HUY" duration="00:00:00.0003355" startTime="2026-04-20T10:33:13.0388586+07:00" endTime="2026-04-20T10:33:13.0388586+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2139bc01-5d3a-452b-943b-b52be54cd03a" />
+    <UnitTestResult executionId="cb63d065-17b4-416b-8680-d2964febc2f4" testId="f7fd5e94-a906-76ce-5cf5-ca175d7310b6" testName="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSortByApplicationFirst" computerName="NGOC_HUY" duration="00:00:00.0010000" startTime="2026-04-20T10:33:13.0731418+07:00" endTime="2026-04-20T10:33:13.0731421+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cb63d065-17b4-416b-8680-d2964febc2f4">
+      <Output>
+        <ErrorInfo>
+          <Message>Legacy mojibake expectation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ca593508-0e68-4b0b-a883-f2ddbda2749d" testId="72b7a1c5-9dcb-3a88-794d-177a2255ad78" testName="ShopDrawing.Tests.LayoutManagerRulesTests.BuildPageLabel_ShouldOnlyAddSuffixForMultiPage" computerName="NGOC_HUY" duration="00:00:00.0000907" startTime="2026-04-20T10:33:13.0602903+07:00" endTime="2026-04-20T10:33:13.0602903+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ca593508-0e68-4b0b-a883-f2ddbda2749d" />
+    <UnitTestResult executionId="18bf39c1-03de-466c-850d-b461f7fb2dfe" testId="604e8529-82b4-1c4c-cc3f-e5c3a7d85474" testName="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField_CurrentContract" computerName="NGOC_HUY" duration="00:00:00.0017354" startTime="2026-04-20T10:33:14.8195823+07:00" endTime="2026-04-20T10:33:14.8195826+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18bf39c1-03de-466c-850d-b461f7fb2dfe" />
+    <UnitTestResult executionId="97f9961e-76e1-4960-87a1-69bd0cdd05a6" testId="76353425-6da1-2e03-29fe-12fdf1b08863" testName="ShopDrawing.Tests.AccessoryDataManagerTests.GetDefaults_ShouldIncludeColdStorageCeilingSuspensionAccessories" computerName="NGOC_HUY" duration="00:00:00.0010603" startTime="2026-04-20T10:33:13.0608641+07:00" endTime="2026-04-20T10:33:13.0608642+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97f9961e-76e1-4960-87a1-69bd0cdd05a6" />
+    <UnitTestResult executionId="a953a9db-3792-478a-988e-7796b53ba207" testId="0fa2add9-d1c6-5121-f359-d1ca051c68a7" testName="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;ZZ&quot;, expected: &quot;AAA&quot;)" computerName="NGOC_HUY" duration="00:00:00.0004897" startTime="2026-04-20T10:33:13.0366994+07:00" endTime="2026-04-20T10:33:13.0366996+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a953a9db-3792-478a-988e-7796b53ba207" />
+    <UnitTestResult executionId="6400783d-5763-4b51-b234-b54c75389377" testId="9ba0a60f-1bfd-3235-9b4e-e4113fdf7a82" testName="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure_CurrentContract" computerName="NGOC_HUY" duration="00:00:00.0051061" startTime="2026-04-20T10:33:13.0628761+07:00" endTime="2026-04-20T10:33:13.0628763+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6400783d-5763-4b51-b234-b54c75389377">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: 13.550000000000001&#xD;
+Actual:   13.33</Message>
+          <StackTrace>   at ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure_CurrentContract() in c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderBomCalculatorTests.cs:line 520&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="58cefa3c-ce39-4999-ab61-7d4bbc5f45b0" testId="fdaf87bb-725a-e8f7-8279-3503d2815ba9" testName="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;AZ&quot;, expected: &quot;BA&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000085" startTime="2026-04-20T10:33:13.0372343+07:00" endTime="2026-04-20T10:33:13.0372344+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="58cefa3c-ce39-4999-ab61-7d4bbc5f45b0" />
+    <UnitTestResult executionId="d4844fd0-63d6-4fd4-9013-dfd8eba2009e" testId="b71fe695-5326-5282-1cac-acc735b8ba43" testName="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;W1 (PHẦN 1/3)&quot;, expected: &quot;W1 (PHẦN 1-3)&quot;)" computerName="NGOC_HUY" duration="00:00:00.0000533" startTime="2026-04-20T10:33:13.0386296+07:00" endTime="2026-04-20T10:33:13.0386296+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d4844fd0-63d6-4fd4-9013-dfd8eba2009e" />
+    <UnitTestResult executionId="5c8ddfca-020b-4a09-a96f-e71b19b2a147" testId="0da47653-d033-ed5a-c07c-37b8ba4d5632" testName="ShopDrawing.Tests.PlotStyleInstallerTests.ResolvePreferredStyleName_ShouldPreferRequestedStyleWhenAvailable" computerName="NGOC_HUY" duration="00:00:00.0042138" startTime="2026-04-20T10:33:12.9961449+07:00" endTime="2026-04-20T10:33:12.9961451+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5c8ddfca-020b-4a09-a96f-e71b19b2a147" />
+    <UnitTestResult executionId="5ef39a1f-33b1-4066-9e6e-5394123e967f" testId="f07b27b1-883a-f8d2-0d8a-e9a0f30cab19" testName="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_UsesMarkerRoot" computerName="NGOC_HUY" duration="00:00:00.0102003" startTime="2026-04-20T10:33:13.0387944+07:00" endTime="2026-04-20T10:33:13.0387945+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5ef39a1f-33b1-4066-9e6e-5394123e967f" />
+    <UnitTestResult executionId="10682a5a-5a71-407d-9da6-13ccb6157a9d" testId="abf5634c-501b-8ba2-d71d-059c6cce98c2" testName="ShopDrawing.Tests.ProjectInitializationStructureTests.InitializeProjectStructure_ShouldCreateExpectedFolders" computerName="NGOC_HUY" duration="00:00:00.0528930" startTime="2026-04-20T10:33:13.0609268+07:00" endTime="2026-04-20T10:33:13.0609268+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="10682a5a-5a71-407d-9da6-13ccb6157a9d" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="992ec7d3-c27d-43f1-4832-d241f343d41a">
+      <Execution id="4aaf7560-d203-4636-9834-dce86435f61d" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderExcelExporterTests" name="Export_ShouldIncludeSpecManagementSheetInSameWorkbook" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldCalculateColdStorageCeilingSuspensionAndWireRope" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="61c844c6-6fde-8774-6221-48fcb535d6e6">
+      <Execution id="e11356cb-15de-4841-89cf-9a1dcb08070c" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="GetBasisValue_ShouldCalculateColdStorageCeilingSuspensionAndWireRope" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.ScaleHelpers_ShouldNormalizeAndFormat(raw: &quot;1:75&quot;, expectedNormalized: &quot;1:75&quot;, expectedLabel: &quot;TỶ LỆ 1:75&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="2357d24f-e42e-9f49-9bf9-d023359879ca">
+      <Execution id="42390319-e2e1-4eb3-9f00-d1a978af235d" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="ScaleHelpers_ShouldNormalizeAndFormat" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;SD-001&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W4&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="fb3de100-448b-4872-6b7c-0ee8e5843214">
+      <Execution id="942a4159-cb59-4334-bbef-006574f57310" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="MergeWallNames_ShouldReturnHumanReadableDrawingTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutPackingServiceTests.TryPackViewport_ShouldUseLowerFreeBand_WhenTopRowCannotFit" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="59dd1858-aa2b-1f95-e0a7-f481e7091bf4">
+      <Execution id="ee2b2000-f9ac-4be0-8406-e63919d3734a" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutPackingServiceTests" name="TryPackViewport_ShouldUseLowerFreeBand_WhenTopRowCannotFit" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="16712a33-38fe-e570-241c-f57f2719b1fa">
+      <Execution id="f477ad6d-6fc1-4caf-bdfb-b548b43f4cc1" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldReturnTotalExposedEdgeLength" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="ae3186a4-82d9-e57c-5236-6b7a47754e88">
+      <Execution id="412e2f9e-c9a0-4573-8734-7e8b324c0fb4" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="GetBasisValue_ShouldReturnTotalExposedEdgeLength" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;MẶT ĐỨNG VÁCH - W1 (PHẦN 1/2)&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W1&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="5ea691d3-9e36-66ed-3801-99e01bc45b67">
+      <Execution id="3b211c4a-9b5f-4d96-a487-69aba788efdf" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="MergeWallNames_ShouldReturnHumanReadableDrawingTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="b7145f23-f69a-e17c-26c8-f49dce130d5e">
+      <Execution id="abda218b-4614-426b-a2b2-4a4c5eb734a3" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.AccessoryDataManagerTests.GetDefaults_ShouldIncludeColdStorageCeilingSuspensionAccessories" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="76353425-6da1-2e03-29fe-12fdf1b08863">
+      <Execution id="97f9961e-76e1-4960-87a1-69bd0cdd05a6" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.AccessoryDataManagerTests" name="GetDefaults_ShouldIncludeColdStorageCeilingSuspensionAccessories" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutPackingServiceTests.TryPackViewport_ShouldPlaceNextViewportToTheRight_WhenTopRowHasSpace" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="981a7ebe-b28b-34c2-db9b-e42df9827e08">
+      <Execution id="22f8706c-73c0-4bfb-8769-63d3e254f1e3" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutPackingServiceTests" name="TryPackViewport_ShouldPlaceNextViewportToTheRight_WhenTopRowHasSpace" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;W1/W2&quot;, expected: &quot;W1-W2&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="1a06ac6e-cf15-88aa-fb23-f81ce5b2627c">
+      <Execution id="76ccdcfc-00e3-4e15-b15a-11b0db808f0f" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.Export_ShouldWriteVietnameseAccessorySections" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="f8ab28ae-5c14-b047-c7f3-289036ed9be1">
+      <Execution id="a3080e3b-c621-492d-af57-aa4465ebb113" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="Export_ShouldWriteVietnameseAccessorySections" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;MẶT ĐỨNG VÁCH - W1&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1, W4&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="5caa274b-2408-60a8-5ecf-dafb3c1ae97f">
+      <Execution id="59e2b862-7a47-4964-bcfc-391a3e4a5ce6" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="MergeWallNames_ShouldReturnHumanReadableDrawingTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="61123aa7-083c-eeeb-d6ff-ea9b45d5b0fe">
+      <Execution id="53ea7e11-1f50-4727-8d42-b9678ea81d02" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.AccessoryDataManagerTests.GetDefaults_ShouldUseMaterialColumnForColdStorageConvention" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="f94a9eae-5537-be92-ba4c-601956f1e0cf">
+      <Execution id="6d90f9f8-1ab9-4e21-ad57-7a6a25456a34" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.AccessoryDataManagerTests" name="GetDefaults_ShouldUseMaterialColumnForColdStorageConvention" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;&quot;, expected: &quot;A&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="2aa422ba-510d-469d-9e55-a47244e877b3">
+      <Execution id="a9fdda5a-67cf-40a1-8df4-7d77bbb22593" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="NextRevision_ShouldAdvanceAlphabetically" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.PlotStyleInstallerTests.ResolvePreferredStyleName_ShouldFallBackToSdBlackThenMonochrome" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="8df95acf-0be2-d108-1947-8ef7763ab292">
+      <Execution id="dbe13f12-ca2b-4672-9bee-893fcc8bbd0c" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.PlotStyleInstallerTests" name="ResolvePreferredStyleName_ShouldFallBackToSdBlackThenMonochrome" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.AccessoryDataManagerTests.NormalizeConfiguredAccessories_ShouldOnlyRenameColdStorageTrimNames" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="d7766721-7f43-428e-c889-124badef031c">
+      <Execution id="3ed6d942-8c63-4d88-8718-5ab792ccd2b9" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.AccessoryDataManagerTests" name="NormalizeConfiguredAccessories_ShouldOnlyRenameColdStorageTrimNames" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;ZZ&quot;, expected: &quot;AAA&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="0fa2add9-d1c6-5121-f359-d1ca051c68a7">
+      <Execution id="a953a9db-3792-478a-988e-7796b53ba207" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="NextRevision_ShouldAdvanceAlphabetically" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.AccessoryDataManagerTests.NormalizeConfiguredAccessories_ShouldMigrateLegacySealantNamesWithoutPositionExpansion" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="3345730b-90a5-a92a-a166-41ba1194b1f5">
+      <Execution id="f43fdb5e-92a6-4cb9-b0c5-1af488dd829f" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.AccessoryDataManagerTests" name="NormalizeConfiguredAccessories_ShouldMigrateLegacySealantNamesWithoutPositionExpansion" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutEngineTests.AssignIds_ShouldWorkCorrectlty" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="205117db-37b7-a997-e3fc-c62ab0c77565">
+      <Execution id="d10f4326-175e-40fa-a48e-b4008f4dd0a1" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutEngineTests" name="AssignIds_ShouldWorkCorrectlty" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="38863778-c9d5-4634-0d9d-76f2123662fe">
+      <Execution id="af62b84f-3adc-4f04-8f20-706019496465" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderExcelExporterTests" name="Export_ShouldIncludeSpecManagementSheetInSameWorkbook_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="fbed529f-8a04-1578-27d6-03862fb34db4">
+      <Execution id="44df3980-0eb8-418b-a6ea-fddfadf63123" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSortByApplicationFirst_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="77c78f0b-ab9b-45e7-cb22-cd2c6a820210">
+      <Execution id="f8a23f97-2401-4ae3-90ae-d1afd94f9776" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="CalculateAccessoryReport_ShouldSortByApplicationFirst_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.PlotStyleInstallerTests.ResolvePreferredStyleName_ShouldPreferRequestedStyleWhenAvailable" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="0da47653-d033-ed5a-c07c-37b8ba4d5632">
+      <Execution id="5c8ddfca-020b-4a09-a96f-e71b19b2a147" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.PlotStyleInstallerTests" name="ResolvePreferredStyleName_ShouldPreferRequestedStyleWhenAvailable" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle(layoutName: &quot;SD-W1-W3&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1, W3&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="4718375b-99a3-d1d1-aa2d-9b6e115d221c">
+      <Execution id="3cd55418-1689-41a7-bdd2-d8e6d764cced" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.AccessoryDataManagerTests.GetDefaults_ShouldIncludeDetailedExteriorAndCleanroomSealantRows" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="10d4a9ef-a8b5-aca4-3c4b-15566104e5df">
+      <Execution id="9fdb8080-a3c8-4605-a468-6197e8d03905" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.AccessoryDataManagerTests" name="GetDefaults_ShouldIncludeDetailedExteriorAndCleanroomSealantRows" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutEngineTests.Calculate_ShouldCreateCorrectNumberOfPanels" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="fa68f112-ed20-0e18-372d-f46107e1ea13">
+      <Execution id="4a478d29-c675-42d5-ab0d-361a54e3c1e2" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutEngineTests" name="Calculate_ShouldCreateCorrectNumberOfPanels" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;A&quot;, expected: &quot;B&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="e7e45a04-f096-a5e6-35ba-51874f523d18">
+      <Execution id="3e1dba02-191e-4a35-8b47-cf6a26093df2" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="NextRevision_ShouldAdvanceAlphabetically" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldSplitOpeningPerimeterAndDoorQuantity" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="83e39171-f7d0-c754-af27-64ad34f4b4e4">
+      <Execution id="aae34d00-3605-4ef6-a0c4-341641bd3c87" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="GetBasisValue_ShouldSplitOpeningPerimeterAndDoorQuantity" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="1cc0ca2d-5329-6905-6f84-324550bf5194">
+      <Execution id="a354b477-fe13-4725-9df8-87827b4b0e73" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.PlotStyleInstallerTests.FindPlotStylesDirectoryFromAppData_ShouldFindAutoCadProfilePath" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="70fff462-0480-f457-8f74-40d23e400b05">
+      <Execution id="6009938a-cce2-4000-8d33-905da3c219e4" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.PlotStyleInstallerTests" name="FindPlotStylesDirectoryFromAppData_ShouldFindAutoCadProfilePath" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="604e8529-82b4-1c4c-cc3f-e5c3a7d85474">
+      <Execution id="18bf39c1-03de-466c-850d-b461f7fb2dfe" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.PlotStyleInstallerTests.NeedsCopy_ShouldUseContentHashInsteadOfTimestampOnly" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="bda819cc-3161-7705-3919-60dc5140b73d">
+      <Execution id="54d63316-591f-404f-8f4f-e7720a9ca822" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.PlotStyleInstallerTests" name="NeedsCopy_ShouldUseContentHashInsteadOfTimestampOnly" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_UsesCurrentFolderWhenNoMarkerAndNotInDrawings" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="d8c9faca-889d-3a7d-859c-8e7a21a9e137">
+      <Execution id="ecadb91c-98e0-4168-8998-810b51a3b1f9" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.ProjectDataPathResolverTests" name="ResolveFromDrawingPath_UsesCurrentFolderWhenNoMarkerAndNotInDrawings" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.ScaleHelpers_ShouldNormalizeAndFormat(raw: &quot; ty le 1 : 200 &quot;, expectedNormalized: &quot;1:200&quot;, expectedLabel: &quot;TỶ LỆ 1:200&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="316d4b98-705f-3284-92fa-b5ed72874669">
+      <Execution id="90e79e7b-cc4f-43bf-82f8-3debab9980fa" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="ScaleHelpers_ShouldNormalizeAndFormat" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldRespectExposedEdgesAndOutsideCorners" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="57210a86-e991-8202-91e3-68d345f9cb98">
+      <Execution id="39c8364b-55a3-46fb-96d2-7e9981a53cf3" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="GetBasisValue_ShouldRespectExposedEdgesAndOutsideCorners" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;  /  &quot;, expected: &quot;LAYOUT&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="5152f995-032e-032b-db41-e90dc1d6febf">
+      <Execution id="75d57e68-3263-4621-96a0-1e97cf406cc8" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSupportDoorKitAndTwoFaceOpeningTrim" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="134cae6d-ee51-fd83-244f-7c9d618f4cf2">
+      <Execution id="a6e446d1-843f-4e9e-aca5-7d3ae81630d6" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="CalculateAccessoryReport_ShouldSupportDoorKitAndTwoFaceOpeningTrim" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle(layoutName: &quot;MẶT ĐỨNG VÁCH - W9&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W9&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="867f5df2-8a77-18b6-8be5-aec0514df256">
+      <Execution id="2139bc01-5d3a-452b-943b-b52be54cd03a" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;SD-001-W4&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W5&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W4, W5&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="381d6e4d-7d78-ade8-c760-49803fd7c121">
+      <Execution id="e20d934b-c2b4-4f15-8337-80decb4e6304" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="MergeWallNames_ShouldReturnHumanReadableDrawingTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.MergeWallNames_ShouldReturnHumanReadableDrawingTitle(existingName: &quot;SD-W1-W3&quot;, newName: &quot;MẶT ĐỨNG VÁCH - W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W1, W3, W4&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="e852015d-2b4e-07a3-e5a6-763693368b27">
+      <Execution id="a769dc31-0c51-4792-947a-e511dc45574b" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="MergeWallNames_ShouldReturnHumanReadableDrawingTitle" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_UsesMarkerRoot" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="f07b27b1-883a-f8d2-0d8a-e9a0f30cab19">
+      <Execution id="5ef39a1f-33b1-4066-9e6e-5394123e967f" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.ProjectDataPathResolverTests" name="ResolveFromDrawingPath_UsesMarkerRoot" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;TRỤC A:B&quot;, expected: &quot;TRỤC A-B&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="cee05050-605a-ad9f-57e8-9904637f9032">
+      <Execution id="e8826912-44ea-4899-8468-cf048f23ffeb" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;Z&quot;, expected: &quot;AA&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="5d21358d-cb9c-fd9b-e996-bd5e312a8cd9">
+      <Execution id="a8529128-1a57-459f-9271-848b41a1faba" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="NextRevision_ShouldAdvanceAlphabetically" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="0530d75c-a2c5-49f4-d262-4c4180f05d8e">
+      <Execution id="eeaa89f9-5dea-4a69-a3b8-12a4e6226b0d" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.ScaleHelpers_ShouldNormalizeAndFormat(raw: &quot;TỶ LỆ 1:100&quot;, expectedNormalized: &quot;1:100&quot;, expectedLabel: &quot;TỶ LỆ 1:100&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="1288d739-2217-7423-3837-0c8d8af700ed">
+      <Execution id="624c6cec-658c-42ed-ad57-db0a7df7a6f3" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="ScaleHelpers_ShouldNormalizeAndFormat" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSortByApplicationFirst" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="f7fd5e94-a906-76ce-5cf5-ca175d7310b6">
+      <Execution id="cb63d065-17b4-416b-8680-d2964febc2f4" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="CalculateAccessoryReport_ShouldSortByApplicationFirst" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.BuildPageLabel_ShouldOnlyAddSuffixForMultiPage" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="72b7a1c5-9dcb-3a88-794d-177a2255ad78">
+      <Execution id="ca593508-0e68-4b0b-a883-f2ddbda2749d" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="BuildPageLabel_ShouldOnlyAddSuffixForMultiPage" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.NextRevision_ShouldAdvanceAlphabetically(current: &quot;AZ&quot;, expected: &quot;BA&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="fdaf87bb-725a-e8f7-8279-3503d2815ba9">
+      <Execution id="58cefa3c-ce39-4999-ab61-7d4bbc5f45b0" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="NextRevision_ShouldAdvanceAlphabetically" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_UsesParentOfDrawingsWhenNoMarker" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="dd49f54c-1a5e-befa-dca1-ba4fbd8aa2dc">
+      <Execution id="f0eadb57-c898-47bc-b963-3548ea1f8c5e" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.ProjectDataPathResolverTests" name="ResolveFromDrawingPath_UsesParentOfDrawingsWhenNoMarker" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.ProjectInitializationStructureTests.InitializeProjectStructure_ShouldCreateExpectedFolders" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="abf5634c-501b-8ba2-d71d-059c6cce98c2">
+      <Execution id="10682a5a-5a71-407d-9da6-13ccb6157a9d" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.ProjectInitializationStructureTests" name="InitializeProjectStructure_ShouldCreateExpectedFolders" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="97e7041e-52ec-c135-261d-fbc1870f1f79">
+      <Execution id="a7852720-a0ea-42dd-9fa2-939d9e0c0eca" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars(raw: &quot;W1 (PHẦN 1/3)&quot;, expected: &quot;W1 (PHẦN 1-3)&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="b71fe695-5326-5282-1cac-acc735b8ba43">
+      <Execution id="d4844fd0-63d6-4fd4-9013-dfd8eba2009e" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="SanitizeLayoutTabLabel_ShouldRemoveAutoCadInvalidChars" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.GetMergedLayoutTabName_ShouldReturnSdTabNameOnly" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="3ae88fa5-7105-af10-a377-2384c748b3ef">
+      <Execution id="c830e48f-e908-4ae6-8a42-ae98fa69b6f8" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="GetMergedLayoutTabName_ShouldReturnSdTabNameOnly" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.ProjectDataPathResolverTests.ResolveFromDrawingPath_CreatesMarkerAndDataFolders_WhenEnsureExists" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="3e1e867b-194d-7abc-4d51-f00fefa9ffcf">
+      <Execution id="5044f40b-0e4e-4bf6-966e-65d215825c25" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.ProjectDataPathResolverTests" name="ResolveFromDrawingPath_CreatesMarkerAndDataFolders_WhenEnsureExists" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="9ba0a60f-1bfd-3235-9b4e-e4113fdf7a82">
+      <Execution id="6400783d-5763-4b51-b234-b54c75389377" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows_CurrentContract" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="b3853ab5-621d-f5ac-3a98-7687bae8e8d2">
+      <Execution id="8e878817-b2dc-45c4-af7d-d76a730b37fe" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.TenderBomCalculatorTests" name="NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows_CurrentContract" />
+    </UnitTest>
+    <UnitTest name="ShopDrawing.Tests.LayoutManagerRulesTests.InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle(layoutName: &quot;SD-001-W4&quot;, expected: &quot;MẶT ĐỨNG VÁCH - W4&quot;)" storage="c:\my_project\shopdrawing-app\artifacts\bin\shopdrawing.tests\net8.0-windows\shopdrawing.tests.dll" id="be9350ef-b5b5-7ff9-9069-4287d6276d6c">
+      <Execution id="a5e04ab1-a956-467a-a3fb-b06929efbf36" />
+      <TestMethod codeBase="c:\my_project\shopdrawing-app\artifacts\bin\ShopDrawing.Tests\net8.0-windows\ShopDrawing.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ShopDrawing.Tests.LayoutManagerRulesTests" name="InferDrawingTitleFromLayoutTabName_ShouldRecoverHumanReadableTitle" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="2aa422ba-510d-469d-9e55-a47244e877b3" executionId="a9fdda5a-67cf-40a1-8df4-7d77bbb22593" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5ea691d3-9e36-66ed-3801-99e01bc45b67" executionId="3b211c4a-9b5f-4d96-a487-69aba788efdf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f8ab28ae-5c14-b047-c7f3-289036ed9be1" executionId="a3080e3b-c621-492d-af57-aa4465ebb113" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3345730b-90a5-a92a-a166-41ba1194b1f5" executionId="f43fdb5e-92a6-4cb9-b0c5-1af488dd829f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="981a7ebe-b28b-34c2-db9b-e42df9827e08" executionId="22f8706c-73c0-4bfb-8769-63d3e254f1e3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="59dd1858-aa2b-1f95-e0a7-f481e7091bf4" executionId="ee2b2000-f9ac-4be0-8406-e63919d3734a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="61c844c6-6fde-8774-6221-48fcb535d6e6" executionId="e11356cb-15de-4841-89cf-9a1dcb08070c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57210a86-e991-8202-91e3-68d345f9cb98" executionId="39c8364b-55a3-46fb-96d2-7e9981a53cf3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5caa274b-2408-60a8-5ecf-dafb3c1ae97f" executionId="59e2b862-7a47-4964-bcfc-391a3e4a5ce6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="83e39171-f7d0-c754-af27-64ad34f4b4e4" executionId="aae34d00-3605-4ef6-a0c4-341641bd3c87" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0530d75c-a2c5-49f4-d262-4c4180f05d8e" executionId="eeaa89f9-5dea-4a69-a3b8-12a4e6226b0d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="205117db-37b7-a997-e3fc-c62ab0c77565" executionId="d10f4326-175e-40fa-a48e-b4008f4dd0a1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97e7041e-52ec-c135-261d-fbc1870f1f79" executionId="a7852720-a0ea-42dd-9fa2-939d9e0c0eca" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="be9350ef-b5b5-7ff9-9069-4287d6276d6c" executionId="a5e04ab1-a956-467a-a3fb-b06929efbf36" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a06ac6e-cf15-88aa-fb23-f81ce5b2627c" executionId="76ccdcfc-00e3-4e15-b15a-11b0db808f0f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fa68f112-ed20-0e18-372d-f46107e1ea13" executionId="4a478d29-c675-42d5-ab0d-361a54e3c1e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="16712a33-38fe-e570-241c-f57f2719b1fa" executionId="f477ad6d-6fc1-4caf-bdfb-b548b43f4cc1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3ae88fa5-7105-af10-a377-2384c748b3ef" executionId="c830e48f-e908-4ae6-8a42-ae98fa69b6f8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4718375b-99a3-d1d1-aa2d-9b6e115d221c" executionId="3cd55418-1689-41a7-bdd2-d8e6d764cced" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1cc0ca2d-5329-6905-6f84-324550bf5194" executionId="a354b477-fe13-4725-9df8-87827b4b0e73" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5152f995-032e-032b-db41-e90dc1d6febf" executionId="75d57e68-3263-4621-96a0-1e97cf406cc8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2357d24f-e42e-9f49-9bf9-d023359879ca" executionId="42390319-e2e1-4eb3-9f00-d1a978af235d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="38863778-c9d5-4634-0d9d-76f2123662fe" executionId="af62b84f-3adc-4f04-8f20-706019496465" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="61123aa7-083c-eeeb-d6ff-ea9b45d5b0fe" executionId="53ea7e11-1f50-4727-8d42-b9678ea81d02" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8c9faca-889d-3a7d-859c-8e7a21a9e137" executionId="ecadb91c-98e0-4168-8998-810b51a3b1f9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1288d739-2217-7423-3837-0c8d8af700ed" executionId="624c6cec-658c-42ed-ad57-db0a7df7a6f3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb3de100-448b-4872-6b7c-0ee8e5843214" executionId="942a4159-cb59-4334-bbef-006574f57310" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bda819cc-3161-7705-3919-60dc5140b73d" executionId="54d63316-591f-404f-8f4f-e7720a9ca822" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f94a9eae-5537-be92-ba4c-601956f1e0cf" executionId="6d90f9f8-1ab9-4e21-ad57-7a6a25456a34" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="992ec7d3-c27d-43f1-4832-d241f343d41a" executionId="4aaf7560-d203-4636-9834-dce86435f61d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8df95acf-0be2-d108-1947-8ef7763ab292" executionId="dbe13f12-ca2b-4672-9bee-893fcc8bbd0c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b7145f23-f69a-e17c-26c8-f49dce130d5e" executionId="abda218b-4614-426b-a2b2-4a4c5eb734a3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e1e867b-194d-7abc-4d51-f00fefa9ffcf" executionId="5044f40b-0e4e-4bf6-966e-65d215825c25" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3853ab5-621d-f5ac-3a98-7687bae8e8d2" executionId="8e878817-b2dc-45c4-af7d-d76a730b37fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="381d6e4d-7d78-ade8-c760-49803fd7c121" executionId="e20d934b-c2b4-4f15-8337-80decb4e6304" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e7e45a04-f096-a5e6-35ba-51874f523d18" executionId="3e1dba02-191e-4a35-8b47-cf6a26093df2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d7766721-7f43-428e-c889-124badef031c" executionId="3ed6d942-8c63-4d88-8718-5ab792ccd2b9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5d21358d-cb9c-fd9b-e996-bd5e312a8cd9" executionId="a8529128-1a57-459f-9271-848b41a1faba" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e852015d-2b4e-07a3-e5a6-763693368b27" executionId="a769dc31-0c51-4792-947a-e511dc45574b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="134cae6d-ee51-fd83-244f-7c9d618f4cf2" executionId="a6e446d1-843f-4e9e-aca5-7d3ae81630d6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="316d4b98-705f-3284-92fa-b5ed72874669" executionId="90e79e7b-cc4f-43bf-82f8-3debab9980fa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fbed529f-8a04-1578-27d6-03862fb34db4" executionId="44df3980-0eb8-418b-a6ea-fddfadf63123" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae3186a4-82d9-e57c-5236-6b7a47754e88" executionId="412e2f9e-c9a0-4573-8734-7e8b324c0fb4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="10d4a9ef-a8b5-aca4-3c4b-15566104e5df" executionId="9fdb8080-a3c8-4605-a468-6197e8d03905" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="70fff462-0480-f457-8f74-40d23e400b05" executionId="6009938a-cce2-4000-8d33-905da3c219e4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dd49f54c-1a5e-befa-dca1-ba4fbd8aa2dc" executionId="f0eadb57-c898-47bc-b963-3548ea1f8c5e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cee05050-605a-ad9f-57e8-9904637f9032" executionId="e8826912-44ea-4899-8468-cf048f23ffeb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="77c78f0b-ab9b-45e7-cb22-cd2c6a820210" executionId="f8a23f97-2401-4ae3-90ae-d1afd94f9776" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="867f5df2-8a77-18b6-8be5-aec0514df256" executionId="2139bc01-5d3a-452b-943b-b52be54cd03a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f7fd5e94-a906-76ce-5cf5-ca175d7310b6" executionId="cb63d065-17b4-416b-8680-d2964febc2f4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="72b7a1c5-9dcb-3a88-794d-177a2255ad78" executionId="ca593508-0e68-4b0b-a883-f2ddbda2749d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="604e8529-82b4-1c4c-cc3f-e5c3a7d85474" executionId="18bf39c1-03de-466c-850d-b461f7fb2dfe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="76353425-6da1-2e03-29fe-12fdf1b08863" executionId="97f9961e-76e1-4960-87a1-69bd0cdd05a6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0fa2add9-d1c6-5121-f359-d1ca051c68a7" executionId="a953a9db-3792-478a-988e-7796b53ba207" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9ba0a60f-1bfd-3235-9b4e-e4113fdf7a82" executionId="6400783d-5763-4b51-b234-b54c75389377" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fdaf87bb-725a-e8f7-8279-3503d2815ba9" executionId="58cefa3c-ce39-4999-ab61-7d4bbc5f45b0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b71fe695-5326-5282-1cac-acc735b8ba43" executionId="d4844fd0-63d6-4fd4-9013-dfd8eba2009e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0da47653-d033-ed5a-c07c-37b8ba4d5632" executionId="5c8ddfca-020b-4a09-a96f-e71b19b2a147" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f07b27b1-883a-f8d2-0d8a-e9a0f30cab19" executionId="5ef39a1f-33b1-4066-9e6e-5394123e967f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="abf5634c-501b-8ba2-d71d-059c6cce98c2" executionId="10682a5a-5a71-407d-9da6-13ccb6157a9d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="60" executed="53" passed="49" failed="4" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.4.1+b9eacec401 (64-bit .NET 8.0.21)&#xD;
+[xUnit.net 00:00:00.08]   Discovering: ShopDrawing.Tests&#xD;
+[xUnit.net 00:00:00.84]   Discovered:  ShopDrawing.Tests&#xD;
+[xUnit.net 00:00:00.84]   Starting:    ShopDrawing.Tests&#xD;
+[xUnit.net 00:00:00.94]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.94]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.94]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.94]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.94]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.94]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.94]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.94]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.94]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.94]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.94]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.94]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.94]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.94]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.94]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.94]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.94]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.94]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.95]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.95]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.95]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.95]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.95]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.95]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.95]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.95]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.95]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.95]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.95]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.95]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.95]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.95]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.95]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.95]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.95]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.95]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.95]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.95]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.95]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.95]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.95]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.95]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.95]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.95]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.95]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.95]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.95]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.95]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.95]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.95]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.95]       System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.&#xD;
+[xUnit.net 00:00:00.95]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.96]            at System.ModuleHandle.ResolveType(QCallModule module, Int32 typeToken, IntPtr* typeInstArgs, Int32 typeInstCount, IntPtr* methodInstArgs, Int32 methodInstCount, ObjectHandleOnStack type)&#xD;
+[xUnit.net 00:00:00.96]            at System.ModuleHandle.ResolveTypeHandle(Int32 typeToken, RuntimeTypeHandle[] typeInstantiationContext, RuntimeTypeHandle[] methodInstantiationContext)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.RuntimeModule.ResolveType(Int32 metadataToken, Type[] genericTypeArguments, Type[] genericMethodArguments)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.CustomAttribute.FilterCustomAttributeRecord(MetadataToken caCtorToken, MetadataImport&amp; scope, RuntimeModule decoratedModule, MetadataToken decoratedToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1&amp; derivedAttributes, RuntimeType&amp; attributeType, IRuntimeMethodInfo&amp; ctorWithParameters, Boolean&amp; isVarArg)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.CustomAttribute.AddCustomAttributes(ListBuilder`1&amp; attributes, RuntimeModule decoratedModule, Int32 decoratedMetadataToken, RuntimeType attributeFilterType, Boolean mustBeInheritable, ListBuilder`1 derivedAttributes)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.CustomAttribute.GetCustomAttributes(RuntimeModule decoratedModule, Int32 decoratedMetadataToken, Int32 pcaCount, RuntimeType attributeFilterType)&#xD;
+[xUnit.net 00:00:00.96]            at System.Attribute.GetCustomAttributes(Assembly element, Type attributeType, Boolean inherit)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.CustomAttributeExtensions.GetCustomAttributes[T](Assembly element)&#xD;
+[xUnit.net 00:00:00.96]         /_/src/common/NewReflectionExtensions.cs(26,0): at NewReflectionExtensions.GetCustomAttributes(Assembly assembly)&#xD;
+[xUnit.net 00:00:00.96]            at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;
+[xUnit.net 00:00:00.96]            at System.Linq.Enumerable.SelectEnumerableIterator`2.ToArray()&#xD;
+[xUnit.net 00:00:00.96]         /_/src/xunit.runner.utility/Extensions/MessageSinkMessageExtensions.cs(39,0): at MessageSinkMessageExtensions.Dispatch[TMessage](IMessageSinkMessage message, HashSet`1 messageTypes, MessageHandler`1 callback)&#xD;
+[xUnit.net 00:00:00.96]       Assert.Contains() Failure: Filter not matched in collection&#xD;
+[xUnit.net 00:00:00.96]       Collection: [AccessorySummaryRow { Adjustment = 0, Application = "Kho lạnh", AutoQuantity = 1, BasisLabel = "Số lượng cửa đi", BasisValue = 1, ··· }, AccessorySummaryRow { Adjustment = 0, Application = "Kho lạnh", AutoQuantity = 13.98, BasisLabel = "Chu vi lỗ mở 2 mặt", BasisValue = 13.98, ··· }]&#xD;
+[xUnit.net 00:00:00.96]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.96]         c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderBomCalculatorTests.cs(162,0): at ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSupportDoorKitAndTwoFaceOpeningTrim()&#xD;
+[xUnit.net 00:00:00.96]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.96]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:00.96]       Expected: 13.550000000000001&#xD;
+[xUnit.net 00:00:00.96]       Actual:   13.33&#xD;
+[xUnit.net 00:00:00.96]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.96]         c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderBomCalculatorTests.cs(520,0): at ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure_CurrentContract()&#xD;
+[xUnit.net 00:00:00.96]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.96]       Assert.Equal() Failure: Values are not within 3 decimal places&#xD;
+[xUnit.net 00:00:00.96]       Expected: 10 (rounded from 10)&#xD;
+[xUnit.net 00:00:00.96]       Actual:   5 (rounded from 5)&#xD;
+[xUnit.net 00:00:00.96]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.96]         c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderBomCalculatorTests.cs(386,0): at ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldCalculateColdStorageCeilingSuspensionAndWireRope()&#xD;
+[xUnit.net 00:00:00.96]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:00.96]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:00.96]       Legacy mojibake expectation&#xD;
+[xUnit.net 00:00:00.97]       Legacy mojibake expectation&#xD;
+[xUnit.net 00:00:00.97]       Legacy mojibake expectation&#xD;
+[xUnit.net 00:00:00.97]       Legacy mojibake expectation&#xD;
+[xUnit.net 00:00:00.97]       Legacy mojibake expectation&#xD;
+Test 'ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows' was skipped in the test run.&#xD;
+Test 'ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSortByApplicationFirst' was skipped in the test run.&#xD;
+Test 'ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig' was skipped in the test run.&#xD;
+Test 'ShopDrawing.Tests.TenderBomCalculatorTests.GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505' was skipped in the test run.&#xD;
+Test 'ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure' was skipped in the test run.&#xD;
+[xUnit.net 00:00:00.97]       Legacy mojibake expectation&#xD;
+Test 'ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField' was skipped in the test run.&#xD;
+[xUnit.net 00:00:02.71]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:02.71]       Expected: 2&#xD;
+[xUnit.net 00:00:02.71]       Actual:   4&#xD;
+[xUnit.net 00:00:02.71]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.71]         c:\my_project\shopdrawing-app\ShopDrawing.Tests\TenderExcelExporterTests.cs(143,0): at ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook_CurrentContract()&#xD;
+[xUnit.net 00:00:02.71]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.71]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+[xUnit.net 00:00:02.71]       Legacy mojibake expectation&#xD;
+[xUnit.net 00:00:02.72]   Finished:    ShopDrawing.Tests&#xD;
+Test 'ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook' was skipped in the test run.&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0753810+07:00">
+        <Text>[xUnit.net 00:00:00.94]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0756786+07:00">
+        <Text>[xUnit.net 00:00:00.94] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0757045+07:00">
+        <Text>[xUnit.net 00:00:00.94]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0757595+07:00">
+        <Text>[xUnit.net 00:00:00.94] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0757749+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0758679+07:00">
+        <Text>[xUnit.net 00:00:00.95] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0758925+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0759388+07:00">
+        <Text>[xUnit.net 00:00:00.95] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0759551+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0760167+07:00">
+        <Text>[xUnit.net 00:00:00.95] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0760356+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0760850+07:00">
+        <Text>[xUnit.net 00:00:00.95] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0761000+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0761500+07:00">
+        <Text>[xUnit.net 00:00:00.95] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0761773+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0762625+07:00">
+        <Text>[xUnit.net 00:00:00.95] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0762944+07:00">
+        <Text>[xUnit.net 00:00:00.95]     [FATAL ERROR] System.IO.FileNotFoundException</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0763858+07:00">
+        <Text>[xUnit.net 00:00:00.96] Catastrophic failure: System.IO.FileNotFoundException : Could not load file or assembly 'accoremgd, Version=25.1.0.0, Culture=neutral, PublicKeyToken=null'. The system cannot find the file specified.</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0770133+07:00">
+        <Text>[xUnit.net 00:00:00.96]     ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSupportDoorKitAndTwoFaceOpeningTrim [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0770601+07:00">
+        <Text>[xUnit.net 00:00:00.96]     ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure_CurrentContract [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:13.0780844+07:00">
+        <Text>[xUnit.net 00:00:00.96]     ShopDrawing.Tests.TenderBomCalculatorTests.GetBasisValue_ShouldCalculateColdStorageCeilingSuspensionAndWireRope [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:13.0781483+07:00">
+        <Text>[xUnit.net 00:00:00.96]     ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldExpandLegacyAllScopeRows [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:13.0782126+07:00">
+        <Text>[xUnit.net 00:00:00.96]     ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldSortByApplicationFirst [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:13.0782456+07:00">
+        <Text>[xUnit.net 00:00:00.97]     ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldMergeMissingColdStorageCeilingDefaultsIntoExistingProjectConfig [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:13.0782731+07:00">
+        <Text>[xUnit.net 00:00:00.97]     ShopDrawing.Tests.TenderBomCalculatorTests.GetDefaults_ShouldSplitColdStorageSealantIntoMc202AndSn505 [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:13.0783089+07:00">
+        <Text>[xUnit.net 00:00:00.97]     ShopDrawing.Tests.TenderBomCalculatorTests.CalculateAccessoryReport_ShouldReturnBasisAndFinalQuantityInVietnameseStructure [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:13.0790509+07:00">
+        <Text>[xUnit.net 00:00:00.97]     ShopDrawing.Tests.TenderBomCalculatorTests.NormalizeConfiguredAccessories_ShouldKeepProductNameAndUsePositionAsSeparateField [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Error" timestamp="2026-04-20T10:33:14.8167434+07:00">
+        <Text>[xUnit.net 00:00:02.71]     ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook_CurrentContract [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="NGOC_HUY" outcome="Warning" timestamp="2026-04-20T10:33:14.8178012+07:00">
+        <Text>[xUnit.net 00:00:02.71]     ShopDrawing.Tests.TenderExcelExporterTests.Export_ShouldIncludeSpecManagementSheetInSameWorkbook [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

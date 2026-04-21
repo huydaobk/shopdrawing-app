@@ -53,6 +53,7 @@ namespace ShopDrawing.Plugin.Core
             // Quét từng tấm — lấy chiều dài TỐI ĐA trong dải tấm để đặt hàng đúng
             var panelLengths = new List<double>(); // chiều dài thực tế mỗi tấm
             var openingWasteGroups = new Dictionary<(double Width, double Length), int>(); // thống kê hao hụt lỗ mở lẹm
+            var stepWasteGroups = new Dictionary<(double Width, double Length), int>(); // thống kê hao hụt chéo/đỉnh mái
 
             for (int i = 0; i < totalPanels; i++)
             {
@@ -69,13 +70,14 @@ namespace ShopDrawing.Plugin.Core
                 double step = stripeW / (numScans + 1);
                 
                 // Bước 1: Quét KHÔNG CÓ lỗ mở để tìm kích thước tấm Nguyên nguyên thủy của dải polygon
-                var rawStripes = new List<(double Start, double End)>();
+                var scanLineSegments = new List<List<(double Start, double End)>>();
                 for (int s = 1; s <= numScans; s++)
                 {
                     double scanPos = panelStart + s * step;
                     var solidSegs = GetSolidSegments(pts, scanPos, isHorizontal, null);
-                    rawStripes.AddRange(solidSegs);
+                    scanLineSegments.Add(solidSegs);
                 }
+                var rawStripes = scanLineSegments.SelectMany(x => x).ToList();
                 var orderedPieces = UnionSegments(rawStripes);
 
                 // Bước 2: Tự đối chiếu lỗ mở bằng Geometry để bắt "Hao hụt lẹm" y hệt Pick Vách
@@ -119,6 +121,33 @@ namespace ShopDrawing.Plugin.Core
                     if (roundedSpan > 0)
                         panelLengths.Add(roundedSpan);
 
+                    // Quá trình trích xuất Hao hụt chéo/giật bậc (Step/Diagonal Waste)
+                    double totalSubScannedSpan = 0;
+                    foreach (var scanSegs in scanLineSegments)
+                    {
+                        double spanInScan = 0;
+                        foreach (var seg in scanSegs)
+                        {
+                            double overlapTop = Math.Min(piece.End, seg.End);
+                            double overlapBottom = Math.Max(piece.Start, seg.Start);
+                            if (overlapTop > overlapBottom)
+                                spanInScan += (overlapTop - overlapBottom);
+                        }
+                        totalSubScannedSpan += spanInScan;
+                    }
+
+                    double avgUsedHeight = totalSubScannedSpan / numScans;
+                    double stepWasteH = pieceSpan - avgUsedHeight;
+
+                    if (stepWasteH > 1.0)
+                    {
+                        var wasteKey = (Width: Math.Round(stripeW), Length: Math.Round(stepWasteH));
+                        if (stepWasteGroups.ContainsKey(wasteKey))
+                            stepWasteGroups[wasteKey]++;
+                        else
+                            stepWasteGroups[wasteKey] = 1;
+                    }
+
                     // Quá trình trích xuất Hao hụt do Lỗ mở lẹm (Grazing Waste)
                     foreach (var op in partialOpenings)
                     {
@@ -140,7 +169,21 @@ namespace ShopDrawing.Plugin.Core
             }
 
             // Nhóm theo chiều dài giống nhau → gọn bảng
-            return GroupPanelEntries(panelLengths, panelWidth, totalScanSpan, totalPanels, openingWasteGroups);
+            var entries = GroupPanelEntries(panelLengths, panelWidth, totalScanSpan, totalPanels, openingWasteGroups);
+
+            // Bổ sung hao hụt giật cấp / cắt xiên vào BOM
+            foreach (var kv in stepWasteGroups.OrderByDescending(x => x.Key.Length).ThenByDescending(x => x.Key.Width))
+            {
+                entries.Add(new TenderPanelEntry
+                {
+                    WidthMm = kv.Key.Width,
+                    LengthMm = kv.Key.Length,
+                    Count = kv.Value,
+                    Label = "Hao hụt"
+                });
+            }
+
+            return entries;
         }
 
         /// <summary>

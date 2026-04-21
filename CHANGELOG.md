@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-21] - v0.2.36 Plan-Based Wall Layout (Pick Dài) 🚀
+### Added
+- **Plan-based Layout**: Thêm tính năng "Tạo tường theo mặt bằng" (`_SD_WALL_PLAN_QUICK`) cho phép vẽ tường bằng cách chọn các đường/điểm trên mặt bằng sàn và nhập chiều cao tổng. Tính năng sử dụng `QuickPlanWallCommandService` được thiết kế tương thích hoàn toàn với lõi tính toán hao hụt và LayoutEngine hiện có. Dễ dàng truy cập từ nút "Tạo tường mặt bằng" trên bảng Palette chính.
+
 ## [2026-04-21] - v0.2.35 Pick Vùng Remnant Waste Fix 🔧
 ### Fixed
 - **Pick Vùng - Hao hụt tấm cuối**: Loại bỏ hoàn toàn lỗi xuất hiện tấm "Hao hụt 1100mm" giả tạo ở tấm cuối khi dùng chế độ Pick Vùng. Nguyên nhân gốc rễ là công thức `totalScanSpan - (totalStripes-1) * panelWidth` nhạy cảm với sai số float CAD; đã thay bằng cách trích xuất trực tiếp từ biến `stripeW` (đã clamp cứng theo `scanMax`) bên trong vòng lặp quét, đồng bộ 100% với cơ chế Pick Dài.

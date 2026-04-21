@@ -23,6 +23,12 @@ namespace ShopDrawing.Plugin.Commands
             _actions.CreateWallQuick();
         }
 
+        [CommandMethod("_SD_WALL_PLAN_QUICK")]
+        public void CreatePlanWallQuick()
+        {
+            _actions.CreatePlanWallQuick();
+        }
+
         [CommandMethod("_SD_CEILING_QUICK")]
         public void CreateCeilingQuick()
         {

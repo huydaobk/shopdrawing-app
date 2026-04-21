@@ -21,6 +21,16 @@ namespace ShopDrawing.Plugin.Commands
                 ShopDrawingRuntimeServices.BomManager);
         }
 
+        public void CreatePlanWallQuick()
+        {
+            ShopDrawingModuleRegistry.Panel.CreatePlanWallQuick(
+                ShopDrawingRuntimeServices.Settings,
+                ShopDrawingRuntimeServices.LayoutEngine,
+                ShopDrawingRuntimeServices.WasteRepo,
+                ShopDrawingRuntimeServices.BlockManager,
+                ShopDrawingRuntimeServices.BomManager);
+        }
+
         public void CreateCeilingQuick()
         {
             ShopDrawingModuleRegistry.Panel.CreateCeilingQuick(

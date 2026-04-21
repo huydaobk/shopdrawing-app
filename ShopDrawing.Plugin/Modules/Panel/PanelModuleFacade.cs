@@ -17,6 +17,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
         private PaletteSet? _paletteSet;
         private WasteManagerDialog? _wasteDialog;
         private readonly QuickWallCommandService _quickWallCommandService = new();
+        private readonly QuickPlanWallCommandService _quickPlanWallCommandService = new();
         private readonly QuickCeilingCommandService _quickCeilingCommandService = new();
         private readonly PlaceDetailCommandService _placeDetailCommandService = new();
 
@@ -121,6 +122,16 @@ namespace ShopDrawing.Plugin.Modules.Panel
             BomManager bomManager)
         {
             _quickWallCommandService.Run(settings, layoutEngine, wasteRepo, blockManager, bomManager);
+        }
+
+        public void CreatePlanWallQuick(
+            ShopDrawing.Plugin.Runtime.ShopDrawingRuntimeSettings settings,
+            LayoutEngine layoutEngine,
+            WasteRepository? wasteRepo,
+            BlockManager blockManager,
+            BomManager bomManager)
+        {
+            _quickPlanWallCommandService.Run(PanelLayoutScope.Wall, settings, layoutEngine, wasteRepo, blockManager, bomManager);
         }
 
         public void CreateCeilingQuick(

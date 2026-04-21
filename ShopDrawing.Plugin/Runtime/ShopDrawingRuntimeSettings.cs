@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Models;
@@ -20,6 +20,8 @@ namespace ShopDrawing.Plugin.Runtime
         public int WallCounter { get; set; } = 1;
 
         public string DefaultWallCode { get; set; } = "W1";
+
+        public double DefaultWallHeight { get; set; } = 3000;
 
         public double DefaultPanelWidth { get; set; } = 1100;
 

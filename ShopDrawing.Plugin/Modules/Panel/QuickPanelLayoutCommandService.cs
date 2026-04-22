@@ -241,39 +241,39 @@ namespace ShopDrawing.Plugin.Modules.Panel
                         continue;
                     }
 
-                    var pko = new PromptKeywordOptions($"\nLỗ mở #{openIndex}: Loại lỗ mở [Cuadi/Cuaso]? ")
+                    var pko = new PromptKeywordOptions($"\nLỗ mở #{openIndex} (Rộng {width:F0}): Chọn loại lỗ mở [cửa Đi(D)/cửa Sổ(S)] <S>: ")
                     {
                         AllowNone = true
                     };
-                    pko.Keywords.Add("Cuadi");
-                    pko.Keywords.Add("Cuaso");
-                    pko.Keywords.Default = "Cuadi";
+                    pko.Keywords.Add("D");
+                    pko.Keywords.Add("S");
+                    pko.Keywords.Default = "S";
                     
                     var kwRes = ed.GetKeywords(pko);
                     if (kwRes.Status == PromptStatus.Cancel) break;
-                    string openingType = (kwRes.Status == PromptStatus.OK) ? kwRes.StringResult : "Cuadi";
-                    string displayType = openingType == "Cuadi" ? "Cửa đi" : "Cửa sổ/LKT";
+                    string openingType = (kwRes.Status == PromptStatus.OK) ? kwRes.StringResult : "S";
+                    string displayType = openingType == "D" ? "Cửa đi" : "Cửa sổ/LKT";
 
-                    var pdoHeight = new PromptDistanceOptions($"\nLỗ mở #{openIndex} ({displayType}): Nhập hoặc pick 2 điểm xác định chiều cao lỗ mở: ")
+                    var pdoHeight = new PromptDistanceOptions($"\nLỗ mở #{openIndex} (Rộng {width:F0}). Nhập hoặc pick 2 điểm chiều cao lỗ mở H: ")
                     {
                         AllowZero = false,
                         AllowNegative = false,
                         UseBasePoint = true,
-                        BasePoint = pt1
+                        BasePoint = pt2
                     };
                     var heightRes = ed.GetDistance(pdoHeight);
                     if (heightRes.Status != PromptStatus.OK) break;
                     double height = heightRes.Value;
 
                     double sillHeight = 0;
-                    if (openingType == "Cuaso")
+                    if (openingType == "S")
                     {
-                        var pdoSill = new PromptDistanceOptions($"\nLỗ mở #{openIndex} ({displayType}): Nhập hoặc pick 2 điểm xác định cao đáy lỗ mở (Sill height): ")
+                        var pdoSill = new PromptDistanceOptions($"\nLỗ mở #{openIndex} (Rộng {width:F0}). Nhập hoặc pick 2 điểm khoảng cách chân sàn (Sill): ")
                         {
                             AllowZero = true,
                             AllowNegative = false,
                             UseBasePoint = true,
-                            BasePoint = pt1
+                            BasePoint = pt2
                         };
                         var sillRes = ed.GetDistance(pdoSill);
                         if (sillRes.Status != PromptStatus.OK) break;

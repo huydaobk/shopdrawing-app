@@ -1236,11 +1236,10 @@ namespace ShopDrawing.Plugin.Core
 
         /// Đọc tỷ lệ annotation hiện hành từ AutoCAD (db.Cannoscale).
 
-        /// Fallback về DefaultAnnotationScales nếu không đọc được.
-
+        /// <summary>
+        /// Lay scale tu CANNOSCALEVALUE
         /// </summary>
-
-        private static double GetDrawingScale(Database db)
+        public static double GetDrawingScale(Database db)
 
         {
 

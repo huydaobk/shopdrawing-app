@@ -332,12 +332,15 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
                 // Text tren mat bang
                 var arialStyleId = BlockManager.EnsureArialStyle(doc.Database, tr);
+                double scaleFactor = BlockManager.GetDrawingScale(doc.Database);
+                double textHeight = Math.Max(settings.DefaultTextHeightMm * scaleFactor, 30.0);
+                
                 var midPt = drawnPlanPoly.GetPointAtDist(drawnPlanPoly.Length / 2.0);
                 var txt = new DBText();
                 txt.TextStyleId = arialStyleId;
                 txt.TextString = $"{request.WallCode} - {request.Spec}";
-                txt.Position = new Autodesk.AutoCAD.Geometry.Point3d(midPt.X, midPt.Y + 100, 0);
-                txt.Height = 150;
+                txt.Position = new Autodesk.AutoCAD.Geometry.Point3d(midPt.X, midPt.Y + textHeight * 0.8, 0);
+                txt.Height = textHeight;
                 txt.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 3);
                 planEntityIds.Add(ms.AppendEntity(txt));
                 tr.AddNewlyCreatedDBObject(txt, true);

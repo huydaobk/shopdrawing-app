@@ -542,9 +542,9 @@ namespace ShopDrawing.Plugin.Core
         {
             string name = (accessory.Name ?? string.Empty).Trim();
             if (!string.Equals(name, "Rive Ø4.2×12", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(name, "Rive Ã˜4.2Ã—12", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(name, "Rive Ø4.2×12", StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(name, "Rivet Ø4.2×12", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(name, "Rivet Ã˜4.2Ã—12", StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(name, "Rivet Ø4.2×12", StringComparison.OrdinalIgnoreCase))
                 return false;
 
             if (!string.Equals((accessory.Position ?? string.Empty).Trim(), PosVach, StringComparison.OrdinalIgnoreCase))

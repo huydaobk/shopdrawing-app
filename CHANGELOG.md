@@ -1,5 +1,14 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-22] - v0.2.38 Vietnamese Font Encoding Fix 🔤
+### Fixed
+- **Font Mojibake – String Literals**: Sửa triệt để lỗi hiển thị ký tự lạ (mojibake) trong toàn bộ string literal tiếng Việt bị double-encode trong mã nguồn. Áp dụng phương pháp double-encode detection để thay thế chính xác tại byte-level, không làm ảnh hưởng các chuỗi đúng sẵn có.
+  - `QuickPlanWallCommandService.cs` — 16 chuỗi thông báo AutoCAD command line (`WriteMessage`) cho lệnh `SD_WALL_PLAN_QUICK` (Lỗi, Tấm lẻ, Tìm khớp, Trần/Tường, v.v.)
+  - `QuickPanelLayoutCommandService.cs` — 24 chuỗi thông báo cho lệnh `SD_PANEL_LAYOUT`/`SD_CEILING_QUICK` (Chọn vùng cắt, Phải là Polyline, Cửa sổ/LKT, v.v.)
+  - `PlaceDetailCommandService.cs` — 4 chuỗi prompt/thông báo cho lệnh `SD_DETAIL`
+  - `TenderBomDialog.cs` — ComboBox `"Dọc"/"Ngang"` (L2881) và ký tự nhân `×` trong parse kích thước (L3356)
+  - `AccessoryDataManager.cs` — 2 chuỗi tên rivet `"Ø4.2×12"` dùng cho so sánh lọc phụ kiện (L545, L547)
+
 ## [2026-04-21] - v0.2.37 Enhanced UX for Openings and UI Labels 🔄
 ### Changed
 - **Opening Selection UX**: Cải tiến hoàn toàn phần bắt lỗ mở cho tính năng "Tạo tường mặt bằng" (`_SD_WALL_PLAN_QUICK`). Thay thế phương pháp quét đối tượng (`PromptSelectionOptions`) trước đây bằng vòng lặp Pick 2 điểm lọt lòng (`PromptPointOptions`). Phương pháp mới không bị phụ thuộc vào chất lượng vẽ kiến trúc và tăng độ linh hoạt/chính xác tối đa.

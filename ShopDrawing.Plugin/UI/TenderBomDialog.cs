@@ -2878,7 +2878,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
 
         private static DataGridTemplateColumn ColSuspensionLayout(string header, string binding, double width)
         {
-            var col = ColTemplateCombo(header, binding, width, new[] { "Dá»c", "Ngang" });
+            var col = ColTemplateCombo(header, binding, width, new[] { "Dọc", "Ngang" });
             var disabledBrush = new SolidColorBrush(Color.FromRgb(240, 240, 240));
             var tooltip = UiText.Normalize("Ch\u1ec9 nh\u1eadp cho h\u1ea1ng m\u1ee5c Tr\u1ea7n.");
 
@@ -3353,7 +3353,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                     .Replace("*", "x", StringComparison.Ordinal)
                     .Replace("X", "x", StringComparison.Ordinal)
                     .Replace("\u00d7", "x", StringComparison.Ordinal)
-                    .Replace("Ã—", "x", StringComparison.Ordinal);
+                    .Replace("×", "x", StringComparison.Ordinal);
 
                 var pair = normalizedToken.Split('x');
                 if (pair.Length != 2)

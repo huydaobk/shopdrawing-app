@@ -75,7 +75,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
             catch (Exception ex)
             {
                 string msg = ex.InnerException?.Message ?? ex.Message;
-                ed.WriteMessage($"\nLá»—i {GetCommandName(scope)}: {msg}");
+                ed.WriteMessage($"\nLỗi {GetCommandName(scope)}: {msg}");
             }
         }
 
@@ -184,8 +184,8 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
         private static ObjectId PromptBoundaryPolyline(Editor ed, PanelLayoutScope scope)
         {
-            var options = new PromptEntityOptions($"\nClick Polyline biÃªn {GetBoundaryLabel(scope)}:");
-            options.SetRejectMessage("\nPháº£i lÃ  Polyline!");
+            var options = new PromptEntityOptions($"\nClick Polyline biên {GetBoundaryLabel(scope)}:");
+            options.SetRejectMessage("\nPhải là Polyline!");
             options.AddAllowedClass(typeof(Polyline), true);
 
             var result = ed.GetEntity(options);
@@ -195,11 +195,11 @@ namespace ShopDrawing.Plugin.Modules.Panel
         private static List<Opening> PromptOpenings(Document doc, Editor ed, PanelLayoutScope scope, ShopDrawingRuntimeSettings settings)
         {
             var openings = new List<Opening>();
-            ed.WriteMessage($"\nClick cÃ¡c Polyline {GetOpeningLabel(scope)} (Enter Ä‘á»ƒ bá» qua):");
+            ed.WriteMessage($"\nClick các Polyline {GetOpeningLabel(scope)} (Enter để bỏ qua):");
 
             var selectionOptions = new PromptSelectionOptions
             {
-                MessageForAdding = "\n   Chá»n vÃ¹ng cáº¯t:",
+                MessageForAdding = "\n   Chọn vùng cắt:",
                 MessageForRemoval = string.Empty
             };
 
@@ -225,7 +225,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     Y = ext.MinPoint.Y,
                     Width = ext.MaxPoint.X - ext.MinPoint.X,
                     Height = ext.MaxPoint.Y - ext.MinPoint.Y,
-                    OpeningType = scope == PanelLayoutScope.Wall ? settings.DefaultOpeningType : "Cá»­a sá»•/LKT"
+                    OpeningType = scope == PanelLayoutScope.Wall ? settings.DefaultOpeningType : "Cửa sổ/LKT"
                 });
             }
 
@@ -244,7 +244,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
             using var tr = doc.Database.TransactionManager.StartTransaction();
             if (tr.GetObject(boundaryId, OpenMode.ForRead) is not Polyline boundaryPolyline)
             {
-                ed.WriteMessage("\nLá»—i: khÃ´ng pháº£i Polyline.");
+                ed.WriteMessage("\nLỗi: không phải Polyline.");
                 return null;
             }
 
@@ -271,12 +271,12 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             if (wasteRepo == null)
             {
-                ed.WriteMessage("\nWaste DB chÆ°a sáºµn sÃ ng, bá» qua bÆ°á»›c tÃ¬m táº¥m láº».");
+                ed.WriteMessage("\nWaste DB chưa sẵn sàng, bỏ qua bước tìm tấm lẻ.");
                 return;
             }
 
             ed.WriteMessage(
-                $"\nTáº¥m láº» cáº§n: Spec={remnantPanel.Spec} | DÃ y={remnantPanel.ThickMm}mm | Rá»™ng={remnantPanel.WidthMm:F0}mm | DÃ i={remnantPanel.LengthMm:F0}mm");
+                $"\nTấm lẻ cần: Spec={remnantPanel.Spec} | Dày={remnantPanel.ThickMm}mm | Rộng={remnantPanel.WidthMm:F0}mm | Dài={remnantPanel.LengthMm:F0}mm");
 
             var matcher = new WasteMatcher(wasteRepo);
             var matchResult = matcher.FindBestMatchWithDirection(remnantPanel);
@@ -284,11 +284,11 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             if (matchResult.Panel != null)
             {
-                ed.WriteMessage($"\nTÃ¬m tháº¥y táº¥m khá»›p: {matchResult.Panel.PanelCode} | HÆ°á»›ng: {matchResult.Direction}");
+                ed.WriteMessage($"\nTìm thấy tấm khớp: {matchResult.Panel.PanelCode} | Hướng: {matchResult.Direction}");
 
                 string remnantJoints = $"{SignOf(remnantPanel.JointLeft)}/{SignOf(remnantPanel.JointRight)}";
                 string foundJoints = $"{SignOf(matchResult.Panel.JointLeft)}/{SignOf(matchResult.Panel.JointRight)}";
-                ed.WriteMessage($"\n   Remnant cáº§n: [{remnantJoints}] | Kho cÃ³: [{foundJoints}] | Direction: {matchResult.Direction}");
+                ed.WriteMessage($"\n   Remnant cần: [{remnantJoints}] | Kho có: [{foundJoints}] | Direction: {matchResult.Direction}");
 
                 var suggestDialog = new WasteSuggestionDialog(remnantPanel, matchResult.Panel, matchResult.Direction);
                 if (Application.ShowModalWindow(suggestDialog) == true && suggestDialog.UseFromStock)
@@ -300,7 +300,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     ApplyMatchedJoints(remnantPanel, matchResult);
                     FlipPanelsIfNeeded(ed, layout, matchResult.Direction);
 
-                    ed.WriteMessage($"\nTáº­n dá»¥ng táº¥m kho {matchResult.Panel.PanelCode} ({matchResult.Panel.WidthMm:F0}mm).");
+                    ed.WriteMessage($"\nTận dụng tấm kho {matchResult.Panel.PanelCode} ({matchResult.Panel.WidthMm:F0}mm).");
 
                     var reuseLeftover = matcher.CreateReuseLeftover(matchResult.Panel, remnantPanel, matchResult.Direction);
                     if (reuseLeftover != null)
@@ -308,7 +308,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                         matcher.SaveReuseLeftover(reuseLeftover);
                         settings.NotifyWasteUpdated();
                         ed.WriteMessage(
-                            $"\nCáº­p nháº­t pháº§n cÃ²n láº¡i {reuseLeftover.WidthMm:F0}mm [{SignOf(reuseLeftover.JointLeft)}/{SignOf(reuseLeftover.JointRight)}] vÃ o kho.");
+                            $"\nCập nhật phần còn lại {reuseLeftover.WidthMm:F0}mm [{SignOf(reuseLeftover.JointLeft)}/{SignOf(reuseLeftover.JointRight)}] vào kho.");
                     }
                     else
                     {
@@ -339,7 +339,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             string leftJoint = SignOf(leftover.JointLeft);
             string rightJoint = SignOf(leftover.JointRight);
-            ed.WriteMessage($"\nLÆ°u táº¥m láº» {leftover.WidthMm:F0}mm [{leftJoint}/{rightJoint}] vÃ o kho.");
+            ed.WriteMessage($"\nLưu tấm lẻ {leftover.WidthMm:F0}mm [{leftJoint}/{rightJoint}] vào kho.");
         }
 
         private static void ClearGeneratedWaste(
@@ -405,7 +405,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 flippedCount++;
             }
 
-            ed.WriteMessage($"\nÄÃ£ Ä‘á»•i chiá»u ngÃ m {flippedCount} táº¥m.");
+            ed.WriteMessage($"\nĐã đổi chiều ngàm {flippedCount} tấm.");
         }
 
         private static void LogAvailableWasteDebug(
@@ -414,7 +414,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
             ShopDrawing.Plugin.Models.Panel remnantPanel)
         {
             var availableWaste = wasteRepo.GetAll().Where(w => w.Status == "available").ToList();
-            ed.WriteMessage($"\nKhÃ´ng tÃ¬m tháº¥y táº¥m khá»›p trong kho. Kho hiá»‡n cÃ³ {availableWaste.Count} táº¥m available.");
+            ed.WriteMessage($"\nKhông tìm thấy tấm khớp trong kho. Kho hiện có {availableWaste.Count} tấm available.");
 
             if (availableWaste.Count == 0)
             {
@@ -423,9 +423,9 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             var first = availableWaste.First();
             ed.WriteMessage(
-                $"\n   VD: {first.PanelCode} | Spec={first.PanelSpec} | DÃ y={first.ThickMm}mm | Rá»™ng={first.WidthMm:F0}mm | DÃ i={first.LengthMm:F0}mm");
+                $"\n   VD: {first.PanelCode} | Spec={first.PanelSpec} | Dày={first.ThickMm}mm | Rộng={first.WidthMm:F0}mm | Dài={first.LengthMm:F0}mm");
             ed.WriteMessage(
-                $"\n   Cáº§n: Spec={remnantPanel.Spec} | DÃ y={remnantPanel.ThickMm}mm | Rá»™ng<={remnantPanel.WidthMm:F0}mm | DÃ i<={remnantPanel.LengthMm:F0}mm");
+                $"\n   Cần: Spec={remnantPanel.Spec} | Dày={remnantPanel.ThickMm}mm | Rộng<={remnantPanel.WidthMm:F0}mm | Dài<={remnantPanel.LengthMm:F0}mm");
         }
 
         private static void RecordStepWaste(
@@ -472,7 +472,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             if (stepCount > 0)
             {
-                ed.WriteMessage($"\nGhi nháº­n {stepCount} pháº§n cáº¯t báº­c thang vÃ o kho.");
+                ed.WriteMessage($"\nGhi nhận {stepCount} phần cắt bậc thang vào kho.");
                 settings.NotifyWasteUpdated();
             }
         }
@@ -518,7 +518,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 wasteCount++;
             }
 
-            ed.WriteMessage($"\nGhi nháº­n {wasteCount} pháº§n cáº¯t vÃ¹ng má»Ÿ vÃ o kho.");
+            ed.WriteMessage($"\nGhi nhận {wasteCount} phần cắt vùng mở vào kho.");
             settings.NotifyWasteUpdated();
         }
 
@@ -606,10 +606,10 @@ namespace ShopDrawing.Plugin.Modules.Panel
             }
 
             tr.Commit();
-            ed.WriteMessage($"\nTáº¡o xong {layout.AllPanels.Count} táº¥m cho {GetScopeLabel(scope).ToLowerInvariant()} [{request.WallCode}].");
+            ed.WriteMessage($"\nTạo xong {layout.AllPanels.Count} tấm cho {GetScopeLabel(scope).ToLowerInvariant()} [{request.WallCode}].");
             if (openings.Count > 0)
             {
-                ed.WriteMessage($"\nÄÃ£ váº½ {openings.Count} vÃ¹ng cáº¯t.");
+                ed.WriteMessage($"\nĐã vẽ {openings.Count} vùng cắt.");
             }
         }
 
@@ -687,12 +687,12 @@ namespace ShopDrawing.Plugin.Modules.Panel
             => scope == PanelLayoutScope.Ceiling ? "SD_CEILING_QUICK" : "SD_WALL_QUICK";
 
         private static string GetScopeLabel(PanelLayoutScope scope)
-            => scope == PanelLayoutScope.Ceiling ? "Tráº§n" : "TÆ°á»ng";
+            => scope == PanelLayoutScope.Ceiling ? "Trần" : "Tường";
 
         private static string GetBoundaryLabel(PanelLayoutScope scope)
-            => scope == PanelLayoutScope.Ceiling ? "tráº§n" : "tÆ°á»ng";
+            => scope == PanelLayoutScope.Ceiling ? "trần" : "tường";
 
         private static string GetOpeningLabel(PanelLayoutScope scope)
-            => scope == PanelLayoutScope.Ceiling ? "lá»— má»Ÿ / Ã´ trá»‘ng tráº§n" : "lá»— má»Ÿ";
+            => scope == PanelLayoutScope.Ceiling ? "lỗ mở / ô trống trần" : "lỗ mở";
     }
 }

@@ -19,8 +19,8 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             try
             {
-                var opt = new PromptEntityOptions("\nChá»n Polyline biÃªn tÆ°á»ng Ä‘á»ƒ chÃ¨n Detail:");
-                opt.SetRejectMessage("\nPháº£i lÃ  Polyline!");
+                var opt = new PromptEntityOptions("\nChọn Polyline biên tường để chèn Detail:");
+                opt.SetRejectMessage("\nPhải là Polyline!");
                 opt.AddAllowedClass(typeof(Polyline), true);
                 var entRes = ed.GetEntity(opt);
                 if (entRes.Status != PromptStatus.OK) return;
@@ -37,11 +37,11 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 int count = placer.PlaceDetails(polyline, detailType, tr);
 
                 tr.Commit();
-                ed.WriteMessage($"\nâœ… ÄÃ£ chÃ¨n {count} details (loáº¡i {detailType}).");
+                ed.WriteMessage($"\nâœ… Đã chèn {count} details (loại {detailType}).");
             }
             catch (Exception ex)
             {
-                ed.WriteMessage($"\nâŒ Lá»—i chÃ¨n detail: {ex.Message}");
+                ed.WriteMessage($"\nâŒ Lỗi chèn detail: {ex.Message}");
             }
         }
     }

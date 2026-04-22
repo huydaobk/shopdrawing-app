@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -71,9 +71,6 @@ namespace ShopDrawing.Plugin.UI
 
                     ObjectId layerId = EnsureHighlightLayer(db, tr);
                     var highlightPolyline = BuildHighlightPolyline(panelExtents.Value, layerId);
-
-                    double viewSize = Convert.ToDouble(AcApp.GetSystemVariable("VIEWSIZE"));
-                    highlightPolyline.ConstantWidth = Math.Max(viewSize * 0.005, 10.0);
 
                     ObjectId addedId = modelSpace.AppendEntity(highlightPolyline);
                     tr.AddNewlyCreatedDBObject(highlightPolyline, true);

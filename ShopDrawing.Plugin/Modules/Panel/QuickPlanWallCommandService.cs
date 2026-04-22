@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -104,42 +104,81 @@ namespace ShopDrawing.Plugin.Modules.Panel
         {
             openings = new List<Opening>();
 
-            var pdo = new PromptDoubleOptions("\nNhập thiết kế chiều cao tường (H): ")
-            {
-                DefaultValue = settings.DefaultWallHeight,
-                UseDefaultValue = true,
-                AllowZero = false,
-                AllowNegative = false
-            };
-            var heightResult = ed.GetDouble(pdo);
-            if (heightResult.Status != PromptStatus.OK) return ObjectId.Null;
-            double h = heightResult.Value;
-            settings.DefaultWallHeight = h;
-
-            var ppo1 = new PromptPointOptions("\nChọn điểm bắt đầu tường trên mặt bằng: ");
+            var ppo1 = new PromptPointOptions("\nChọn điểm bắt đầu dải tường trên mặt bằng: ");
             var pt1Res = ed.GetPoint(ppo1);
             if (pt1Res.Status != PromptStatus.OK) return ObjectId.Null;
             var ptStart = pt1Res.Value;
+            var currentPt = ptStart;
 
-            var ppo2 = new PromptPointOptions("\nChọn điểm kết thúc mép tường trên mặt bằng: ")
-            {
-                UseBasePoint = true,
-                BasePoint = ptStart,
-                UseDashedLine = true
-            };
-            var pt2Res = ed.GetPoint(ppo2);
-            if (pt2Res.Status != PromptStatus.OK) return ObjectId.Null;
-            var ptEnd = pt2Res.Value;
+            var segments = new List<(Autodesk.AutoCAD.Geometry.Point3d Start, Autodesk.AutoCAD.Geometry.Point3d End, double Length, double Height)>();
+            double currentHeight = settings.DefaultWallHeight;
+            int segmentIndex = 1;
 
-            double length = ptStart.DistanceTo(ptEnd);
-            if (length <= 0)
+            while (true)
             {
-                ed.WriteMessage("\nChiều dài tường phải > 0!");
+                var ppo2 = new PromptPointOptions($"\nĐoạn {segmentIndex}: Chọn điểm tiếp theo (Enter để kết thúc dải tuyến): ")
+                {
+                    UseBasePoint = true,
+                    BasePoint = currentPt,
+                    UseDashedLine = true,
+                    AllowNone = true
+                };
+                var pt2Res = ed.GetPoint(ppo2);
+                if (pt2Res.Status == PromptStatus.None || pt2Res.Status == PromptStatus.Cancel)
+                {
+                    break;
+                }
+
+                if (pt2Res.Status == PromptStatus.OK)
+                {
+                    var ptEnd = pt2Res.Value;
+                    double segLen = currentPt.DistanceTo(ptEnd);
+                    if (segLen <= 0)
+                    {
+                        ed.WriteMessage("\nChiều dài đoạn tường phải > 0! Thử lại.");
+                        continue;
+                    }
+
+                    var pdo = new PromptDoubleOptions($"\nĐoạn {segmentIndex} dài {segLen:F0}: Nhập chiều cao thiết kế (H): ")
+                    {
+                        DefaultValue = currentHeight,
+                        UseDefaultValue = true,
+                        AllowZero = false,
+                        AllowNegative = false
+                    };
+                    var heightResult = ed.GetDouble(pdo);
+                    if (heightResult.Status == PromptStatus.Cancel) break;
+
+                    if (heightResult.Status == PromptStatus.OK)
+                    {
+                        currentHeight = heightResult.Value;
+                        if (segmentIndex == 1)
+                        {
+                            settings.DefaultWallHeight = currentHeight;
+                        }
+                    }
+
+                    segments.Add((currentPt, ptEnd, segLen, currentHeight));
+                    currentPt = ptEnd;
+                    segmentIndex++;
+                }
+            }
+
+            if (segments.Count == 0)
+            {
                 return ObjectId.Null;
             }
 
+            double totalLength = segments.Sum(s => s.Length);
+
+            var planPolyline = new Polyline();
+            planPolyline.AddVertexAt(0, new Autodesk.AutoCAD.Geometry.Point2d(segments[0].Start.X, segments[0].Start.Y), 0, 0, 0);
+            for (int i = 0; i < segments.Count; i++)
+            {
+                planPolyline.AddVertexAt(i + 1, new Autodesk.AutoCAD.Geometry.Point2d(segments[i].End.X, segments[i].End.Y), 0, 0, 0);
+            }
+
             var tempOpenings = new List<(double st, double w, double sill, double oh)>();
-            var dir = (ptEnd - ptStart).GetNormal();
             
             int openIndex = 1;
             while (true)
@@ -171,43 +210,49 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     {
                         var ptOp2 = ppoOp2Res.Value;
 
-                        var offset1 = (ptOp1 - ptStart).DotProduct(dir);
-                        var offset2 = (ptOp2 - ptStart).DotProduct(dir);
-
-                        double minProj = Math.Min(offset1, offset2);
-                        double maxProj = Math.Max(offset1, offset2);
-
-                        double startOffset = Math.Max(0, minProj);
-                        double endOffset = Math.Min(length, maxProj);
-                        double openW = endOffset - startOffset;
-
-                        if (openW > 10)
+                        using var curve = planPolyline.Clone() as Curve;
+                        if (curve != null)
                         {
-                            double sill = 0;
-                            double openH = 2200;
+                            var closest1 = curve.GetClosestPointTo(ptOp1, false);
+                            var closest2 = curve.GetClosestPointTo(ptOp2, false);
                             
-                            var pdoSill = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập khoảng cách chân sàn (Sill): ") 
-                            { DefaultValue = 0, UseDefaultValue = true };
-                            var rSill = ed.GetDouble(pdoSill);
-                            if (rSill.Status == PromptStatus.Cancel) break;
-                            if (rSill.Status == PromptStatus.OK) sill = rSill.Value;
-                            
-                            var pdoHeight = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập chiều cao lỗ mở H: ") 
-                            { DefaultValue = 2200, UseDefaultValue = true };
-                            var rHeight = ed.GetDouble(pdoHeight);
-                            if (rHeight.Status == PromptStatus.Cancel) break;
-                            if (rHeight.Status == PromptStatus.OK) openH = rHeight.Value;
+                            double dist1 = curve.GetDistAtPoint(closest1);
+                            double dist2 = curve.GetDistAtPoint(closest2);
 
-                            tempOpenings.Add((startOffset, openW, sill, openH));
-                            openIndex++;
-                        }
-                        else
-                        {
-                            ed.WriteMessage("\nKích thước lỗ mở quá bé (< 10), vui lòng chọn lại!");
+                            double startOffset = Math.Min(dist1, dist2);
+                            double endOffset = Math.Max(dist1, dist2);
+                            double openW = endOffset - startOffset;
+
+                            if (openW > 10)
+                            {
+                                double sill = 0;
+                                double openH = 2200;
+                                
+                                var pdoSill = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập khoảng cách chân sàn (Sill): ") 
+                                { DefaultValue = 0, UseDefaultValue = true };
+                                var rSill = ed.GetDouble(pdoSill);
+                                if (rSill.Status == PromptStatus.Cancel) break;
+                                if (rSill.Status == PromptStatus.OK) sill = rSill.Value;
+                                
+                                var pdoHeight = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập chiều cao lỗ mở H: ") 
+                                { DefaultValue = 2200, UseDefaultValue = true };
+                                var rHeight = ed.GetDouble(pdoHeight);
+                                if (rHeight.Status == PromptStatus.Cancel) break;
+                                if (rHeight.Status == PromptStatus.OK) openH = rHeight.Value;
+
+                                tempOpenings.Add((startOffset, openW, sill, openH));
+                                openIndex++;
+                            }
+                            else
+                            {
+                                ed.WriteMessage("\nKích thước lỗ mở quá bé (< 10), vui lòng chọn lại!");
+                            }
                         }
                     }
                 }
             }
+            
+            planPolyline.Dispose();
 
             var ppoIns = new PromptPointOptions("\nChọn vị trí click gốc trục tọa độ để Drop xuất Shopdrawing mặt đứng tường:");
             var insRes = ed.GetPoint(ppoIns);
@@ -234,9 +279,19 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
                 var polyline = new Polyline();
                 polyline.AddVertexAt(0, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X, insertPt.Y), 0, 0, 0);
-                polyline.AddVertexAt(1, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X + length, insertPt.Y), 0, 0, 0);
-                polyline.AddVertexAt(2, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X + length, insertPt.Y + h), 0, 0, 0);
-                polyline.AddVertexAt(3, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X, insertPt.Y + h), 0, 0, 0);
+                polyline.AddVertexAt(1, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X + totalLength, insertPt.Y), 0, 0, 0);
+
+                int vertexIdx = 2;
+                double currentRunningLength = totalLength;
+                
+                for (int i = segments.Count - 1; i >= 0; i--)
+                {
+                    var seg = segments[i];
+                    polyline.AddVertexAt(vertexIdx++, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X + currentRunningLength, insertPt.Y + seg.Height), 0, 0, 0);
+                    currentRunningLength -= seg.Length;
+                    polyline.AddVertexAt(vertexIdx++, new Autodesk.AutoCAD.Geometry.Point2d(insertPt.X + currentRunningLength, insertPt.Y + seg.Height), 0, 0, 0);
+                }
+
                 polyline.Closed = true;
 
                 boundaryId = ms.AppendEntity(polyline);

@@ -1,6 +1,6 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
-## [2026-04-22] - v0.2.38 Vietnamese Font Encoding Fix 🔤
+## [2026-04-22] - v0.2.39 Vietnamese Font Encoding Fix 🔤
 ### Fixed
 - **Font Mojibake – String Literals**: Sửa triệt để lỗi hiển thị ký tự lạ (mojibake) trong toàn bộ string literal tiếng Việt bị double-encode trong mã nguồn. Áp dụng phương pháp double-encode detection để thay thế chính xác tại byte-level, không làm ảnh hưởng các chuỗi đúng sẵn có.
   - `QuickPlanWallCommandService.cs` — 16 chuỗi thông báo AutoCAD command line (`WriteMessage`) cho lệnh `SD_WALL_PLAN_QUICK` (Lỗi, Tấm lẻ, Tìm khớp, Trần/Tường, v.v.)

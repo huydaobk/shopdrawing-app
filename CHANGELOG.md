@@ -1,5 +1,11 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-22] - v0.2.44 Elevation Openings UX Polish 🛠️
+### Fixed
+- **Elevation Opening Keywords**: Đồng bộ từ khóa chọn loại lỗ mở mặt đứng `[cửa Đi(D)/cửa Sổ(S)]` giống với mặt bằng, tránh lỗi nhận nhầm thành Cửa đi do sai cú pháp.
+### Changed
+- **Elevation UX**: Bổ sung hiển thị `(Rộng xxx)` vào các câu nhắc nhập liệu chiều cao và Sill để người dùng dễ theo dõi.
+- **Elevation Base Point**: Đổi gốc tọa độ đo khoảng cách (Base Point) sang góc bên phải (`Điểm 2`), hỗ trợ người dùng thao tác vuốt chuột chữ U (Trái -> Phải -> Lên -> Xuống) mượt mà hơn.
 ## [2026-04-22] - v0.2.43 Elevation Openings & Grouping 🚀
 ### Changed
 - **Elevation Opening UX**: Nâng cấp tính năng vẽ lỗ mở trên mặt đứng. Thay thế việc chọn polyline vẽ sẵn bằng thao tác pick 2 điểm trực tiếp để xác định chiều rộng, đồng thời nhập khoảng cách chiều cao và cao đáy (Sill height) tương tự như mặt bằng. Tự động set Sill = 0 cho Cửa Đi.

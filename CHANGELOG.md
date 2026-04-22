@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-22] - v0.2.42 Automated CAD Grouping 📦
+### Added
+- **AutoCAD CAD Grouping**: Tự động gộp tất cả các đối tượng sinh ra từ lệnh vẽ "Tạo tường mặt bằng" (`SD_WALL_PLAN_QUICK`) bao gồm các đoạn line trên mặt bằng, text Ký hiệu/Spec của tường và toàn bộ mặt dựng 3D (panel, hatch, đường nối, tag) vào một AutoCAD `Group` duy nhất.
+- Group được đặt tên ẩn tự động để tránh trùng lặp. Tính năng này giúp thao tác chọn, di chuyển toàn bộ mảng tường trên CAD trở nên dễ dàng và đồng bộ thông qua `PICKSTYLE` (Ctrl+Shift+A).
+
 ## [2026-04-22] - v0.2.41 Dynamic Openings Separation 🚪
 ### Changed
 - **Opening Type UX**: Bỏ hoàn toàn combobox "Loại lỗ" chung trên UI Palette để tách triệt để cơ chế gán Cửa đi/Cửa sổ.

@@ -400,18 +400,7 @@ namespace ShopDrawing.Plugin.UI
             stackCableDrop.Children.Add(txtCableDrop);
             settingsSection.Children.Add(RegisterCeilingModeElement(stackCableDrop));
 
-            var chkOpening = new CheckBox
-            {
-                Content = "Cắt lỗ (Openings)?",
-                IsChecked = initialSettings.EnableOpeningCut,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = SdPaletteStyles.TextPrimaryBrush,
-                FontFamily = SdPaletteStyles.Font,
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-            chkOpening.Checked += (_, _) => _paletteFacade.SetOpeningCut(true);
-            chkOpening.Unchecked += (_, _) => _paletteFacade.SetOpeningCut(false);
-            settingsSection.Children.Add(chkOpening);
+
 
             ApplyDrawingModeUi();
             return SdPaletteStyles.CreateSectionBorder(settingsSection);

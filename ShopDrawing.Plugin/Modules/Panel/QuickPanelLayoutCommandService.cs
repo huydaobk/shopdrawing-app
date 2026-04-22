@@ -50,9 +50,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     return;
                 }
 
-                var openings = settings.EnableOpeningCut
-                    ? PromptOpenings(doc, ed, scope)
-                    : new List<Opening>();
+                var openings = PromptOpenings(doc, ed, scope, boundaryId);
 
                 var layout = CalculateLayout(doc, ed, layoutEngine, request, boundaryId, openings);
                 if (layout == null)
@@ -192,24 +190,108 @@ namespace ShopDrawing.Plugin.Modules.Panel
             return result.Status == PromptStatus.OK ? result.ObjectId : ObjectId.Null;
         }
 
-        private static List<Opening> PromptOpenings(Document doc, Editor ed, PanelLayoutScope scope)
+        private static List<Opening> PromptOpenings(Document doc, Editor ed, PanelLayoutScope scope, ObjectId boundaryId)
         {
             var openings = new List<Opening>();
 
-            if (scope == PanelLayoutScope.Wall)
-            {
-                ed.WriteMessage("\n--- BƯỚC 1: CỬA ĐI ---");
-                ed.WriteMessage("\nClick các Polyline thuộc CỬA ĐI (Chỉ có viền trên & 2 bên, Enter hoặc Chuột phải để bỏ qua):");
-                PromptSingleOpeningSelectionPass(doc, ed, openings, "Cửa đi");
-
-                ed.WriteMessage("\n--- BƯỚC 2: CỬA SỔ / LKT ---");
-                ed.WriteMessage("\nClick các Polyline thuộc CỬA SỔ / Lỗ Kỹ thuật (Đủ 4 viền, Enter hoặc Chuột phải để kết thúc):");
-                PromptSingleOpeningSelectionPass(doc, ed, openings, "Cửa sổ/LKT");
-            }
-            else
+            if (scope != PanelLayoutScope.Wall)
             {
                 ed.WriteMessage($"\nClick các Polyline {GetOpeningLabel(scope)} (Enter để bỏ qua):");
                 PromptSingleOpeningSelectionPass(doc, ed, openings, "Cửa sổ/LKT");
+                return openings;
+            }
+
+            double baseElevationY = 0;
+            using (var tr = doc.Database.TransactionManager.StartTransaction())
+            {
+                if (tr.GetObject(boundaryId, OpenMode.ForRead) is Polyline boundaryPolyline)
+                {
+                    baseElevationY = boundaryPolyline.GeometricExtents.MinPoint.Y;
+                }
+                tr.Commit();
+            }
+
+            int openIndex = 1;
+            while (true)
+            {
+                var ppo1 = new PromptPointOptions($"\nLỗ mở #{openIndex}: Chọn điểm thứ nhất lọt lòng lỗ mở (Enter/Chuột phải để bỏ qua/kết thúc): ")
+                {
+                    AllowNone = true
+                };
+                var pt1Res = ed.GetPoint(ppo1);
+                if (pt1Res.Status == PromptStatus.None || pt1Res.Status == PromptStatus.Cancel) break;
+
+                if (pt1Res.Status == PromptStatus.OK)
+                {
+                    var pt1 = pt1Res.Value;
+                    var ppo2 = new PromptPointOptions($"\nLỗ mở #{openIndex}: Chọn điểm thứ hai lọt lòng lỗ mở: ")
+                    {
+                        UseBasePoint = true,
+                        BasePoint = pt1,
+                        UseDashedLine = true
+                    };
+                    var pt2Res = ed.GetPoint(ppo2);
+                    if (pt2Res.Status != PromptStatus.OK) break;
+                    var pt2 = pt2Res.Value;
+
+                    double width = Math.Abs(pt2.X - pt1.X);
+                    if (width <= 0)
+                    {
+                        ed.WriteMessage("\nChiều rộng phải > 0! Thử lại.");
+                        continue;
+                    }
+
+                    var pko = new PromptKeywordOptions($"\nLỗ mở #{openIndex}: Loại lỗ mở [Cuadi/Cuaso]? ")
+                    {
+                        AllowNone = true
+                    };
+                    pko.Keywords.Add("Cuadi");
+                    pko.Keywords.Add("Cuaso");
+                    pko.Keywords.Default = "Cuadi";
+                    
+                    var kwRes = ed.GetKeywords(pko);
+                    if (kwRes.Status == PromptStatus.Cancel) break;
+                    string openingType = (kwRes.Status == PromptStatus.OK) ? kwRes.StringResult : "Cuadi";
+                    string displayType = openingType == "Cuadi" ? "Cửa đi" : "Cửa sổ/LKT";
+
+                    var pdoHeight = new PromptDistanceOptions($"\nLỗ mở #{openIndex} ({displayType}): Nhập hoặc pick 2 điểm xác định chiều cao lỗ mở: ")
+                    {
+                        AllowZero = false,
+                        AllowNegative = false,
+                        UseBasePoint = true,
+                        BasePoint = pt1
+                    };
+                    var heightRes = ed.GetDistance(pdoHeight);
+                    if (heightRes.Status != PromptStatus.OK) break;
+                    double height = heightRes.Value;
+
+                    double sillHeight = 0;
+                    if (openingType == "Cuaso")
+                    {
+                        var pdoSill = new PromptDistanceOptions($"\nLỗ mở #{openIndex} ({displayType}): Nhập hoặc pick 2 điểm xác định cao đáy lỗ mở (Sill height): ")
+                        {
+                            AllowZero = true,
+                            AllowNegative = false,
+                            UseBasePoint = true,
+                            BasePoint = pt1
+                        };
+                        var sillRes = ed.GetDistance(pdoSill);
+                        if (sillRes.Status != PromptStatus.OK) break;
+                        sillHeight = sillRes.Value;
+                    }
+
+                    double minX = Math.Min(pt1.X, pt2.X);
+                    openings.Add(new Opening
+                    {
+                        X = minX,
+                        Y = baseElevationY + sillHeight,
+                        Width = width,
+                        Height = height,
+                        OpeningType = displayType
+                    });
+
+                    openIndex++;
+                }
             }
 
             return openings;
@@ -603,11 +685,19 @@ namespace ShopDrawing.Plugin.Modules.Panel
             ObjectId boundaryId)
         {
             using var tr = doc.Database.TransactionManager.StartTransaction();
-            blockManager.DrawAllPanels(layout.AllPanels, tr);
+            
+            var allIdsToGroup = new ObjectIdCollection();
+            
+            var panelIds = blockManager.DrawAllPanels(layout.AllPanels, tr);
+            foreach (var id in panelIds)
+            {
+                allIdsToGroup.Add(id);
+            }
+
             if (scope == PanelLayoutScope.Ceiling
                 && tr.GetObject(boundaryId, OpenMode.ForRead) is Polyline boundaryPolyline)
             {
-                blockManager.DrawCeilingHardware(
+                var hardwareIds = blockManager.DrawCeilingHardware(
                     layout.AllPanels,
                     boundaryPolyline,
                     request.CeilingSuspensionDirection,
@@ -617,11 +707,25 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     request.CeilingBayHasMushroomFlags,
                     request.CeilingMushroomDivisionCount,
                     tr);
+                foreach (var id in hardwareIds)
+                {
+                    allIdsToGroup.Add(id);
+                }
             }
 
             if (openings.Count > 0)
             {
-                blockManager.DrawOpenings(openings, tr);
+                var openingIds = blockManager.DrawOpenings(openings, tr);
+                foreach (var id in openingIds)
+                {
+                    allIdsToGroup.Add(id);
+                }
+            }
+
+            if (allIdsToGroup.Count > 0)
+            {
+                string groupName = $"{request.WallCode}_{Guid.NewGuid():N}";
+                blockManager.EntityIdsToGroup(allIdsToGroup, groupName, tr);
             }
 
             tr.Commit();

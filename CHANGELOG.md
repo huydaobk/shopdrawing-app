@@ -1,5 +1,12 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-22] - v0.2.43 Elevation Openings & Grouping 🚀
+### Changed
+- **Elevation Opening UX**: Nâng cấp tính năng vẽ lỗ mở trên mặt đứng. Thay thế việc chọn polyline vẽ sẵn bằng thao tác pick 2 điểm trực tiếp để xác định chiều rộng, đồng thời nhập khoảng cách chiều cao và cao đáy (Sill height) tương tự như mặt bằng. Tự động set Sill = 0 cho Cửa Đi.
+- **Palette UI Cleanup**: Loại bỏ hoàn toàn checkbox "Cắt lỗ (Openings)?" trên UI Palette để giảm bớt sự rườm rà. Lệnh `SD_WALL_ELEVATION` giờ đây luôn hỏi cắt lỗ, nhưng người dùng có thể dễ dàng nhấn `Enter` hoặc chuột phải để bỏ qua.
+### Added
+- **Elevation CAD Grouping**: Toàn bộ kết quả vẽ của một mặt đứng (tấm vách, lỗ mở, hardware trần) giờ đây được tự động nhóm lại thành một AutoCAD `Group` duy nhất sau khi lệnh `SD_WALL_ELEVATION` hoàn tất. Việc này giúp thao tác chọn và di chuyển toàn bộ mảng vách trên mặt đứng dễ dàng hơn rất nhiều.
+
 ## [2026-04-22] - v0.2.42 Automated CAD Grouping 📦
 ### Added
 - **AutoCAD CAD Grouping**: Tự động gộp tất cả các đối tượng sinh ra từ lệnh vẽ "Tạo tường mặt bằng" (`SD_WALL_PLAN_QUICK`) bao gồm các đoạn line trên mặt bằng, text Ký hiệu/Spec của tường và toàn bộ mặt dựng 3D (panel, hatch, đường nối, tag) vào một AutoCAD `Group` duy nhất.

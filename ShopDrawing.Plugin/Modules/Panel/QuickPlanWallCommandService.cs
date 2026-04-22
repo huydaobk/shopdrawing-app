@@ -39,7 +39,8 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 ed.WriteMessage(
                     $"\n[{GetCommandName(scope)}] {GetScopeLabel(scope)}: {request.WallCode} | {request.PanelWidthMm:F0}mm | {request.ThicknessMm}mm | {request.Direction}");
 
-                var boundaryId = PromptPlanInputs(doc, ed, settings, out var openings);
+                var promptResult = PromptPlanInputs(doc, ed, settings, request, out var openings);
+                var boundaryId = promptResult.BoundaryId;
                 if (boundaryId == ObjectId.Null)
                 {
                     return;
@@ -55,7 +56,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 ProcessWasteMatching(ed, settings, wasteRepo, request, layout);
                 RecordStepWaste(ed, settings, wasteRepo, request, layout);
                 RecordOpeningWaste(ed, settings, wasteRepo, request, layout);
-                DrawLayout(doc, ed, blockManager, layout, openings, request, scope, settings, boundaryId);
+                DrawLayout(doc, ed, blockManager, layout, openings, request, scope, settings, boundaryId, promptResult.PlanEntityIds);
 
                 bomManager.Refresh();
                 if (scope == PanelLayoutScope.Wall)
@@ -100,13 +101,13 @@ namespace ShopDrawing.Plugin.Modules.Panel
             };
         }
 
-        private static ObjectId PromptPlanInputs(Document doc, Editor ed, ShopDrawingRuntimeSettings settings, out List<Opening> openings)
+        private static (ObjectId BoundaryId, List<ObjectId> PlanEntityIds) PromptPlanInputs(Document doc, Editor ed, ShopDrawingRuntimeSettings settings, LayoutRequest request, out List<Opening> openings)
         {
             openings = new List<Opening>();
 
             var ppo1 = new PromptPointOptions("\nChọn điểm bắt đầu dải tường trên mặt bằng: ");
             var pt1Res = ed.GetPoint(ppo1);
-            if (pt1Res.Status != PromptStatus.OK) return ObjectId.Null;
+            if (pt1Res.Status != PromptStatus.OK) return (ObjectId.Null, new List<ObjectId>());
             var ptStart = pt1Res.Value;
             var currentPt = ptStart;
 
@@ -166,7 +167,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             if (segments.Count == 0)
             {
-                return ObjectId.Null;
+                return (ObjectId.Null, new List<ObjectId>());
             }
 
             double totalLength = segments.Sum(s => s.Length);
@@ -276,7 +277,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
             var ppoIns = new PromptPointOptions("\nChọn vị trí click gốc trục tọa độ để Drop xuất Shopdrawing mặt đứng tường:");
             var insRes = ed.GetPoint(ppoIns);
-            if (insRes.Status != PromptStatus.OK) return ObjectId.Null;
+            if (insRes.Status != PromptStatus.OK) return (ObjectId.Null, new List<ObjectId>());
             var insertPt = insRes.Value;
             
             foreach(var op in tempOpenings)
@@ -291,6 +292,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 });
             }
 
+            var planEntityIds = new List<ObjectId>();
             ObjectId boundaryId = ObjectId.Null;
             using (var tr = doc.Database.TransactionManager.StartTransaction())
             {
@@ -314,13 +316,38 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
                 polyline.Closed = true;
 
+
+                // Ve duong line tren mat bang
+                var drawnPlanPoly = new Polyline();
+                drawnPlanPoly.AddVertexAt(0, new Autodesk.AutoCAD.Geometry.Point2d(segments[0].Start.X, segments[0].Start.Y), 0, 0, 0);
+                for (int j = 0; j < segments.Count; j++)
+                {
+                    drawnPlanPoly.AddVertexAt(j + 1, new Autodesk.AutoCAD.Geometry.Point2d(segments[j].End.X, segments[j].End.Y), 0, 0, 0);
+                }
+                drawnPlanPoly.Layer = "0";
+                drawnPlanPoly.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 3); // Green
+
+                planEntityIds.Add(ms.AppendEntity(drawnPlanPoly));
+                tr.AddNewlyCreatedDBObject(drawnPlanPoly, true);
+
+                // Text tren mat bang
+                var arialStyleId = BlockManager.EnsureArialStyle(doc.Database, tr);
+                var midPt = drawnPlanPoly.GetPointAtDist(drawnPlanPoly.Length / 2.0);
+                var txt = new DBText();
+                txt.TextStyleId = arialStyleId;
+                txt.TextString = $"{request.WallCode} - {request.Spec}";
+                txt.Position = new Autodesk.AutoCAD.Geometry.Point3d(midPt.X, midPt.Y + 100, 0);
+                txt.Height = 150;
+                txt.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 3);
+                planEntityIds.Add(ms.AppendEntity(txt));
+                tr.AddNewlyCreatedDBObject(txt, true);
                 boundaryId = ms.AppendEntity(polyline);
                 tr.AddNewlyCreatedDBObject(polyline, true);
                 
                 tr.Commit();
             }
 
-            return boundaryId;
+            return (boundaryId, planEntityIds);
         }
 
         private static LayoutResult? CalculateLayout(
@@ -671,14 +698,17 @@ namespace ShopDrawing.Plugin.Modules.Panel
             LayoutRequest request,
             PanelLayoutScope scope,
             ShopDrawingRuntimeSettings settings,
-            ObjectId boundaryId)
+            ObjectId boundaryId,
+            List<ObjectId> planEntityIds)
         {
             using var tr = doc.Database.TransactionManager.StartTransaction();
-            blockManager.DrawAllPanels(layout.AllPanels, tr);
+            var allDrawnIds = new ObjectIdCollection();
+            foreach(var id in planEntityIds) allDrawnIds.Add(id);
+            allDrawnIds.JoinWith(blockManager.DrawAllPanels(layout.AllPanels, tr));
             if (scope == PanelLayoutScope.Ceiling
                 && tr.GetObject(boundaryId, OpenMode.ForRead) is Polyline boundaryPolyline)
             {
-                blockManager.DrawCeilingHardware(
+                allDrawnIds.JoinWith(blockManager.DrawCeilingHardware(
                     layout.AllPanels,
                     boundaryPolyline,
                     request.CeilingSuspensionDirection,
@@ -687,14 +717,16 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     request.CeilingBaySpansMm,
                     request.CeilingBayHasMushroomFlags,
                     request.CeilingMushroomDivisionCount,
-                    tr);
+                    tr));
             }
 
             if (openings.Count > 0)
             {
-                blockManager.DrawOpenings(openings, tr);
+                allDrawnIds.JoinWith(blockManager.DrawOpenings(openings, tr));
             }
 
+            // Nhom mat bang va mat dung
+            blockManager.EntityIdsToGroup(allDrawnIds, request.WallCode, tr);
             tr.Commit();
             ed.WriteMessage($"\nTạo xong {layout.AllPanels.Count} tấm cho {GetScopeLabel(scope).ToLowerInvariant()} [{request.WallCode}].");
             if (openings.Count > 0)

@@ -178,7 +178,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 planPolyline.AddVertexAt(i + 1, new Autodesk.AutoCAD.Geometry.Point2d(segments[i].End.X, segments[i].End.Y), 0, 0, 0);
             }
 
-            var tempOpenings = new List<(double st, double w, double sill, double oh)>();
+            var tempOpenings = new List<(double st, double w, double sill, double oh, string type)>();
             
             int openIndex = 1;
             while (true)
@@ -225,14 +225,34 @@ namespace ShopDrawing.Plugin.Modules.Panel
 
                             if (openW > 10)
                             {
+                                string openingType = "Cửa sổ/LKT";
                                 double sill = 0;
                                 double openH = 2200;
                                 
-                                var pdoSill = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập khoảng cách chân sàn (Sill): ") 
-                                { DefaultValue = 0, UseDefaultValue = true };
-                                var rSill = ed.GetDouble(pdoSill);
-                                if (rSill.Status == PromptStatus.Cancel) break;
-                                if (rSill.Status == PromptStatus.OK) sill = rSill.Value;
+                                var pkoType = new PromptKeywordOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}): Chọn loại lỗ mở [cửa Đi(D)/cửa Sổ(S)] <S>: ")
+                                {
+                                    AllowNone = true
+                                };
+                                pkoType.Keywords.Add("D");
+                                pkoType.Keywords.Add("S");
+                                pkoType.Keywords.Default = "S";
+                                
+                                var pkoRes = ed.GetKeywords(pkoType);
+                                if (pkoRes.Status == PromptStatus.Cancel) break;
+                                
+                                if (pkoRes.StringResult == "D")
+                                {
+                                    openingType = "Cửa đi";
+                                }
+                                
+                                if (openingType == "Cửa sổ/LKT")
+                                {
+                                    var pdoSill = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập khoảng cách chân sàn (Sill): ") 
+                                    { DefaultValue = 0, UseDefaultValue = true };
+                                    var rSill = ed.GetDouble(pdoSill);
+                                    if (rSill.Status == PromptStatus.Cancel) break;
+                                    if (rSill.Status == PromptStatus.OK) sill = rSill.Value;
+                                }
                                 
                                 var pdoHeight = new PromptDoubleOptions($"\nLỗ mở #{openIndex} (Rộng {openW:F0}). Nhập chiều cao lỗ mở H: ") 
                                 { DefaultValue = 2200, UseDefaultValue = true };
@@ -240,7 +260,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                                 if (rHeight.Status == PromptStatus.Cancel) break;
                                 if (rHeight.Status == PromptStatus.OK) openH = rHeight.Value;
 
-                                tempOpenings.Add((startOffset, openW, sill, openH));
+                                tempOpenings.Add((startOffset, openW, sill, openH, openingType));
                                 openIndex++;
                             }
                             else
@@ -267,7 +287,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     Y = insertPt.Y + op.sill,
                     Width = op.w,
                     Height = op.oh,
-                    OpeningType = settings.DefaultOpeningType
+                    OpeningType = op.type
                 });
             }
 

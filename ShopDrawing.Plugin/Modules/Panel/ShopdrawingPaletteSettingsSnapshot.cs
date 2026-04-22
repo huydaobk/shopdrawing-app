@@ -1,4 +1,4 @@
-﻿using ShopDrawing.Plugin.Core;
+using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Models;
 
 namespace ShopDrawing.Plugin.Modules.Panel
@@ -10,7 +10,6 @@ namespace ShopDrawing.Plugin.Modules.Panel
         string DefaultWallStartPanelTreatment,
         string DefaultWallEndPanelTreatment,
         bool DefaultWallBottomEdgeEnabled,
-        string DefaultOpeningType,
         int DefaultThickness,
         double DefaultPanelWidth,
         double DefaultTextHeightMm,

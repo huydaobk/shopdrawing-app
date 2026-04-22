@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -51,7 +51,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 }
 
                 var openings = settings.EnableOpeningCut
-                    ? PromptOpenings(doc, ed, scope, settings)
+                    ? PromptOpenings(doc, ed, scope)
                     : new List<Opening>();
 
                 var layout = CalculateLayout(doc, ed, layoutEngine, request, boundaryId, openings);
@@ -192,11 +192,31 @@ namespace ShopDrawing.Plugin.Modules.Panel
             return result.Status == PromptStatus.OK ? result.ObjectId : ObjectId.Null;
         }
 
-        private static List<Opening> PromptOpenings(Document doc, Editor ed, PanelLayoutScope scope, ShopDrawingRuntimeSettings settings)
+        private static List<Opening> PromptOpenings(Document doc, Editor ed, PanelLayoutScope scope)
         {
             var openings = new List<Opening>();
-            ed.WriteMessage($"\nClick các Polyline {GetOpeningLabel(scope)} (Enter để bỏ qua):");
 
+            if (scope == PanelLayoutScope.Wall)
+            {
+                ed.WriteMessage("\n--- BƯỚC 1: CỬA ĐI ---");
+                ed.WriteMessage("\nClick các Polyline thuộc CỬA ĐI (Chỉ có viền trên & 2 bên, Enter hoặc Chuột phải để bỏ qua):");
+                PromptSingleOpeningSelectionPass(doc, ed, openings, "Cửa đi");
+
+                ed.WriteMessage("\n--- BƯỚC 2: CỬA SỔ / LKT ---");
+                ed.WriteMessage("\nClick các Polyline thuộc CỬA SỔ / Lỗ Kỹ thuật (Đủ 4 viền, Enter hoặc Chuột phải để kết thúc):");
+                PromptSingleOpeningSelectionPass(doc, ed, openings, "Cửa sổ/LKT");
+            }
+            else
+            {
+                ed.WriteMessage($"\nClick các Polyline {GetOpeningLabel(scope)} (Enter để bỏ qua):");
+                PromptSingleOpeningSelectionPass(doc, ed, openings, "Cửa sổ/LKT");
+            }
+
+            return openings;
+        }
+
+        private static void PromptSingleOpeningSelectionPass(Document doc, Editor ed, List<Opening> openings, string openingType)
+        {
             var selectionOptions = new PromptSelectionOptions
             {
                 MessageForAdding = "\n   Chọn vùng cắt:",
@@ -207,7 +227,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
             var selection = ed.GetSelection(selectionOptions, filter);
             if (selection.Status != PromptStatus.OK)
             {
-                return openings;
+                return;
             }
 
             using var tr = doc.Database.TransactionManager.StartTransaction();
@@ -225,12 +245,11 @@ namespace ShopDrawing.Plugin.Modules.Panel
                     Y = ext.MinPoint.Y,
                     Width = ext.MaxPoint.X - ext.MinPoint.X,
                     Height = ext.MaxPoint.Y - ext.MinPoint.Y,
-                    OpeningType = scope == PanelLayoutScope.Wall ? settings.DefaultOpeningType : "Cửa sổ/LKT"
+                    OpeningType = openingType
                 });
             }
 
             tr.Commit();
-            return openings;
         }
 
         private static LayoutResult? CalculateLayout(

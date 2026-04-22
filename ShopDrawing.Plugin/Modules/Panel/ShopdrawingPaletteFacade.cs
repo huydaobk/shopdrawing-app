@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using ShopDrawing.Plugin.Core;
@@ -75,12 +75,6 @@ namespace ShopDrawing.Plugin.Modules.Panel
         {
             get => Settings.DefaultWallBottomEdgeEnabled;
             set => Settings.DefaultWallBottomEdgeEnabled = value;
-        }
-
-        public string DefaultOpeningType
-        {
-            get => Settings.DefaultOpeningType;
-            set => Settings.DefaultOpeningType = value;
         }
 
         public string DefaultAnnotationScales
@@ -246,14 +240,6 @@ namespace ShopDrawing.Plugin.Modules.Panel
             Settings.DefaultWallBottomEdgeEnabled = enabled;
         }
 
-        public void SetOpeningType(string openingType)
-        {
-            if (!string.IsNullOrWhiteSpace(openingType))
-            {
-                Settings.DefaultOpeningType = openingType.Trim();
-            }
-        }
-
         public void SetCurrentDetailType(DetailType detailType)
         {
             Settings.CurrentDetailType = detailType;
@@ -274,7 +260,6 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 Settings.DefaultWallStartPanelTreatment,
                 Settings.DefaultWallEndPanelTreatment,
                 Settings.DefaultWallBottomEdgeEnabled,
-                Settings.DefaultOpeningType,
                 Settings.DefaultThickness,
                 Settings.DefaultPanelWidth,
                 Settings.DefaultTextHeightMm,

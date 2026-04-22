@@ -1,5 +1,11 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-22] - v0.2.41 Dynamic Openings Separation 🚪
+### Changed
+- **Opening Type UX**: Bỏ hoàn toàn combobox "Loại lỗ" chung trên UI Palette để tách triệt để cơ chế gán Cửa đi/Cửa sổ.
+- **SD_WALL_PLAN_QUICK**: Tích hợp keyword prompt trực tiếp chọn loại lỗ mở `[cửa Đi(D)/cửa Sổ(S)]` vào trong luồng bắt điểm. Tự động bỏ qua câu hỏi Sill khi Cửa đi được lựa chọn (cho Sill = 0).
+- **SD_PANEL_LAYOUT**: Tách làm 2 bước: Quét cửa đi (bước 1) và Quét cửa sổ (bước 2) để gán type tùy biến cho hàng loạt đối tượng hiệu quả hơn.
+
 ## [2026-04-22] - v0.2.40 Quick Plan Wall Upgrade & Visual Fixes 🚀
 ### Changed
 - **Quick Plan Wall**: Nâng cấp tính năng `SD_WALL_PLAN_QUICK` hỗ trợ chế độ pick dải nhiều đoạn liên tục. Cho phép nhập chiều cao riêng cho từng đoạn. Lỗ mở được ánh xạ chuẩn xác xuống mặt bằng polyline bằng thuật toán hình học đường cong (`GetClosestPointTo` / `GetDistAtPoint`).

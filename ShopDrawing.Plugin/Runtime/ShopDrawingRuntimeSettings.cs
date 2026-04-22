@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Models;
@@ -59,7 +59,6 @@ namespace ShopDrawing.Plugin.Runtime
 
         public bool DefaultWallBottomEdgeEnabled { get; set; } = true;
 
-        public string DefaultOpeningType { get; set; } = "Cửa sổ/LKT";
 
         public event Action<string>? AnnotationScaleChanged;
 

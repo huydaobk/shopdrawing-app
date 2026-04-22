@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -241,25 +241,6 @@ namespace ShopDrawing.Plugin.UI
             chkBottomEdge.Unchecked += (_, _) => _paletteFacade.SetWallBottomEdgeEnabled(false);
             settingsSection.Children.Add(RegisterWallModeElement(chkBottomEdge));
 
-            var stackOpeningType = CreateSettingRow("Loại lỗ:", 80);
-            var cboOpeningType = new ComboBox { Width = 120 };
-            cboOpeningType.Items.Add("Cửa đi");
-            cboOpeningType.Items.Add("Cửa sổ/LKT");
-            cboOpeningType.SelectedItem = initialSettings.DefaultOpeningType;
-            if (cboOpeningType.SelectedItem == null)
-            {
-                cboOpeningType.SelectedIndex = 1;
-            }
-
-            cboOpeningType.SelectionChanged += (_, _) =>
-            {
-                if (cboOpeningType.SelectedItem is string openingType)
-                {
-                    _paletteFacade.SetOpeningType(openingType);
-                }
-            };
-            stackOpeningType.Children.Add(cboOpeningType);
-            settingsSection.Children.Add(RegisterWallModeElement(stackOpeningType));
 
             var stackThick = CreateSettingRow("Độ dày (mm):", 80);
             _lblThickness = new TextBlock

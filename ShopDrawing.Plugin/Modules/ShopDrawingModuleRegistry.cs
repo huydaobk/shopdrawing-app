@@ -1,4 +1,4 @@
-using ShopDrawing.Plugin.Modules.Accessories;
+﻿using ShopDrawing.Plugin.Modules.Accessories;
 using ShopDrawing.Plugin.Modules.Export;
 using ShopDrawing.Plugin.Modules.Layout;
 using ShopDrawing.Plugin.Modules.Panel;

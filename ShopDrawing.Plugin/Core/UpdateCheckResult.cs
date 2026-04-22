@@ -1,4 +1,4 @@
-namespace ShopDrawing.Plugin.Core
+﻿namespace ShopDrawing.Plugin.Core
 {
     internal sealed class UpdateCheckResult
     {

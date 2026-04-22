@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Data;
 

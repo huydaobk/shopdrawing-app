@@ -1,4 +1,4 @@
-using ShopDrawing.Plugin.Core;
+﻿using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Runtime;
 using ShopDrawing.Plugin.UI;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;

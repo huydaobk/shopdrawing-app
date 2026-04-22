@@ -1,4 +1,4 @@
-namespace ShopDrawing.Plugin.Modules.Accessories
+﻿namespace ShopDrawing.Plugin.Modules.Accessories
 {
     internal enum WallCornerMarkerKind
     {

@@ -1,4 +1,4 @@
-using ShopDrawing.Plugin.Models;
+﻿using ShopDrawing.Plugin.Models;
 
 namespace ShopDrawing.Plugin.Modules.Accessories
 {

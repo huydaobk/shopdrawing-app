@@ -1,4 +1,4 @@
-namespace ShopDrawing.Plugin.Modules.Panel
+﻿namespace ShopDrawing.Plugin.Modules.Panel
 {
     internal enum PanelLayoutScope
     {

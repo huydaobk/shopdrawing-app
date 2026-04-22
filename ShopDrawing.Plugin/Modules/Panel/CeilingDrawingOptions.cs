@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ShopDrawing.Plugin.Core;
 
 namespace ShopDrawing.Plugin.Modules.Panel

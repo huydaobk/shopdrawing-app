@@ -1,4 +1,4 @@
-using ShopDrawing.Plugin.Modules;
+﻿using ShopDrawing.Plugin.Modules;
 using ShopDrawing.Plugin.Modules.Accessories;
 using ShopDrawing.Plugin.Runtime;
 

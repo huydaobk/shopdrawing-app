@@ -1,4 +1,4 @@
-using Autodesk.AutoCAD.ApplicationServices;
+﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Data;

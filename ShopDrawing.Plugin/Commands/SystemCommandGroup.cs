@@ -1,4 +1,4 @@
-using Autodesk.AutoCAD.Runtime;
+﻿using Autodesk.AutoCAD.Runtime;
 
 [assembly: CommandClass(typeof(ShopDrawing.Plugin.Commands.SystemCommandGroup))]
 

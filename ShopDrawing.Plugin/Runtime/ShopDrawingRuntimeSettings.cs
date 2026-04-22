@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Models;

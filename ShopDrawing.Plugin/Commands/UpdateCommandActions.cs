@@ -1,4 +1,4 @@
-using ShopDrawing.Plugin.Core;
+﻿using ShopDrawing.Plugin.Core;
 
 namespace ShopDrawing.Plugin.Commands
 {

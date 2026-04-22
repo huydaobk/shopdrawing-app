@@ -1478,6 +1478,7 @@ namespace ShopDrawing.Plugin.Core
 
             tr.AddNewlyCreatedDBObject(pl, true);
             ShopdrawingEntityMetadata.ApplyOpeningMetadata(ms.Database, tr, pl, o);
+            result.Add(pl.ObjectId);
 
 
             // 2. Hatch ANSI31 (chéo đơn) — cam, 40% trong suốt (dễ thấy hơn 80%)
@@ -1487,7 +1488,7 @@ namespace ShopDrawing.Plugin.Core
             ms.AppendEntity(hatch);
 
             tr.AddNewlyCreatedDBObject(hatch, true);
-
+            result.Add(hatch.ObjectId);
 
 
             hatch.SetHatchPattern(HatchPatternType.PreDefined, "ANSI31");
@@ -1575,6 +1576,7 @@ namespace ShopDrawing.Plugin.Core
                 ms.AppendEntity(txt);
 
                 tr.AddNewlyCreatedDBObject(txt, true);
+                result.Add(txt.ObjectId);
 
                 startY -= lineSpacing;
 

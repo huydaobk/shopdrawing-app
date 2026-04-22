@@ -344,6 +344,21 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 txt.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 3);
                 planEntityIds.Add(ms.AppendEntity(txt));
                 tr.AddNewlyCreatedDBObject(txt, true);
+
+                var linkLine = new Autodesk.AutoCAD.DatabaseServices.Line(midPt, insertPt);
+                linkLine.Layer = "Defpoints";
+                planEntityIds.Add(ms.AppendEntity(linkLine));
+                tr.AddNewlyCreatedDBObject(linkLine, true);
+
+                var defTxt = new DBText();
+                defTxt.TextStyleId = arialStyleId;
+                defTxt.TextString = $"{request.WallCode} - {request.Spec}";
+                defTxt.Position = new Autodesk.AutoCAD.Geometry.Point3d(insertPt.X, insertPt.Y - textHeight * 1.5, 0);
+                defTxt.Height = textHeight;
+                defTxt.Layer = "Defpoints";
+                planEntityIds.Add(ms.AppendEntity(defTxt));
+                tr.AddNewlyCreatedDBObject(defTxt, true);
+
                 boundaryId = ms.AppendEntity(polyline);
                 tr.AddNewlyCreatedDBObject(polyline, true);
                 

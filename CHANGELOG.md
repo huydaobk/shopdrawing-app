@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-22] - v0.2.40 Quick Plan Wall Upgrade & Visual Fixes 🚀
+### Changed
+- **Quick Plan Wall**: Nâng cấp tính năng `SD_WALL_PLAN_QUICK` hỗ trợ chế độ pick dải nhiều đoạn liên tục. Cho phép nhập chiều cao riêng cho từng đoạn. Lỗ mở được ánh xạ chuẩn xác xuống mặt bằng polyline bằng thuật toán hình học đường cong (`GetClosestPointTo` / `GetDistAtPoint`).
+- **Highlight Visual**: Loại bỏ `ConstantWidth` của viền highlight trong "Kho lẻ", khắc phục lỗi nét quá to che khuất tầm nhìn khi zoom.
+
 ## [2026-04-22] - v0.2.39 Vietnamese Font Encoding Fix 🔤
 ### Fixed
 - **Font Mojibake – String Literals**: Sửa triệt để lỗi hiển thị ký tự lạ (mojibake) trong toàn bộ string literal tiếng Việt bị double-encode trong mã nguồn. Áp dụng phương pháp double-encode detection để thay thế chính xác tại byte-level, không làm ảnh hưởng các chuỗi đúng sẵn có.

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -229,37 +229,46 @@ namespace ShopDrawing.Plugin.UI
             footer.Children.Add(btnClose);
 
             Grid.SetRow(footer, 2);
-
             root.Children.Add(footer);
-
             Content = root;
-
             UiText.NormalizeWindow(this);
 
             System.Action wasteRefreshHandler = () =>
-
                 Dispatcher.BeginInvoke(new System.Action(() => RequestLoadAllData(force: true)));
 
+            Autodesk.AutoCAD.ApplicationServices.CommandEventHandler commandEndedHandler = (s, e) =>
+            {
+                if (e.GlobalCommandName.Equals("ERASE", StringComparison.OrdinalIgnoreCase))
+                {
+                    Dispatcher.BeginInvoke(new System.Action(() => RequestLoadAllData(force: false)));
+                }
+            };
+
             ShopDrawingCommands.WasteUpdated += wasteRefreshHandler;
+            
+            var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            if (doc != null)
+            {
+                doc.CommandEnded += commandEndedHandler;
+            }
 
             Closed += (_, _) => 
             {
                 ShopDrawingCommands.WasteUpdated -= wasteRefreshHandler;
+                var currentDoc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                if (currentDoc != null)
+                {
+                    currentDoc.CommandEnded -= commandEndedHandler;
+                }
                 ClearHighlight();
             };
 
             _tabs.SelectionChanged += (s, e) =>
-
             {
-
                 if (!ReferenceEquals(e.OriginalSource, _tabs))
-
                 {
-
                     e.Handled = true;
-
                     return;
-
                 }
 
                 if (_tabs.SelectedIndex == 2)

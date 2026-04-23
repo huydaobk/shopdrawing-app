@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using ShopDrawing.Plugin.Runtime;
 
 namespace ShopDrawing.Plugin.Modules.Accessories
@@ -29,6 +29,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
 
             foreach (ObjectId id in ms)
             {
+                if (id.IsErased) continue;
+
                 if (tr.GetObject(id, OpenMode.ForRead) is not Entity entity)
                 {
                     continue;

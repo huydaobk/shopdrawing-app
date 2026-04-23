@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-23] - v0.2.46 Auto-refresh BOM upon Deletion ♻️
+### Fixed
+- **BOM Logic**: Sửa lỗi `eWasErased` gây crash ngầm khi xóa marker (góc/tường) trên CAD và tính toán lại BOM.
+- **BOM UI**: Thêm logic cập nhật bảng thống kê BOM realtime (tự động load lại danh sách) ngay sau khi người dùng xóa (ERASE) marker ngoài giao diện CAD.
+
 ## [2026-04-23] - v0.2.45 Corner Marker Interactive Selection 🏗️
 ### Changed
 - **Corner Marker UX**: Nâng cấp lệnh "Pick góc" trên giao diện Palette. Thay vì ngầm định chèn góc theo hạng mục mặc định của dự án, hệ thống sẽ hiển thị một Popup nhỏ gọn cho phép người dùng chủ động chọn Hạng mục ứng dụng (Ngoài nhà, Phòng sạch, Kho lạnh) ngay trước khi pick điểm.

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -22,6 +22,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             var markers = new List<CornerMarkerInfo>();
             foreach (ObjectId id in ms)
             {
+                if (id.IsErased) continue;
+
                 if (tr.GetObject(id, OpenMode.ForRead) is not BlockReference blockReference)
                 {
                     continue;

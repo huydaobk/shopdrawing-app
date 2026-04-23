@@ -1,4 +1,4 @@
-﻿namespace ShopDrawing.Plugin.Models
+namespace ShopDrawing.Plugin.Models
 {
     /// <summary>
     /// Quy tắc tính khối lượng phụ kiện.
@@ -47,6 +47,12 @@
 
         /// <summary>Tổng chiều cao các góc trong x hệ số</summary>
         PER_INSIDE_CORNER_HEIGHT,
+
+        /// <summary>Số lượng góc ngoài x hệ số</summary>
+        PER_OUTSIDE_CORNER_QTY,
+
+        /// <summary>Số lượng góc trong x hệ số</summary>
+        PER_INSIDE_CORNER_QTY,
 
         /// <summary>Số tấm x hệ số</summary>
         PER_PANEL_QTY,

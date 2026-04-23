@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ShopDrawing.Plugin.Models;
 
@@ -34,6 +34,8 @@ namespace ShopDrawing.Plugin.Core
             new(AccessoryCalcRule.PER_TOTAL_EXPOSED_EDGE_LENGTH, "Theo t\u1ed5ng c\u1ea1nh l\u1ed9 thi\u00ean"),
             new(AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT, "Theo chi\u1ec1u cao g\u00f3c ngo\u00e0i"),
             new(AccessoryCalcRule.PER_INSIDE_CORNER_HEIGHT, "Theo chi\u1ec1u cao g\u00f3c trong"),
+            new(AccessoryCalcRule.PER_OUTSIDE_CORNER_QTY, "Theo số lượng góc ngoài"),
+            new(AccessoryCalcRule.PER_INSIDE_CORNER_QTY, "Theo số lượng góc trong"),
             new(AccessoryCalcRule.PER_PANEL_QTY, "Theo s\u1ed1 t\u1ea5m"),
             new(AccessoryCalcRule.PER_JOINT_LENGTH, "Theo chi\u1ec1u d\u00e0i m\u1ed1i n\u1ed1i"),
             new(AccessoryCalcRule.PER_OPENING_PERIMETER, "Theo chu vi l\u1ed7 m\u1edf"),
@@ -91,6 +93,8 @@ namespace ShopDrawing.Plugin.Core
                 AccessoryCalcRule.PER_TOTAL_EXPOSED_EDGE_LENGTH => "T\u1ed5ng c\u1ea1nh l\u1ed9 thi\u00ean",
                 AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT => "Chi\u1ec1u cao g\u00f3c ngo\u00e0i",
                 AccessoryCalcRule.PER_INSIDE_CORNER_HEIGHT => "Chi\u1ec1u cao g\u00f3c trong",
+                AccessoryCalcRule.PER_OUTSIDE_CORNER_QTY => "Số lượng góc ngoài",
+                AccessoryCalcRule.PER_INSIDE_CORNER_QTY => "Số lượng góc trong",
                 AccessoryCalcRule.PER_PANEL_QTY => "S\u1ed1 t\u1ea5m \u01b0\u1edbc t\u00ednh",
                 AccessoryCalcRule.PER_JOINT_LENGTH => "Chi\u1ec1u d\u00e0i m\u1ed1i n\u1ed1i",
                 AccessoryCalcRule.PER_OPENING_PERIMETER => "Chu vi l\u1ed7 m\u1edf",

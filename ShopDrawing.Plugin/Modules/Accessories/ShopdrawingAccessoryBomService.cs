@@ -16,7 +16,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             var rows = new List<ShopdrawingAccessorySummaryRow>();
             foreach (var snapshot in snapshots)
             {
-                foreach (TenderAccessory accessory in AccessoryDataManager.GetDefaults())
+                foreach (TenderAccessory accessory in ShopdrawingAccessoryConfigManager.GetAll())
                 {
                     if (!IsMatchingScope(accessory.CategoryScope, CeilingCategory)
                         || !IsMatchingScope(accessory.Application, snapshot.Application)
@@ -54,7 +54,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             var rows = new List<ShopdrawingAccessorySummaryRow>();
             foreach (ShopdrawingWallAccessorySnapshot snapshot in snapshots)
             {
-                foreach (TenderAccessory accessory in AccessoryDataManager.GetDefaults())
+                foreach (TenderAccessory accessory in ShopdrawingAccessoryConfigManager.GetAll())
                 {
                     if (!IsMatchingScope(accessory.CategoryScope, WallCategory)
                         || !IsMatchingScope(accessory.Application, snapshot.Application)
@@ -92,7 +92,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             var rows = new List<ShopdrawingAccessorySummaryRow>();
             foreach (ShopdrawingPlanAccessorySnapshot snapshot in snapshots)
             {
-                foreach (TenderAccessory accessory in AccessoryDataManager.GetDefaults())
+                foreach (TenderAccessory accessory in ShopdrawingAccessoryConfigManager.GetAll())
                 {
                     if (!IsMatchingScope(accessory.CategoryScope, WallCategory)
                         || !IsMatchingScope(accessory.Application, snapshot.Application)
@@ -196,6 +196,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             {
                 AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT => snapshot.OutsideCornerHeightM,
                 AccessoryCalcRule.PER_INSIDE_CORNER_HEIGHT => snapshot.InsideCornerHeightM,
+                AccessoryCalcRule.PER_OUTSIDE_CORNER_QTY => snapshot.OutsideCornerCount,
+                AccessoryCalcRule.PER_INSIDE_CORNER_QTY => snapshot.InsideCornerCount,
                 _ => 0
             };
 

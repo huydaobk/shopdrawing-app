@@ -120,6 +120,10 @@ namespace ShopDrawing.Plugin.UI
 
         private TextBlock _accessoryFooterText = null!;
 
+        // === TAB 5: Cấu Hình Phụ Kiện ===
+        private DataGrid _configGrid = null!;
+        private ObservableCollection<TenderAccessoryRow> _configRows = new();
+
         private TabControl _tabs = null!;
 
         private readonly ShopdrawingAccessoryScanner _ceilingAccessoryScanner = new();
@@ -187,7 +191,7 @@ namespace ShopDrawing.Plugin.UI
             _tabs.Items.Add(CreateWasteTab());
 
             _tabs.Items.Add(CreateAccessoryTab());
-
+            _tabs.Items.Add(CreateAccessoryConfigTab());
             _tabs.Items.Add(CreateSummaryTab());
 
             Grid.SetRow(_tabs, 1);
@@ -878,6 +882,125 @@ namespace ShopDrawing.Plugin.UI
             return tab;
 
         }
+        private TabItem CreateAccessoryConfigTab()
+        {
+            var tab = new TabItem { Header = "Cấu hình Phụ Kiện" };
+
+            var panel = new Grid { Margin = new Thickness(8) };
+            panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            panel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var info = new TextBlock
+            {
+                Text = "Cấu hình quy tắc tính và hệ số cho phụ kiện Shopdrawing (Lưu theo dự án).",
+                Foreground = Brushes.Gray,
+                Margin = new Thickness(0, 0, 0, 6)
+            };
+            Grid.SetRow(info, 0);
+            panel.Children.Add(info);
+
+            var toolbar = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+
+            var btnAdd = new Button { Content = "Thêm dòng", Background = new SolidColorBrush(Color.FromRgb(39, 174, 96)), Foreground = Brushes.White, Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(0, 0, 6, 0) };
+            btnAdd.Click += (s, e) => {
+                _configRows.Add(new TenderAccessoryRow { Index = _configRows.Count + 1, CategoryScope = "Tất cả", Application = "Tất cả", SpecKey = "Tất cả", Unit = "md", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 1 });
+            };
+            toolbar.Children.Add(btnAdd);
+
+            var btnDelete = new Button { Content = "Xóa dòng", Background = new SolidColorBrush(Color.FromRgb(231, 76, 60)), Foreground = Brushes.White, Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(0, 0, 6, 0) };
+            btnDelete.Click += (s, e) => {
+                var selected = _configGrid.SelectedItems.Cast<TenderAccessoryRow>().ToList();
+                foreach (var row in selected) _configRows.Remove(row);
+                for (int i = 0; i < _configRows.Count; i++) _configRows[i].Index = i + 1;
+            };
+            toolbar.Children.Add(btnDelete);
+
+            var btnSave = new Button { Content = "Lưu cấu hình", Background = new SolidColorBrush(Color.FromRgb(41, 128, 185)), Foreground = Brushes.White, Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(0, 0, 6, 0) };
+            btnSave.Click += (s, e) => {
+                var models = _configRows.Where(r => !string.IsNullOrWhiteSpace(r.Name)).Select(r => r.ToModel()).ToList();
+                ShopdrawingAccessoryConfigManager.Save(models);
+                MessageBox.Show("Đã lưu cấu hình phụ kiện Shopdrawing thành công.\nVui lòng 'Tải Lại' khối lượng.", "Lưu thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+            };
+            toolbar.Children.Add(btnSave);
+
+            var btnReset = new Button { Content = "Khôi phục mặc định", Background = new SolidColorBrush(Color.FromRgb(243, 156, 18)), Foreground = Brushes.White, Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(0, 0, 6, 0) };
+            btnReset.Click += (s, e) => {
+                if (MessageBox.Show("Khôi phục mặc định sẽ xóa toàn bộ cấu hình hiện tại và thay thế bằng cấu hình gốc. Bạn có chắc chắn?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                {
+                    _configRows.Clear();
+                    var defaults = ShopdrawingAccessoryConfigManager.GenerateDefaultConfig();
+                    foreach (var item in defaults)
+                    {
+                        _configRows.Add(TenderAccessoryRow.FromModel(item));
+                    }
+                    for (int i = 0; i < _configRows.Count; i++) _configRows[i].Index = i + 1;
+                    _configGrid.Items.Refresh();
+                }
+            };
+            toolbar.Children.Add(btnReset);
+
+            Grid.SetRow(toolbar, 1);
+            panel.Children.Add(toolbar);
+
+            _configGrid = new DataGrid
+            {
+                AutoGenerateColumns = false,
+                CanUserAddRows = false,
+                CanUserDeleteRows = false,
+                HeadersVisibility = DataGridHeadersVisibility.Column,
+                AlternatingRowBackground = new SolidColorBrush(Color.FromRgb(248, 250, 255)),
+                SelectionMode = DataGridSelectionMode.Extended,
+                SelectionUnit = DataGridSelectionUnit.FullRow,
+                ItemsSource = _configRows
+            };
+
+            // Read config data
+            _configRows.Clear();
+            var accessories = ShopdrawingAccessoryConfigManager.GetAll();
+            foreach (var item in accessories)
+            {
+                _configRows.Add(TenderAccessoryRow.FromModel(item));
+            }
+            for (int i = 0; i < _configRows.Count; i++) _configRows[i].Index = i + 1;
+
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "STT", Binding = new Binding("Index"), Width = 45, IsReadOnly = true });
+            _configGrid.Columns.Add(new DataGridComboBoxColumn { Header = "Hạng mục", SelectedItemBinding = new Binding("CategoryScope") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, ItemsSource = TenderAccessory.CategoryScopeOptions.Where(o => !TenderAccessoryRules.IsAllScope(o)).ToArray(), Width = 95 });
+            _configGrid.Columns.Add(new DataGridComboBoxColumn { Header = "Ứng dụng", SelectedItemBinding = new Binding("Application") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, ItemsSource = TenderWall.ApplicationOptions, Width = 105 });
+            
+            // SpecKeys
+            var _specOptions = new[] { "Tất cả" }.Concat(new SpecConfigManager().GetAll().Select(s => s.Key).Distinct().OrderBy(k => k)).ToArray();
+            _configGrid.Columns.Add(new DataGridComboBoxColumn { Header = "Mã spec", SelectedItemBinding = new Binding("SpecKey") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, ItemsSource = _specOptions, Width = 110 });
+            
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Tên phụ kiện", Binding = new Binding("Name") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 180 });
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Vật liệu", Binding = new Binding("Material") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 95 });
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Vị trí", Binding = new Binding("Position") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 130 });
+            _configGrid.Columns.Add(new DataGridComboBoxColumn { Header = "Đơn vị", SelectedItemBinding = new Binding("Unit") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, ItemsSource = TenderAccessory.UnitOptions, Width = 75 });
+            
+            _configGrid.Columns.Add(new DataGridComboBoxColumn { Header = "Mã quy tắc", SelectedValueBinding = new Binding("CalcRule") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, SelectedValuePath = "Value", DisplayMemberPath = "Label", ItemsSource = TenderAccessoryRules.GetRuleOptions().ToArray(), Width = 240 });
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Diễn giải", Binding = new Binding("RuleDescription"), Width = 220, IsReadOnly = true });
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Hệ số", Binding = new Binding("Factor") { StringFormat = "F2", UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 65 });
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Ghi chú", Binding = new Binding("Note") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 340 });
+
+            _configGrid.CellEditEnding += (s, e) => {
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() => {
+                    foreach (var row in _configRows) row.RefreshDescriptions();
+                    _configGrid.Items.Refresh();
+                }));
+            };
+
+            Grid.SetRow(_configGrid, 2);
+            panel.Children.Add(_configGrid);
+
+            tab.Content = panel;
+            return tab;
+        }
+
 
         private TabItem CreateSummaryTab()
 

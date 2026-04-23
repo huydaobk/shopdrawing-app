@@ -181,7 +181,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             => kind == WallCornerMarkerKind.Outside ? OutsideCornerBlockName : InsideCornerBlockName;
 
         private static string GetDisplayLabel(WallCornerMarkerKind kind)
-            => kind == WallCornerMarkerKind.Outside ? "góc ngoài" : "góc trong";
+            => "góc";
 
         private static ObjectId EnsureMarkerBlock(Database db, Transaction tr, WallCornerMarkerKind kind)
         {

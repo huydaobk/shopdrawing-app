@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using ShopDrawing.Plugin.Models;
 
@@ -11,9 +11,9 @@ namespace ShopDrawing.Plugin.Core
         public const double LockedTenderWastePercent = 3.0;
 
         private const string ScopeAll = "Tất cả";
-        private const string AppExterior = "Ngoài nhà";
-        private const string AppCleanroom = "Phòng sạch";
-        private const string AppColdStorage = "Kho lạnh";
+        public const string AppExterior = "Ngoài nhà";
+        public const string AppCleanroom = "Phòng sạch";
+        public const string AppColdStorage = "Kho lạnh";
 
         /// <summary>Tên gốc vít TEK ngoài nhà — dùng để detect auto-sizing</summary>
         public const string ExteriorTekScrewBaseName = "B2S-TEK 12x14";

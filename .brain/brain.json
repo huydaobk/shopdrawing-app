@@ -3,7 +3,7 @@
     "schema_version": "1.1.0",
     "awf_version": "4.0.2",
     "project": "shopdrawing-app",
-    "last_updated": "2026-03-20"
+    "last_updated": "2026-04-22"
   },
   "project": {
     "name": "ShopDrawing AutoCAD Plugin",
@@ -106,6 +106,11 @@
       "name": "Smart Dimension (Phase 2)",
       "status": "in-progress",
       "details": "SD_DIM command: quét panels+openings trong wallBounds, tạo dim tự động. Dim style TCVN: ArchTick 0.6×text, annotative, Dimtih=false (text xoay theo dim line). Panel widths phía trên/dưới, panel height bên trái/phải, opening height/width theo direction riêng. Sort opening heights short→long. DIMFXL=7mm (set qua SetSystemVariable, không có .NET API property)."
+    },
+    {
+      "name": "Dynamic Opening Types",
+      "status": "implemented",
+      "details": "Bỏ combobox 'Loại lỗ' trên Palette. SD_WALL_PLAN_QUICK cho chọn Cửa đi/Cửa sổ trực tiếp bằng prompt, tự động bỏ qua Sill nếu là Cửa đi. SD_PANEL_LAYOUT chia làm 2 bước pick: Cửa đi trước, Cửa sổ sau để map đúng type."
     }
   ],
   "known_bugs_fixed": [
@@ -115,7 +120,7 @@
     "Cột cấu tạo mặc định SPEC1 — do thiếu Spec text riêng trong drawing",
     "Hatch vô hình trên tấm tái sử dụng — dùng màu ACI 253 + angle 135°",
     "Opening height dim ext lines crossing wall — dùng wallBounds edge thay b.MaxPoint",
-    "Dim opening trồng panel dim (tường dọc) — tách opening dims riêng RIGHT/BOTTOM"
+    "Dim opening chồng panel dim (tường dọc) — tách opening dims riêng RIGHT/BOTTOM"
   ],
   "dim_style_spec": {
     "style_name": "SD_DIM",

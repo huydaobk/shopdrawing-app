@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -40,6 +40,15 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                     BlockTableRecord ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
                     ObjectId blockId = EnsureMarkerBlock(doc.Database, tr, kind);
                     double scale = Math.Max(40.0, GetDrawingScale(doc.Database));
+
+                    var dialog = new ShopDrawing.Plugin.UI.CornerApplicationSelectionDialog();
+                    bool? dialogResult = Application.ShowModalWindow(dialog);
+                    if (dialogResult != true)
+                    {
+                        return;
+                    }
+
+                    string selectedApp = dialog.SelectedApplication;
 
                     while (true)
                     {
@@ -92,7 +101,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                             scale,
                             kind,
                             heightMm,
-                            settings.DefaultApplication,
+                            selectedApp,
                             settings.DefaultSpec);
 
                         insertedCount++;

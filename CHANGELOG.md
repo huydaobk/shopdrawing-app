@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-23] - v0.2.48 Real-time BOM Auto-Refresh on CAD Edit 🔄
+### Fixed
+- **BOM Realtime Sync**: Hook vào sự kiện `Document.CommandEnded` của AutoCAD để tự động gọi `NotifyWasteUpdated()` ngay sau khi người dùng thực thi các lệnh CAD thay đổi đối tượng (ERASE, UNDO, REDO, MOVE, COPY, ROTATE, SCALE, STRETCH, GRIP_STRETCH). Bảng "Phụ Kiện" trong WasteManagerDialog sẽ tự cập nhật realtime mà không cần thao tác thủ công.
+
 ## [2026-04-23] - v0.2.47 Ceiling Hanger Interactive Selection ☂️
 ### Changed
 - **Ceiling Hanger UX**: Nâng cấp lệnh "Pick điểm treo thanh T" và "Pick điểm treo bulong nấm". Bổ sung Popup chọn Hạng mục ứng dụng (Ngoài nhà, Phòng sạch, Kho lạnh) trước khi pick điểm, tương tự như lệnh Pick góc.

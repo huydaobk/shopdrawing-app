@@ -1,0 +1,6 @@
+﻿L298:             var tab = new TabItem { Header = "BOM Chi Tiết" };
+L424:             var tab = new TabItem { Header = "BOM Sản Xuất" };
+L504:                 Header = "Ưu Tiên",
+L600:             var tab = new TabItem { Header = "Kho Lẻ" };
+L754:             var tab = new TabItem { Header = "Phụ Kiện" };
+L886:             var tab = new TabItem { Header = "Tổng Hợp" };

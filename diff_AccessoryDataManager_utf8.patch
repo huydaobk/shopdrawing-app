@@ -1,0 +1,1034 @@
+﻿diff --git a/ShopDrawing.Plugin/Core/AccessoryDataManager.cs b/ShopDrawing.Plugin/Core/AccessoryDataManager.cs
+index 07591d2..640b949 100644
+--- a/ShopDrawing.Plugin/Core/AccessoryDataManager.cs
++++ b/ShopDrawing.Plugin/Core/AccessoryDataManager.cs
+@@ -8,14 +8,17 @@ namespace ShopDrawing.Plugin.Core
+     {
+         public const string DefaultCategoryScope = "V├ích";
+         public const string DefaultApplication = "Ngo├ái nh├á";
++        public const double LockedTenderWastePercent = 3.0;
+ 
+         private const string ScopeAll = "Tß║Ñt cß║ú";
+-        private const string AppExterior = "Ngo├ái nh├á";
+-        private const string AppCleanroom = "Ph├▓ng sß║ích";
+-        private const string AppColdStorage = "Kho lß║ính";
++        public const string AppExterior = "Ngo├ái nh├á";
++        public const string AppCleanroom = "Ph├▓ng sß║ích";
++        public const string AppColdStorage = "Kho lß║ính";
+ 
+         /// <summary>T├¬n gß╗æc v├¡t TEK ngo├ái nh├á ΓÇö d├╣ng ─æß╗â detect auto-sizing</summary>
+         public const string ExteriorTekScrewBaseName = "B2S-TEK 12x14";
++        public const string ColdStorageBottomUChannelBaseName = "U 40x153x40";
++        public const string CleanroomBottomUChannelBaseName = "U 40x50x40";
+ 
+         /// <summary>
+         /// ├ünh xß║í chiß╗üu d├áy panel (mm) ΓåÆ chiß╗üu d├ái v├¡t TEK (mm).
+@@ -58,13 +61,44 @@ namespace ShopDrawing.Plugin.Core
+             return $"{baseName}-{last.Value}HGS";
+         }
+ 
++        public static string GetColdStorageBottomUChannelName(int panelThicknessMm)
++        {
++            if (panelThicknessMm <= 0)
++                return ColdStorageBottomUChannelBaseName;
++
++            return $"U 40x{panelThicknessMm + 3}x40";
++        }
++
++        public static string GetColdStorageBottomUChannelMaterial(int panelThicknessMm)
++        {
++            return panelThicknessMm == 50 || panelThicknessMm == 75
++                ? "Nh├┤m"
++                : "Th├⌐p mß║í kß║╜m";
++        }
++
++        public static string GetCleanroomBottomUChannelName(int panelThicknessMm)
++        {
++            if (panelThicknessMm <= 0)
++                return CleanroomBottomUChannelBaseName;
++
++            return $"U 40x{panelThicknessMm}x40";
++        }
++
++        public static string GetCleanroomBottomUChannelMaterial(int panelThicknessMm)
++        {
++            return panelThicknessMm == 50 || panelThicknessMm == 75
++                ? "Nh├┤m"
++                : "Th├⌐p mß║í kß║╜m";
++        }
++
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+         // POSITION CONSTANTS
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+         private const string PosMoiNoi = "Mß╗æi nß╗æi";
+-        private const string PosCanhTren = "Cß║ính tr├¬n";
+-        private const string PosCanhDuoi = "Cß║ính d╞░ß╗¢i";
+-        private const string PosDauCuoi = "─Éß║ºu/cuß╗æi";
++        private const string PosKheDung = "Khe ─æß╗⌐ng";
++        private const string PosCanhTren = "─Éß╗ënh v├ích";
++        private const string PosCanhDuoi = "Ch├ón v├ích";
++        private const string PosDauCuoi = "─Éß║ºu/cuß╗æi v├ích";
+         private const string PosGocNgoai = "G├│c ngo├ái";
+         private const string PosGocTrong = "G├│c trong";
+         private const string PosCuaDi = "Cß╗¡a ─æi";
+@@ -76,7 +110,7 @@ namespace ShopDrawing.Plugin.Core
+         private const string PosCanhSillLM = "Cß║ính sill LM";
+         private const string PosDinhVach = "─Éß╗ënh v├ích";
+         private const string PosChanVach = "Ch├ón v├ích";
+-        private const string PosCanhHo = "Cß║ính hß╗ƒ";
++        private const string PosCanhHo = "M├⌐p ─æß╗⌐ng tß╗▒ do";
+         private const string PosPanelThep = "PanelΓåÆth├⌐p";
+         private const string PosVach = "V├ích";
+         private const string PosTreoTNh├┤m = "Treo T nh├┤m";
+@@ -89,6 +123,15 @@ namespace ShopDrawing.Plugin.Core
+         private const string SealantMS617 = "Sealant MS-617";
+         private const string SiliconeSN505 = "Silicone SN-505";
+         private const string SealantMC202 = "Sealant MC-202";
++        private const string VBoR40Name = "V bo R40";
++        private const string CleanroomPerimeterAngleName = "V 40x80";
++        private const string BoltSetM10Name = "Bu l├┤ng + t├ín + long ─æen M10";
++        private const string CleanroomMushroomBoltName = "Bulong nß║Ñm nhß╗▒a M10x100L";
++        private const string ColdStorageMushroomBoltName = "Bulong nß║Ñm nhß╗▒a M12x200L";
++        private const double SiliconeSn505JointBottleFactor = 1.0 / 15.0; // quy doi 15 md/chai cho keo moi noi
++        private const double SealantMc202BottleFactor = 1.0 / 6.0; // quy doi 6 md/chai cho sealant moi noi
++        private const double RiveAt300Factor = 1000.0 / 300.0; // quy doi rive @300 theo md tuyen phu kien
++        private const double RiveAt500Factor = 1000.0 / 500.0; // quy doi rive @500 theo md tuyen phu kien
+ 
+         // Legacy name mappings (for backward compat with saved JSON)
+         private static readonly Dictionary<string, string> LegacyNameMap = new()
+@@ -100,17 +143,42 @@ namespace ShopDrawing.Plugin.Core
+             { "Sealant chß╗æng thß║Ñm", SealantMC202 },
+             { "Silicone SN-505 kh├íng mß╗æc", SiliconeSN505 },
+             { "Silicone SN-505 mß╗æi nß╗æi ph├▓ng sß║ích", SiliconeSN505 },
++            { "Nß║╣p nh├┤m phß║│ng", SiliconeSN505 },
++            { "Nß║╣p ch├ón vß╗ç sinh", VBoR40Name },
++            { "Nß║╣p bo cong R40", VBoR40Name },
++            { "R40 P.C. Alu. Internal cove", VBoR40Name },
+             { "Sealant MC-202 giß╗»a ng├ám panel kho lß║ính", SealantMC202 },
+             { "V├¡t TEK ngo├ái nh├á", ExteriorTekScrewBaseName },
+             { "V├¡t TEK inox", "B2S-TEK inox" },
+             // v2.x ΓåÆ v3.x renames
+             { "B2S-TEK", ExteriorTekScrewBaseName },               // vis panel: B2S-TEK ΓåÆ B2S-TEK 12x14
+-            { "Rivet ├ÿ4.2├ù12", "B2S-TEK 15-15├ù20 HWFS" },        // vis diß╗üm ngo├ái nh├á: Rivet ΓåÆ TEK screw
+-            { "Rivets", "B2S-TEK 15-15├ù20 HWFS" },                // variant t├¬n c┼⌐ kh├┤ng c├│ k├╜ tß╗▒ ─æß║╖c biß╗çt
++            { "Mastic tape", SealantMS617 },
++            { "Alu. Omega profile", "Nß║╣p Omega" },
++            { "Mastic tape (Omega)", "B─âng keo butyl Omega" },
++            { "Foam PU on site", "Foam PU b╞ím tß║íi chß╗ù" },
++            { "Panel support bracket", "B├ít th├⌐p ch├ón panel" },
++            { "Rivet inox ├ÿ4.2├ù12", "Rive ├ÿ4.2├ù12" },
++            { "Rive inox ├ÿ4.2├ù12", "Rive ├ÿ4.2├ù12" },
++            { "T-profile", "Thanh T" },
++            { "T-profile 68x75", "Thanh T 68x75" },
++            { "Steel plate 50x325x3", "Bß║ún m├ú 50x325x3" },
++            { "Turnbuckle M10", "T─âng ─æ╞í M10" },
++            { "Turnbuckle M12", "T─âng ─æ╞í M12" },
++            { "Wire rope ├ÿ10", "C├íp treo ├ÿ10" },
++            { "Wire rope ├ÿ12", "C├íp treo ├ÿ12" },
++            { "Wire rope clip ├ÿ10", "C├╣m xiß║┐t c├íp ├ÿ10" },
++            { "Wire rope clip ├ÿ12", "C├╣m xiß║┐t c├íp ├ÿ12" },
++            { "C├╣m c├íp ├ÿ10", "C├╣m xiß║┐t c├íp ├ÿ10" },
++            { "C├╣m c├íp ├ÿ12", "C├╣m xiß║┐t c├íp ├ÿ12" },
++            { "C-channel 100x50", "Thanh C 100x50" },
++            { "Bu l├┤ng + t├ín + long ─æen", BoltSetM10Name },
++            { "ß╗Éng PVC ├ÿ114", "ß╗Éng ├ÿ114" },
++            { "ß╗Éng phi 114", "ß╗Éng ├ÿ114" },
+             // Legacy exterior flashing names ΓåÆ Diß╗üm 01-05
+             { "├Üp n├│c",       "Diß╗üm 01" },
+             { "├Üp ch├ón",      "Diß╗üm 02" },
+             { "├Üp cß║ính hß╗ƒ",   "Diß╗üm 03" },
++            { "Nß║╣p cß║ính hß╗ƒ",  "Nß║╣p m├⌐p ─æß╗⌐ng" },
+             { "├Üp g├│c ngo├ái", "Diß╗üm 04" },
+             { "├Üp nß╗æi dß╗ìc",   "Diß╗üm 05" },
+             // English Flashing format (intermediate naming convention)
+@@ -139,6 +207,8 @@ namespace ShopDrawing.Plugin.Core
+             { "Silicone SN-505 ─æß╗ënh v├ích ph├▓ng sß║ích", PosDinhVach },
+             { "Silicone SN-505 ch├ón v├ích ph├▓ng sß║ích", PosChanVach },
+             { "Silicone SN-505 cß║ính hß╗ƒ ph├▓ng sß║ích", PosCanhHo },
++            { "Nß║╣p nh├┤m phß║│ng", PosMoiNoi },
++            { "Nß║╣p ch├ón vß╗ç sinh", PosCanhDuoi },
+             { "Silicone SN-505 viß╗ün lß╗ù mß╗ƒ kho lß║ính", PosLoMo },
+             { "Silicone SN-505 cß║ính ─æß╗⌐ng lß╗ù mß╗ƒ kho lß║ính", PosCanhDungLM },
+             { "Silicone SN-505 cß║ính ─æß║ºu lß╗ù mß╗ƒ kho lß║ính", PosCanhDauLM },
+@@ -154,8 +224,11 @@ namespace ShopDrawing.Plugin.Core
+             var list = new List<TenderAccessory>();
+             list.AddRange(GetExteriorDefaults());
+             list.AddRange(GetCleanroomDefaults());
++            list.AddRange(GetCleanroomCeilingDefaults());
+             list.AddRange(GetColdStorageDefaults());
+-            return DeduplicateAndSort(list);
++            var defaults = DeduplicateAndSort(ExpandLineBasedRiveAccessories(list));
++            EnforceLockedTenderWaste(defaults);
++            return defaults;
+         }
+ 
+         public static List<TenderAccessory> NormalizeConfiguredAccessories(IEnumerable<TenderAccessory>? accessories)
+@@ -164,6 +237,7 @@ namespace ShopDrawing.Plugin.Core
+             if (source.Count == 0)
+                 return GetDefaults();
+ 
++            var canonicalDefaults = GetDefaults();
+             var normalized = new List<TenderAccessory>();
+ 
+             foreach (var accessory in source)
+@@ -174,6 +248,9 @@ namespace ShopDrawing.Plugin.Core
+                 // Migrate legacy names
+                 MigrateLegacyAccessory(accessory);
+ 
++                if (IsObsoleteConfiguredAccessory(accessory))
++                    continue;
++
+                 string category = TenderAccessoryRules.NormalizeScope(accessory.CategoryScope);
+                 string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
+                 bool allCategory = TenderAccessoryRules.IsAllScope(category);
+@@ -199,14 +276,42 @@ namespace ShopDrawing.Plugin.Core
+                 normalized.AddRange(ExpandForScope(accessory, category, application));
+             }
+ 
+-            MergeMissingDefaults(normalized);
+-            return DeduplicateAndSort(normalized);
++            normalized = ExpandLineBasedRiveAccessories(normalized);
++            normalized = normalized
++                .Where(accessory => !ShouldPruneConfiguredAccessory(accessory, canonicalDefaults))
++                .Where(accessory => ShouldKeepConfiguredAccessory(accessory, canonicalDefaults))
++                .ToList();
++            SynchronizeConfiguredAccessories(normalized, canonicalDefaults);
++            MergeMissingDefaults(normalized, canonicalDefaults);
++            var result = DeduplicateAndSort(normalized);
++            EnforceLockedTenderWaste(result);
++            return result;
+         }
+ 
++#pragma warning disable CS8602
+         private static void MigrateLegacyAccessory(TenderAccessory accessory)
+         {
+             string name = (accessory.Name ?? string.Empty).Trim();
+             string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
++            string position = (accessory.Position ?? string.Empty).Trim();
++
++            if (string.Equals(position, "Cß║ính hß╗ƒ", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(position, "M├⌐p hß╗ƒ", StringComparison.OrdinalIgnoreCase))
++            {
++                accessory.Position = PosCanhHo;
++            }
++            else if (string.Equals(position, "─Éß║ºu/cuß╗æi", StringComparison.OrdinalIgnoreCase))
++            {
++                accessory.Position = PosDauCuoi;
++            }
++            else if (string.Equals(position, "Cß║ính tr├¬n", StringComparison.OrdinalIgnoreCase))
++            {
++                accessory.Position = PosCanhTren;
++            }
++            else if (string.Equals(position, "Cß║ính d╞░ß╗¢i", StringComparison.OrdinalIgnoreCase))
++            {
++                accessory.Position = PosCanhDuoi;
++            }
+ 
+             // Check if long legacy name ΓåÆ extract position and remap name
+             if (LegacyPositionMap.TryGetValue(name, out string? legacyPos))
+@@ -227,6 +332,83 @@ namespace ShopDrawing.Plugin.Core
+             if (LegacyNameMap.TryGetValue(name, out string? newName))
+                 accessory.Name = newName;
+ 
++            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase))
++            {
++                if (string.Equals(name, "Rivet ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Rivets", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = "B2S-TEK 15-15├ù20 HWFS";
++                }
++
++                // Kh├┤i phß╗Ñc dß╗» liß╗çu ─æ├ú tß╗½ng bß╗ï map nhß║ºm: Sealant MS-617 @ khe ─æß╗⌐ng Omega
++                // cß║ºn quay vß╗ü ─æ├║ng vß║¡t t╞░ b─âng keo butyl Omega.
++                if (string.Equals(accessory.Name, SealantMS617, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Position, PosKheDung, StringComparison.OrdinalIgnoreCase)
++                    && accessory.CalcRule == AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT)
++                {
++                    accessory.Name = "B─âng keo butyl Omega";
++                }
++            }
++
++            if (string.Equals(application, AppCleanroom, StringComparison.OrdinalIgnoreCase))
++            {
++                if (string.Equals(name, "Rivet inox ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = "Rive ├ÿ4.2├ù12";
++                    accessory.Material = "Nh├┤m";
++                }
++
++                if (string.Equals(name, "Rive inox ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Rive ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = "Rive ├ÿ4.2├ù12";
++                    accessory.Material = "Nh├┤m";
++                }
++
++                if (string.Equals(accessory.Position, PosTreoTNh├┤m, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Bu l├┤ng + t├ín + long ─æen", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = BoltSetM10Name;
++                }
++
++                if (string.Equals(accessory.Position, PosTreoBulongNam, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Bulong nß║Ñm nhß╗▒a", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = CleanroomMushroomBoltName;
++                }
++            }
++
++            if (string.Equals(application, AppColdStorage, StringComparison.OrdinalIgnoreCase))
++            {
++                if (string.Equals(name, "Rivet ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase))
++                    accessory.Name = "Rive ├ÿ4.2├ù12";
++
++                if (string.Equals(accessory.Position, PosTreoBulongNam, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Ty ren M10", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = "Ty ren M12";
++                }
++
++                if (IsColdStorageBottomUChannelName(accessory.Name))
++                    accessory.Name = ColdStorageBottomUChannelBaseName;
++
++                if (string.Equals(accessory.Name, "Bß║ún m├ú 50x325x3", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "Ty ren M12", StringComparison.OrdinalIgnoreCase))
++                {
++                    if (string.IsNullOrWhiteSpace(accessory.Material)
++                        || string.Equals(accessory.Material, "Th├⌐p", StringComparison.OrdinalIgnoreCase))
++                    {
++                        accessory.Material = "Th├⌐p mß║í kß║╜m";
++                    }
++                }
++
++                if (string.Equals(accessory.Position, PosTreoBulongNam, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Bulong nß║Ñm nhß╗▒a", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = ColdStorageMushroomBoltName;
++                }
++            }
++
+             // Migrate CalcRule: B2S-TEK panel screw PER_PANEL_QTY ΓåÆ PER_TEK_SCREW_QTY
+             if (string.Equals(accessory.Name, ExteriorTekScrewBaseName, StringComparison.OrdinalIgnoreCase)
+                 && accessory.CalcRule == AccessoryCalcRule.PER_PANEL_QTY)
+@@ -252,6 +434,12 @@ namespace ShopDrawing.Plugin.Core
+                 }
+             }
+ 
++            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
++                && accessory.CalcRule == AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT)
++            {
++                accessory.Position = PosKheDung;
++            }
++
+             // Auto-set Material for all Diß╗üm items that haven't been set yet
+             if (accessory.Name.StartsWith("Diß╗üm ", StringComparison.OrdinalIgnoreCase)
+                 && string.IsNullOrWhiteSpace(accessory.Material))
+@@ -259,9 +447,117 @@ namespace ShopDrawing.Plugin.Core
+                 accessory.Material = "Tole";
+             }
+ 
++            if (string.IsNullOrWhiteSpace(accessory.Material))
++            {
++                if (string.Equals(accessory.Name, VBoR40Name, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "Nß║╣p bo cong R40", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "V 80x80", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, CleanroomPerimeterAngleName, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "Nß║╣p Omega", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "Thanh T", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "Thanh T 68x75", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(accessory.Name, "Rive ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Material = "Nh├┤m";
++                }
++            }
++
++            if (string.Equals(application, AppCleanroom, StringComparison.OrdinalIgnoreCase))
++            {
++                if (string.Equals(name, "Viß╗ün lß╗ù mß╗ƒ", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Viß╗ün lß╗ù mß╗ƒ 2 mß║╖t", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = CleanroomBottomUChannelBaseName;
++                }
++
++                if (string.Equals(accessory.Position, PosTreoTNh├┤m, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Thanh T", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = "Thanh T 60x80";
++                }
++
++                if (string.Equals(accessory.Position, PosTreoTNh├┤m, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Bu l├┤ng + t├ín + long ─æen", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = BoltSetM10Name;
++                }
++
++                if (string.Equals(accessory.Position, PosTreoBulongNam, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(accessory.Name, "Bulong nß║Ñm nhß╗▒a", StringComparison.OrdinalIgnoreCase))
++                {
++                    accessory.Name = CleanroomMushroomBoltName;
++                }
++            }
++
+         }
++#pragma warning restore CS8602
+ 
+ 
++        private static List<TenderAccessory> ExpandLineBasedRiveAccessories(IEnumerable<TenderAccessory> items)
++        {
++            var expanded = new List<TenderAccessory>();
++            foreach (var item in items)
++                expanded.AddRange(ExpandLineBasedRiveAccessory(item));
++
++            return expanded;
++        }
++
++        private static IEnumerable<TenderAccessory> ExpandLineBasedRiveAccessory(TenderAccessory accessory)
++        {
++            if (!ShouldExpandLineBasedRive(accessory))
++            {
++                yield return accessory;
++                yield break;
++            }
++
++            string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
++            if (string.Equals(application, AppCleanroom, StringComparison.OrdinalIgnoreCase))
++            {
++                yield return CloneAccessory(accessory, accessory.Name, PosCanhDuoi, AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, RiveAt500Factor * 2.0, "Bß║»n theo 2 tuyß║┐n V bo R40 ch├ón v├ích @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosCanhTren, AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, RiveAt500Factor * 2.0, "─Éß╗ënh v├ích giao trß║ºn giß╗»a: 2 tuyß║┐n rive theo 2 V bo R40 @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosCanhTren, AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, RiveAt500Factor * 2.0, "─Éß╗ënh v├ích giao bi├¬n trß║ºn: 2 tuyß║┐n rive theo V 40x80 + V bo R40 @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosDauCuoi, AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, RiveAt500Factor * 2.0, "─Éß║ºu/cuß╗æi v├ích giao giß╗»a: 2 tuyß║┐n rive theo 2 V bo R40 @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosDauCuoi, AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, RiveAt500Factor * 2.0, "─Éß║ºu/cuß╗æi v├ích giao bi├¬n: 2 tuyß║┐n rive theo V 40x80 + V bo R40 @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosLoMo, AccessoryCalcRule.PER_OPENING_PERIMETER, RiveAt500Factor, "Lß╗ù mß╗ƒ ph├▓ng sß║ích: bß║»n theo U nh├┤m 4 cß║ính @500");
++                yield break;
++            }
++
++            if (string.Equals(application, AppColdStorage, StringComparison.OrdinalIgnoreCase))
++            {
++                yield return CloneAccessory(accessory, accessory.Name, PosCanhTren, AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, 4.0, "─Éß╗ënh v├ích giao trß║ºn giß╗»a: 2 tuyß║┐n rive @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosCanhTren, AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, RiveAt500Factor * 2.0, "─Éß╗ënh v├ích giao bi├¬n trß║ºn: 2 tuyß║┐n rive @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosCanhTren, AccessoryCalcRule.PER_TOP_PANEL_FREE_LENGTH, RiveAt300Factor, "─Éß╗ënh v├ích m├⌐p tß╗▒ do: 1 tuyß║┐n rive theo diß╗üm @300");
++                yield return CloneAccessory(accessory, accessory.Name, PosDauCuoi, AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, RiveAt500Factor * 2.0, "─Éß║ºu/cuß╗æi v├ích giao giß╗»a: 2 tuyß║┐n rive @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosDauCuoi, AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, RiveAt500Factor * 2.0, "─Éß║ºu/cuß╗æi v├ích giao bi├¬n: 2 tuyß║┐n rive @500");
++                yield return CloneAccessory(accessory, accessory.Name, PosDauCuoi, AccessoryCalcRule.PER_END_PANEL_FREE_LENGTH, RiveAt300Factor, "─Éß║ºu/cuß╗æi v├ích m├⌐p ─æß╗⌐ng tß╗▒ do: 1 tuyß║┐n rive @300");
++                yield return CloneAccessory(accessory, accessory.Name, PosMoiNoi, AccessoryCalcRule.PER_JOINT_LENGTH, RiveAt300Factor, "Bß║»n theo diß╗üm mß╗æi nß╗æi @300");
++                yield return CloneAccessory(accessory, accessory.Name, PosLoMo, AccessoryCalcRule.PER_OPENING_PERIMETER_TWO_FACES, RiveAt300Factor, "Bß║»n theo diß╗üm viß╗ün lß╗ù mß╗ƒ 2 mß║╖t @300");
++                yield break;
++            }
++
++            yield return accessory;
++        }
++
++        private static bool ShouldExpandLineBasedRive(TenderAccessory accessory)
++        {
++            string name = (accessory.Name ?? string.Empty).Trim();
++            if (!string.Equals(name, "Rive ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase)
++                && !string.Equals(name, "Rive ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase)
++                && !string.Equals(name, "Rivet ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase)
++                && !string.Equals(name, "Rivet ├ÿ4.2├ù12", StringComparison.OrdinalIgnoreCase))
++                return false;
++
++            if (!string.Equals((accessory.Position ?? string.Empty).Trim(), PosVach, StringComparison.OrdinalIgnoreCase))
++                return false;
++
++            if (accessory.CalcRule != AccessoryCalcRule.PER_WALL_LENGTH)
++                return false;
++
++            string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
++            return string.Equals(application, AppCleanroom, StringComparison.OrdinalIgnoreCase)
++                || string.Equals(application, AppColdStorage, StringComparison.OrdinalIgnoreCase);
++        }
++
+         private static List<TenderAccessory> DeduplicateAndSort(IEnumerable<TenderAccessory> items)
+         {
+             return items
+@@ -274,21 +570,45 @@ namespace ShopDrawing.Plugin.Core
+                     item.Material,
+                     item.Position,
+                     item.Unit,
+-                    item.CalcRule,
+-                    item.Factor,
+-                    item.WasteFactor,
+-                    item.Adjustment,
+-                    item.IsManualOnly,
+-                    item.Note
++                    item.CalcRule
+                 })
+-                .Select(group => group.First())
++                .Select(group => MergeDuplicateAccessoryGroup(group.ToList()))
+                 .OrderBy(item => item, Comparer<TenderAccessory>.Create(CompareAccessories))
+                 .ToList();
+         }
+ 
+-        private static void MergeMissingDefaults(List<TenderAccessory> configuredAccessories)
++        private static TenderAccessory MergeDuplicateAccessoryGroup(List<TenderAccessory> items)
++        {
++            var seed = items[0];
++            var latest = items[^1];
++            string note = items
++                .Select(item => item.Note?.Trim())
++                .LastOrDefault(text => !string.IsNullOrWhiteSpace(text))
++                ?? string.Empty;
++
++            return new TenderAccessory
++            {
++                Name = seed.Name?.Trim() ?? string.Empty,
++                Material = seed.Material?.Trim() ?? string.Empty,
++                Position = seed.Position?.Trim() ?? string.Empty,
++                Unit = seed.Unit,
++                CalcRule = seed.CalcRule,
++                Factor = seed.Factor,
++                CategoryScope = seed.CategoryScope,
++                SpecKey = seed.SpecKey,
++                Application = seed.Application,
++                WasteFactor = LockedTenderWastePercent,
++                Adjustment = latest.Adjustment,
++                IsManualOnly = latest.IsManualOnly,
++                Note = note
++            };
++        }
++
++        private static void MergeMissingDefaults(
++            List<TenderAccessory> configuredAccessories,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
+         {
+-            foreach (var defaultAccessory in GetDefaults())
++            foreach (var defaultAccessory in canonicalDefaults)
+             {
+                 if (configuredAccessories.Any(item => HasSameLogicalAccessory(item, defaultAccessory)))
+                     continue;
+@@ -297,6 +617,242 @@ namespace ShopDrawing.Plugin.Core
+             }
+         }
+ 
++        private static bool IsObsoleteConfiguredAccessory(TenderAccessory accessory)
++        {
++            string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
++            string name = (accessory.Name ?? string.Empty).Trim();
++            string position = (accessory.Position ?? string.Empty).Trim();
++
++            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
++                && string.Equals(name, "B2S-TEK 15-15├ù20 HWFS", StringComparison.OrdinalIgnoreCase)
++                && string.Equals(position, PosVach, StringComparison.OrdinalIgnoreCase)
++                && accessory.CalcRule == AccessoryCalcRule.PER_WALL_LENGTH)
++            {
++                return true;
++            }
++
++            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
++                && string.Equals(name, "Bß╗Ö cß╗¡a ─æi", StringComparison.OrdinalIgnoreCase))
++            {
++                return true;
++            }
++
++            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
++                && string.Equals(name, "B─âng keo butyl", StringComparison.OrdinalIgnoreCase))
++            {
++                return true;
++            }
++
++            if (string.Equals(application, AppExterior, StringComparison.OrdinalIgnoreCase)
++                && (string.Equals(name, "Diß╗üm 05", StringComparison.OrdinalIgnoreCase)
++                    || (string.Equals(name, "B2S-TEK 15-15├ù20 HWFS", StringComparison.OrdinalIgnoreCase)
++                        && string.Equals(position, PosMoiNoi, StringComparison.OrdinalIgnoreCase)
++                        && accessory.CalcRule == AccessoryCalcRule.PER_JOINT_LENGTH)))
++            {
++                return true;
++            }
++
++            if (string.Equals(application, AppColdStorage, StringComparison.OrdinalIgnoreCase))
++            {
++                if (string.Equals(name, "B2S-TEK 15-15├ù20 HWFS", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Sealant opening", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Viß╗ün opening (trim)", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Diß╗üm 02", StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Diß╗üm 05", StringComparison.OrdinalIgnoreCase)
++                    || IsColdStorageTekAlias(name))
++                {
++                    return true;
++                }
++            }
++
++            if (string.Equals(application, AppCleanroom, StringComparison.OrdinalIgnoreCase)
++                && (string.Equals(name, SiliconeSN505, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, CleanroomBottomUChannelBaseName, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(name, "Viß╗ün lß╗ù mß╗ƒ 2 mß║╖t", StringComparison.OrdinalIgnoreCase))
++                && (string.Equals(position, PosCanhDungLM, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(position, PosCanhDauLM, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(position, PosCanhSillLM, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(position, PosLoMo2Mat, StringComparison.OrdinalIgnoreCase)))
++            {
++                return true;
++            }
++
++            return false;
++        }
++
++        private static bool ShouldPruneConfiguredAccessory(
++            TenderAccessory accessory,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
++        {
++            if (FindCanonicalDefault(accessory, canonicalDefaults) != null)
++                return false;
++
++            return IsObsoleteConfiguredAccessory(accessory);
++        }
++
++        private static bool ShouldKeepConfiguredAccessory(
++            TenderAccessory accessory,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
++        {
++            return !IsObsoleteConfiguredAccessory(accessory);
++        }
++
++        private static bool IsManagedCanonicalName(
++            TenderAccessory accessory,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
++        {
++            string category = TenderAccessoryRules.NormalizeScope(accessory.CategoryScope);
++            string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
++            string specKey = TenderAccessoryRules.NormalizeScope(accessory.SpecKey);
++            string name = (accessory.Name ?? string.Empty).Trim();
++
++            return canonicalDefaults.Any(item =>
++                string.Equals(TenderAccessoryRules.NormalizeScope(item.CategoryScope), category, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals(TenderAccessoryRules.NormalizeScope(item.Application), application, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals(TenderAccessoryRules.NormalizeScope(item.SpecKey), specKey, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals((item.Name ?? string.Empty).Trim(), name, System.StringComparison.OrdinalIgnoreCase));
++        }
++
++        private static void SynchronizeConfiguredAccessories(
++            List<TenderAccessory> configuredAccessories,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
++        {
++            foreach (var accessory in configuredAccessories)
++            {
++                var canonical = FindCanonicalDefault(accessory, canonicalDefaults);
++                if (canonical == null)
++                    continue;
++
++                accessory.Name = canonical.Name;
++                accessory.Material = canonical.Material;
++                accessory.Position = canonical.Position;
++                accessory.Unit = canonical.Unit;
++                accessory.CalcRule = canonical.CalcRule;
++                accessory.CategoryScope = canonical.CategoryScope;
++                accessory.SpecKey = canonical.SpecKey;
++                accessory.Application = canonical.Application;
++
++                if (string.IsNullOrWhiteSpace(accessory.Note))
++                    accessory.Note = canonical.Note;
++            }
++        }
++
++        private static TenderAccessory? FindCanonicalDefault(
++            TenderAccessory accessory,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
++        {
++            string category = TenderAccessoryRules.NormalizeScope(accessory.CategoryScope);
++            string application = TenderAccessoryRules.NormalizeScope(accessory.Application);
++            string specKey = TenderAccessoryRules.NormalizeScope(accessory.SpecKey);
++            string name = (accessory.Name ?? string.Empty).Trim();
++            string position = (accessory.Position ?? string.Empty).Trim();
++
++            var exactMatch = canonicalDefaults.FirstOrDefault(item =>
++                string.Equals(TenderAccessoryRules.NormalizeScope(item.CategoryScope), category, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals(TenderAccessoryRules.NormalizeScope(item.Application), application, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals(TenderAccessoryRules.NormalizeScope(item.SpecKey), specKey, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals((item.Name ?? string.Empty).Trim(), name, System.StringComparison.OrdinalIgnoreCase)
++                && string.Equals((item.Position ?? string.Empty).Trim(), position, System.StringComparison.OrdinalIgnoreCase)
++                && item.CalcRule == accessory.CalcRule);
++
++            if (exactMatch != null)
++                return exactMatch;
++
++            var tekMatch = FindCanonicalTekAccessory(category, application, specKey, name, canonicalDefaults);
++            if (tekMatch != null)
++                return tekMatch;
++
++            var relaxedMatches = canonicalDefaults
++                .Where(item =>
++                    string.Equals(TenderAccessoryRules.NormalizeScope(item.CategoryScope), category, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.Application), application, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.SpecKey), specKey, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals((item.Name ?? string.Empty).Trim(), name, System.StringComparison.OrdinalIgnoreCase)
++                    && item.CalcRule == accessory.CalcRule)
++                .ToList();
++
++            if (relaxedMatches.Count == 1)
++                return relaxedMatches[0];
++
++            if (!string.IsNullOrWhiteSpace(position))
++            {
++                var positionMatches = relaxedMatches
++                    .Where(item => string.Equals((item.Position ?? string.Empty).Trim(), position, System.StringComparison.OrdinalIgnoreCase))
++                    .ToList();
++
++                if (positionMatches.Count == 1)
++                    return positionMatches[0];
++            }
++
++            return null;
++        }
++
++        private static TenderAccessory? FindCanonicalTekAccessory(
++            string category,
++            string application,
++            string specKey,
++            string name,
++            IReadOnlyList<TenderAccessory> canonicalDefaults)
++        {
++            if (IsColdStorageTekAlias(name))
++            {
++                return canonicalDefaults.FirstOrDefault(item =>
++                    string.Equals(TenderAccessoryRules.NormalizeScope(item.CategoryScope), category, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.Application), application, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.SpecKey), specKey, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(item.Name, "B2S-TEK", System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(item.Position, PosPanelThep, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(item.Material, "Inox", System.StringComparison.OrdinalIgnoreCase));
++            }
++
++            if (IsExteriorTekAlias(name))
++            {
++                return canonicalDefaults.FirstOrDefault(item =>
++                    string.Equals(TenderAccessoryRules.NormalizeScope(item.CategoryScope), category, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.Application), application, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(TenderAccessoryRules.NormalizeScope(item.SpecKey), specKey, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(item.Name, ExteriorTekScrewBaseName, System.StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(item.Position, PosPanelThep, System.StringComparison.OrdinalIgnoreCase));
++            }
++
++            return null;
++        }
++
++        private static bool IsColdStorageTekAlias(string name)
++        {
++            return string.Equals(name, "B2S-TEK", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, ExteriorTekScrewBaseName, StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "B2S-TEK inox", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "V├¡t TEK", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "Vit TEK", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "V├¡t TEK inox", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "Vit TEK inox", StringComparison.OrdinalIgnoreCase);
++        }
++
++        private static bool IsExteriorTekAlias(string name)
++        {
++            return string.Equals(name, ExteriorTekScrewBaseName, StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "B2S-TEK", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "V├¡t TEK ngo├ái nh├á", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "Vit TEK ngoai nha", StringComparison.OrdinalIgnoreCase);
++        }
++
++        private static bool IsColdStorageBottomUChannelName(string? name)
++        {
++            string normalized = (name ?? string.Empty).Trim();
++            if (!normalized.StartsWith("U 40x", StringComparison.OrdinalIgnoreCase)
++                || !normalized.EndsWith("x40", StringComparison.OrdinalIgnoreCase))
++            {
++                return false;
++            }
++
++            int middleLength = normalized.Length - "U 40x".Length - "x40".Length;
++            if (middleLength <= 0)
++                return false;
++
++            return int.TryParse(normalized.Substring("U 40x".Length, middleLength), out _);
++        }
++
+         private static bool HasSameLogicalAccessory(TenderAccessory left, TenderAccessory right)
+         {
+             return string.Equals(TenderAccessoryRules.NormalizeScope(left.CategoryScope), TenderAccessoryRules.NormalizeScope(right.CategoryScope), System.StringComparison.OrdinalIgnoreCase)
+@@ -322,7 +878,7 @@ namespace ShopDrawing.Plugin.Core
+                 CategoryScope = categoryScope,
+                 SpecKey = TenderAccessoryRules.NormalizeScope(source.SpecKey),
+                 Application = application,
+-                WasteFactor = source.WasteFactor,
++                WasteFactor = LockedTenderWastePercent,
+                 Adjustment = source.Adjustment,
+                 IsManualOnly = source.IsManualOnly,
+                 Note = source.Note
+@@ -333,6 +889,28 @@ namespace ShopDrawing.Plugin.Core
+         {
+             var normalized = CloneForScope(source, categoryScope, application);
+ 
++            if (ShouldDropDeprecatedAccessory(normalized))
++                yield break;
++
++            bool isCleanroom = string.Equals(
++                TenderAccessoryRules.NormalizeScope(normalized.Application),
++                AppCleanroom,
++                StringComparison.OrdinalIgnoreCase);
++
++            if (isCleanroom
++                && (normalized.Position == PosLoMo || normalized.Position == PosLoMo2Mat)
++                && (string.Equals(normalized.Name, CleanroomBottomUChannelBaseName, StringComparison.OrdinalIgnoreCase)
++                    || string.Equals(normalized.Name, SiliconeSN505, StringComparison.OrdinalIgnoreCase)))
++            {
++                normalized.Position = PosLoMo;
++                normalized.CalcRule = AccessoryCalcRule.PER_OPENING_PERIMETER;
++                if (string.Equals(normalized.Name, SiliconeSN505, StringComparison.OrdinalIgnoreCase))
++                    normalized.Factor = SiliconeSn505JointBottleFactor * 2.0;
++
++                yield return normalized;
++                yield break;
++            }
++
+             // Sealant/silicone opening expansion: Lß╗ù mß╗ƒ ΓåÆ cß║ính ─æß╗⌐ng + cß║ính ─æß║ºu + cß║ính sill
+             if (normalized.Position == PosLoMo || normalized.Position == PosLoMo2Mat)
+             {
+@@ -352,25 +930,46 @@ namespace ShopDrawing.Plugin.Core
+                 yield break;
+             }
+ 
+-            // Sealant/silicone v├ích expansion: V├ích lß╗Ö thi├¬n ΓåÆ ─æß╗ënh + ch├ón + cß║ính hß╗ƒ
++            // Sealant/silicone v├ích expansion: V├ích bi├¬n tß╗▒ do ΓåÆ ─æß╗ënh + ch├ón + m├⌐p ─æß╗⌐ng tß╗▒ do
+             if (normalized.Position == PosVach
+                 && (normalized.Name == SealantMS617 || normalized.Name == SiliconeSN505))
+             {
++                bool isExterior = string.Equals(
++                    TenderAccessoryRules.NormalizeScope(normalized.Application),
++                    AppExterior,
++                    StringComparison.OrdinalIgnoreCase);
++
+                 yield return CloneAccessory(normalized, normalized.Name, PosDinhVach,
+                     AccessoryCalcRule.PER_TOP_EDGE_LENGTH, normalized.Factor,
+                     "Ho├án thiß╗çn ─æß╗ënh v├ích");
+                 yield return CloneAccessory(normalized, normalized.Name, PosChanVach,
+                     AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, normalized.Factor,
+                     "Ho├án thiß╗çn ch├ón v├ích");
+-                yield return CloneAccessory(normalized, normalized.Name, PosCanhHo,
+-                    AccessoryCalcRule.PER_EXPOSED_END_LENGTH, normalized.Factor,
+-                    "Ho├án thiß╗çn cß║ính hß╗ƒ");
++                if (!isExterior)
++                {
++                    yield return CloneAccessory(normalized, normalized.Name, PosCanhHo,
++                        AccessoryCalcRule.PER_EXPOSED_END_LENGTH, normalized.Factor,
++                        "Ho├án thiß╗çn m├⌐p ─æß╗⌐ng tß╗▒ do");
++                }
+                 yield break;
+             }
+ 
+             yield return normalized;
+         }
+ 
++        private static bool ShouldDropDeprecatedAccessory(TenderAccessory accessory)
++        {
++            if (!string.Equals(TenderAccessoryRules.NormalizeScope(accessory.Application), AppCleanroom, StringComparison.OrdinalIgnoreCase))
++                return false;
++
++            string name = (accessory.Name ?? string.Empty).Trim();
++            return string.Equals(name, "V├â┬¡t TEK", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "Vit TEK", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "V├â┬¡t TEK inox", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "Vit TEK inox", StringComparison.OrdinalIgnoreCase)
++                || string.Equals(name, "B2S-TEK inox", StringComparison.OrdinalIgnoreCase);
++        }
++
+         private static TenderAccessory CloneAccessory(
+             TenderAccessory source, string name, string position,
+             AccessoryCalcRule calcRule, double factor, string note)
+@@ -386,13 +985,24 @@ namespace ShopDrawing.Plugin.Core
+                 CategoryScope = source.CategoryScope,
+                 SpecKey = source.SpecKey,
+                 Application = source.Application,
+-                WasteFactor = source.WasteFactor,
++                WasteFactor = LockedTenderWastePercent,
+                 Adjustment = source.Adjustment,
+                 IsManualOnly = source.IsManualOnly,
+                 Note = note
+             };
+         }
+ 
++        private static void EnforceLockedTenderWaste(IEnumerable<TenderAccessory> accessories)
++        {
++            foreach (var accessory in accessories)
++            {
++                if (accessory == null)
++                    continue;
++
++                accessory.WasteFactor = LockedTenderWastePercent;
++            }
++        }
++
+         private static int CompareAccessories(TenderAccessory left, TenderAccessory right)
+         {
+             int result = TenderAccessoryRules.CompareApplications(left.Application, right.Application);
+@@ -421,29 +1031,31 @@ namespace ShopDrawing.Plugin.Core
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+         private static List<TenderAccessory> GetExteriorDefaults() => new()
+         {
+-            new() { Name = "Diß╗üm 01", Material = "Tole", Position = PosCanhTren,  Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH,           Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "M├⌐p tr├¬n v├ích, tiß║┐p gi├íp m├íi/trß║ºn" },
++            new() { Name = "Diß╗üm 01", Material = "Tole", Position = PosCanhTren,  Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH,           Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Diß╗üm xß╗¡ l├╜ ─æß╗ënh v├ích, tiß║┐p gi├íp m├íi/trß║ºn" },
+             new() { Name = "Diß╗üm 02", Material = "Tole", Position = PosCanhDuoi,  Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH,        Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "M├⌐p d╞░ß╗¢i v├ích, tiß║┐p gi├íp nß╗ün/s├án" },
+-            new() { Name = "Diß╗üm 03", Material = "Tole", Position = PosDauCuoi,   Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH,        Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "M├⌐p ─æß╗⌐ng hß╗ƒ ß╗ƒ ─æß║ºu/cuß╗æi v├ích (che l├╡i xß╗æp)" },
+             new() { Name = "Diß╗üm 04", Material = "Tole", Position = PosGocNgoai,  Unit = "md", CalcRule = AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT,     Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "G├│c giao 2 v├ích nh├┤ ra ngo├ái (90┬░)" },
+-            new() { Name = "Diß╗üm 05", Material = "Tole", Position = PosMoiNoi,    Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH,              Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Khe nß╗æi T/G giß╗»a 2 tß║Ñm panel kß╗ü nhau" },
+             new() { Name = "Diß╗üm 06", Material = "Tole", Position = PosCuaDi,     Unit = "md", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_PERIMETER,    Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bao quanh 3 m├⌐p lß╗ù cß╗¡a ─æi (tr├¬n + 2 ─æß╗⌐ng, bß╗Å n╞░ß╗íng)" },
+             new() { Name = "Diß╗üm 07", Material = "Tole", Position = PosCuaSoLKT,  Unit = "md", CalcRule = AccessoryCalcRule.PER_NON_DOOR_OPENING_PERIMETER, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bao quanh 4 m├⌐p cß╗¡a sß╗ò/LKT (tr├¬n + 2 ─æß╗⌐ng + sill)" },
+-            new() { Name = "Bß╗Ö cß╗¡a ─æi",           Position = PosCuaDi,     Unit = "bß╗Ö", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_QTY,            Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "T├¡nh s╞í bß╗Ö theo sß╗æ l╞░ß╗úng cß╗¡a ─æi" },
+             new() { Name = ExteriorTekScrewBaseName, Position = PosPanelThep, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_TEK_SCREW_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Nhß╗ïp x├á gß╗ô 1500mm ├ù 2 v├¡t/─æiß╗âm ├ù sß╗æ tß║Ñm" },
+             new() { Name = SealantMS617, Position = PosMoiNoi,     Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH,                   Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bß║╣ khe nß╗æi mß║╖t ngo├ái giß╗»a 2 tß║Ñm panel" },
+             new() { Name = SealantMS617, Position = PosCanhDungLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_VERTICAL_EDGES,         Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bß║╣ 2 cß║ính ─æß╗⌐ng viß╗ün lß╗ù mß╗ƒ" },
+             new() { Name = SealantMS617, Position = PosCanhDauLM,  Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_HORIZONTAL_TOP_LENGTH,  Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bß║╣ cß║ính ngang tr├¬n ─æß║ºu lß╗ù mß╗ƒ" },
+             new() { Name = SealantMS617, Position = PosCanhSillLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_SILL_LENGTH,             Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Bß║╣ ng╞░ß╗íng d╞░ß╗¢i cß╗¡a sß╗ò/LKT (kh├┤ng t├¡nh cß╗¡a ─æi)" },
+-            new() { Name = SealantMS617, Position = PosDinhVach,   Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH,                Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Ho├án thiß╗çn m├⌐p tr├¬n v├ích lß╗Ö thi├¬n" },
+-            new() { Name = SealantMS617, Position = PosChanVach,   Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH,             Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Ho├án thiß╗çn m├⌐p ch├ón v├ích lß╗Ö thi├¬n" },
+-            new() { Name = SealantMS617, Position = PosCanhHo,     Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH,             Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Ho├án thiß╗çn m├⌐p hß╗ƒ ─æß║ºu/cuß╗æi v├ích" },
+-            new() { Name = "Mastic tape",  Position = PosMoiNoi, Unit = "md",  CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH,  Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "B─âng butyl d├ín trong ng├ám T/G tr╞░ß╗¢c khi lß║»p tß║Ñm" },
++            new() { Name = SealantMS617, Position = PosDinhVach,   Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH,                Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Sealant ho├án thiß╗çn ─æß╗ënh v├ích ngo├ái nh├á" },
++            new() { Name = SealantMS617, Position = PosChanVach,   Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH,             Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Ho├án thiß╗çn ch├ón v├ích bi├¬n tß╗▒ do" },
+             // ΓöÇΓöÇΓöÇ Nh├│m khe nß╗æi ─æß╗⌐ng (chß╗ë xß║┐p Ngang, tß╗▒ ─æß╗Öng = 0 khi xß║┐p Dß╗ìc) ΓöÇΓöÇΓöÇ
+-            new() { Name = "Alu. Omega profile",  Material = "Nh├┤m", Position = PosMoiNoi, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 1.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Nß║╣p nh├┤m che khe nß╗æi ─æß╗⌐ng (chß╗ë xß║┐p Ngang)" },
+-            new() { Name = "Mastic tape (Omega)",               Position = PosMoiNoi, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 2.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "D├ín 2 m├⌐p c├ính Omega tr╞░ß╗¢c khi ├⌐p v├áo panel" },
+-            new() { Name = "Foam PU on site",                   Position = PosMoiNoi, Unit = "chai", CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "B╞ím khe 50├ù100mm, foam nß╗ƒ ├ù20, chai 750ml" },
+-            new() { Name = "Gio─âng xß╗æp l├ám k├¡n",               Position = PosMoiNoi, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 2.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "D├ín 2 m├⌐p panel v├áo th├⌐p cß╗Öt ─æß╗⌐ng, chß╗æng n╞░ß╗¢c/gi├│" },
+-            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan gß║»n diß╗üm tole v├áo panel (th├⌐p d├áy < 2.5mm), ~6 con/md v├ích" }
++            new() { Name = "Nß║╣p Omega",  Material = "Nh├┤m", Position = PosKheDung, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 1.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Nß║╣p nh├┤m che khe ─æß╗⌐ng Omega (chß╗ë xß║┐p Ngang)" },
++            new() { Name = "B─âng keo butyl Omega",               Position = PosKheDung, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 2.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "D├ín 2 m├⌐p nß║╣p Omega tr╞░ß╗¢c khi ├⌐p v├áo panel" },
++            new() { Name = "Foam PU b╞ím tß║íi chß╗ù",                   Position = PosKheDung, Unit = "chai", CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "B╞ím k├¡n tuyß║┐n khe ─æß╗⌐ng Omega, quy ─æß╗òi theo md khe" },
++            new() { Name = "Gio─âng xß╗æp l├ám k├¡n",               Position = PosKheDung, Unit = "md",   CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 2.0,  CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "D├ín 2 m├⌐p l├ám k├¡n n╞░ß╗¢c v├á gi├│ tß║íi khe Omega" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosCanhTren, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan bß║»t diß╗üm ─æß╗ënh v├ích, quy ─æß╗òi ~6 con/md" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosCanhDuoi, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan bß║»t diß╗üm ch├ón v├ích, quy ─æß╗òi ~6 con/md" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosGocNgoai, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan bß║»t diß╗üm g├│c ngo├ái, quy ─æß╗òi ~6 con/md" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosKheDung, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_VERTICAL_JOINT_HEIGHT, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan bß║»t nß║╣p Omega theo khe ─æß╗⌐ng, quy ─æß╗òi ~6 con/md" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosCuaDi, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_PERIMETER, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan bß║»t diß╗üm viß╗ün cß╗¡a ─æi, quy ─æß╗òi ~6 con/md" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosCuaSoLKT, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_NON_DOOR_OPENING_PERIMETER, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "V├¡t tß╗▒ khoan bß║»t diß╗üm viß╗ün cß╗¡a sß╗ò/lß╗ù kß╗╣ thuß║¡t, quy ─æß╗òi ~6 con/md" },
++            new() { Name = "B├ít th├⌐p ch├ón panel", Material = "Th├⌐p", Position = PosChanVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_PANEL_SUPPORT_BRACKET_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "Chiß╗üu d├ái v├ích / nhß╗ïp x├á gß╗ô 1500mm, l├ám tr├▓n l├¬n" },
++            new() { Name = "B2S-TEK 15-15├ù20 HWFS", Position = PosChanVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_PANEL_SUPPORT_BRACKET_QTY, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppExterior, Note = "2 v├¡t / 1 b├ít th├⌐p ch├ón panel" }
+         };
+ 
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+@@ -451,56 +1063,89 @@ namespace ShopDrawing.Plugin.Core
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+         private static List<TenderAccessory> GetCleanroomDefaults() => new()
+         {
+-            new() { Name = "Nß║╣p nh├┤m phß║│ng", Position = PosMoiNoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom },
+-            new() { Name = "Nß║╣p ch├ón vß╗ç sinh", Position = PosCanhDuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom },
+-            new() { Name = "Nß║╣p bo cong R40", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom },
+-            new() { Name = "Nß║╣p cß║ính hß╗ƒ", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom },
+-            new() { Name = "Viß╗ün lß╗ù mß╗ƒ 2 mß║╖t", Position = PosLoMo, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_PERIMETER_TWO_FACES, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom },
+-            new() { Name = "Bß╗Ö cß╗¡a ─æi ph├▓ng sß║ích", Position = PosCuaDi, Unit = "bß╗Ö", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "T├¡nh s╞í bß╗Ö theo SL cß╗¡a ─æi" },
+-            new() { Name = SiliconeSN505, Position = PosMoiNoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Kh├íng mß╗æc" },
+-            new() { Name = SiliconeSN505, Position = PosCanhDungLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_VERTICAL_EDGES, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "T├¡nh 2 mß║╖t" },
+-            new() { Name = SiliconeSN505, Position = PosCanhDauLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_HORIZONTAL_TOP_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "T├¡nh 2 mß║╖t" },
+-            new() { Name = SiliconeSN505, Position = PosCanhSillLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_SILL_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "T├¡nh 2 mß║╖t" },
+-            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Ho├án thiß╗çn vß╗ç sinh" },
+-            new() { Name = SiliconeSN505, Position = PosChanVach, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Ho├án thiß╗çn vß╗ç sinh" },
+-            new() { Name = SiliconeSN505, Position = PosCanhHo, Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Ho├án thiß╗çn vß╗ç sinh" },
+-            new() { Name = "B2S-TEK inox", Position = PosPanelThep, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_PANEL_QTY, Factor = 12.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom },
+-            new() { Name = "Rivet inox ├ÿ4.2├ù12", Position = PosVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom }
++            new() { Name = SiliconeSN505, Position = PosMoiNoi, Unit = "chai", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = SiliconeSn505JointBottleFactor, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "B╞ím k├¡n mß╗æi nß╗æi ph├▓ng sß║ích, quy ─æß╗òi 15 md/chai" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosCanhDuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Ch├ón v├ích ph├▓ng sß║ích: 2 tuyß║┐n V bo R40 hai b├¬n v├ích" },
++            new() { Name = CleanroomBottomUChannelBaseName, Material = "Nh├┤m / Th├⌐p mß║í kß║╜m", Position = PosCanhDuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Ch├ón v├ích ph├▓ng sß║ích: 1 tuyß║┐n U ch├ón v├ích, bß╗Ñng U = chiß╗üu d├áy panel; panel 50/75 d├╣ng nh├┤m, c├▓n lß║íi d├╣ng th├⌐p mß║í kß║╜m" },
++            new() { Name = "V├¡t No.5 + tß║»c k├¬ nhß╗▒a", Material = "Th├⌐p mß║í kß║╜m + Nhß╗▒a", Position = PosCanhDuoi, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = RiveAt500Factor, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Cß╗æ ─æß╗ïnh U ch├ón v├ích ph├▓ng sß║ích xuß╗æng s├án: v├¡t + tß║»c k├¬ nhß╗▒a @500" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß╗ënh v├ích ph├▓ng sß║ích giao trß║ºn giß╗»a: 2 tuyß║┐n V bo R40 hai b├¬n v├ích" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß╗ënh v├ích ph├▓ng sß║ích giao bi├¬n trß║ºn: 1 tuyß║┐n V bo R40 ph├¡a trong" },
++            new() { Name = CleanroomPerimeterAngleName, Material = "Nh├┤m", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß╗ënh v├ích ph├▓ng sß║ích giao bi├¬n trß║ºn: 1 tuyß║┐n V 40x80 nh├┤m s╞ín t─⌐nh ─æiß╗çn ph├¡a ngo├ái" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß║ºu/cuß╗æi v├ích ph├▓ng sß║ích giao giß╗»a: 2 tuyß║┐n V bo R40 hai b├¬n v├ích" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß║ºu/cuß╗æi v├ích ph├▓ng sß║ích giao bi├¬n: 1 tuyß║┐n V bo R40 ph├¡a trong" },
++            new() { Name = CleanroomPerimeterAngleName, Material = "Nh├┤m", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß║ºu/cuß╗æi v├ích ph├▓ng sß║ích giao bi├¬n: 1 tuyß║┐n V 40x80 nh├┤m s╞ín t─⌐nh ─æiß╗çn ph├¡a ngo├ái" },
++            new() { Name = CleanroomBottomUChannelBaseName, Material = "Nh├┤m / Th├⌐p mß║í kß║╜m", Position = PosLoMo, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_PERIMETER, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Lß╗ù mß╗ƒ ph├▓ng sß║ích: U 4 cß║ính c├╣ng loß║íi ch├ón v├ích; panel 50/75 d├╣ng nh├┤m, c├▓n lß║íi d├╣ng th├⌐p mß║í kß║╜m" },
++            new() { Name = "Bß╗Ö cß╗¡a ─æi ph├▓ng sß║ích", Position = PosCuaDi, Unit = "bß╗Ö", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "S╞í bß╗Ö theo sß╗æ l╞░ß╗úng cß╗¡a ─æi ph├▓ng sß║ích" },
++            new() { Name = SiliconeSN505, Position = PosLoMo, Unit = "chai", CalcRule = AccessoryCalcRule.PER_OPENING_PERIMETER, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Lß╗ù mß╗ƒ ph├▓ng sß║ích: 2 tuyß║┐n silicone ho├án thiß╗çn theo 4 cß║ính U nh├┤m, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß╗ënh v├ích ph├▓ng sß║ích giao trß║ºn giß╗»a: 2 tuyß║┐n silicone ho├án thiß╗çn theo 2 V bo R40, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß╗ënh v├ích ph├▓ng sß║ích giao bi├¬n trß║ºn: 2 tuyß║┐n silicone ho├án thiß╗çn, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosChanVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Ch├ón v├ích ph├▓ng sß║ích: 2 tuyß║┐n silicone ho├án thiß╗çn theo 2 V bo R40, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhHo, Unit = "chai", CalcRule = AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß║ºu/cuß╗æi v├ích ph├▓ng sß║ích giao giß╗»a: 2 tuyß║┐n silicone ho├án thiß╗çn theo 2 V bo R40, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhHo, Unit = "chai", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "─Éß║ºu/cuß╗æi v├ích ph├▓ng sß║ích giao bi├¬n: 2 tuyß║┐n silicone ho├án thiß╗çn, quy ─æß╗òi 15 md/chai" },
++            new() { Name = "Rive ├ÿ4.2├ù12", Material = "Nh├┤m", Position = PosVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppCleanroom, Note = "Rive nh├┤m line-based theo tß╗½ng tuyß║┐n phß╗Ñ kiß╗çn ph├▓ng sß║ích" }
+         };
+ 
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+         // COLD STORAGE DEFAULTS (Kho lß║ính)
+         // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
++        private static List<TenderAccessory> GetCleanroomCeilingDefaults() => new()
++        {
++            new() { Name = "Thanh T 60x80", Material = "Nh├┤m", Position = PosTreoTNh├┤m, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH, Factor = 1.0 / 6.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "DT-06 tß╗òng chiß╗üu d├ái tuyß║┐n treo thanh T 60x80, quy ─æß╗òi 1 c├óy = 6m" },
++            new() { Name = BoltSetM10Name, Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "bß╗Ö", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "1 bß╗Ö cho mß╗ùi ─æiß╗âm treo thanh T" },
++            new() { Name = "T─âng ─æ╞í M10", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "1 t─âng ─æ╞í cho mß╗ùi ─æiß╗âm treo thanh T" },
++            new() { Name = "C├íp treo ├ÿ10", Material = "Th├⌐p bß╗ìc nhß╗▒a", Position = PosTreoTNh├┤m, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_WIRE_ROPE_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "DT-06 tß╗òng chiß╗üu d├ái c├íp treo thanh T, nh├ón theo Thß║ú c├íp (mm)" },
++            new() { Name = "C├╣m xiß║┐t c├íp ├ÿ10", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 3.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "3 c├╣m xiß║┐t c├íp cho mß╗ùi ─æiß╗âm treo thanh T" },
++            new() { Name = "Thanh C 100x50", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_LENGTH, Factor = 1.0 / 6.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "DT-08 Type 2 tß╗òng chiß╗üu d├ái tuyß║┐n treo bulong nß║Ñm/thanh C, quy ─æß╗òi 1 c├óy = 6m" },
++            new() { Name = "Ty ren M10", Material = "Th├⌐p", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "1 ty ren cho mß╗ùi ─æiß╗âm treo bulong nß║Ñm" },
++            new() { Name = "T─âng ─æ╞í M10", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "1 t─âng ─æ╞í cho mß╗ùi ─æiß╗âm treo bulong nß║Ñm" },
++            new() { Name = "C├íp treo ├ÿ10", Material = "Th├⌐p bß╗ìc nhß╗▒a", Position = PosTreoBulongNam, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_WIRE_ROPE_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "DT-08 Type 2 tß╗òng chiß╗üu d├ái c├íp treo bulong nß║Ñm, nh├ón theo Thß║ú c├íp (mm)" },
++            new() { Name = "C├╣m xiß║┐t c├íp ├ÿ10", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 3.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "3 c├╣m xiß║┐t c├íp cho mß╗ùi ─æiß╗âm treo bulong nß║Ñm" },
++            new() { Name = CleanroomMushroomBoltName, Material = "Nhß╗▒a", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_BOLT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppCleanroom, Note = "1 bulong nß║Ñm cho mß╗ùi ─æiß╗âm li├¬n kß║┐t panel vß╗¢i thanh C" }
++        };
++
+         private static List<TenderAccessory> GetColdStorageDefaults() => new()
+         {
+-            new() { Name = SheetTrim01, Material = "Tole", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SheetTrim01, Material = "Tole", Position = PosCanhDuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SheetTrim01, Material = "Tole", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SheetTrim01, Material = "Tole", Position = PosMoiNoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SheetTrim01, Material = "Tole", Position = PosLoMo, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_PERIMETER_TWO_FACES, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = "Bß╗Ö cß╗¡a ─æi kho lß║ính", Position = PosCuaDi, Unit = "bß╗Ö", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "T├¡nh s╞í bß╗Ö theo SL cß╗¡a ─æi" },
+-            new() { Name = "B2S-TEK", Material = "Inox", Position = PosPanelThep, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_PANEL_QTY, Factor = 12.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SealantMC202, Position = PosMoiNoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Giß╗»a ng├ám panel" },
+-            new() { Name = SiliconeSN505, Position = PosCanhDungLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_VERTICAL_EDGES, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SiliconeSN505, Position = PosCanhDauLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_HORIZONTAL_TOP_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SiliconeSN505, Position = PosCanhSillLM, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_SILL_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ho├án thiß╗çn lß╗Ö thi├¬n" },
+-            new() { Name = SiliconeSN505, Position = PosChanVach, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ho├án thiß╗çn lß╗Ö thi├¬n" },
+-            new() { Name = SiliconeSN505, Position = PosCanhHo, Unit = "md", CalcRule = AccessoryCalcRule.PER_EXPOSED_END_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ho├án thiß╗çn lß╗Ö thi├¬n" },
+-            new() { Name = "Rivet ├ÿ4.2├ù12", Material = "Nh├┤m", Position = PosVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage },
+-            new() { Name = "T-profile 68x75", Material = "Nh├┤m", Position = PosTreoTNh├┤m, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Tß╗òng chiß╗üu d├ái tuyß║┐n treo T nh├┤m" },
+-            new() { Name = "Steel plate 50x325x3", Material = "Th├⌐p", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage },
+-            new() { Name = "Turnbuckle M12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage },
+-            new() { Name = "Wire rope ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_WIRE_ROPE_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Nh├ón theo Thß║ú c├íp (mm) nhß║¡p tay" },
+-            new() { Name = "Wire rope clip ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 2.0, CategoryScope = "Trß║ºn", Application = AppColdStorage },
+-            new() { Name = "ß╗Éng ├ÿ114", Material = "PVC", Position = PosTreoTNh├┤m, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 0.125, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Quy ─æß╗òi 500mm/─æiß╗âm, 1 c├óy = 4m theo DT-15" },
+-            new() { Name = "C-channel 100x50", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Tß╗òng chiß╗üu d├ái tuyß║┐n treo bulong nß║Ñm" },
+-            new() { Name = "Ty ren M10", Material = "Th├⌐p", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage },
+-            new() { Name = "Turnbuckle M12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage },
+-            new() { Name = "Wire rope ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_WIRE_ROPE_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Nh├ón theo Thß║ú c├íp (mm) nhß║¡p tay" },
+-            new() { Name = "Wire rope clip ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 2.0, CategoryScope = "Trß║ºn", Application = AppColdStorage },
+-            new() { Name = "ß╗Éng ├ÿ114", Material = "PVC", Position = PosTreoBulongNam, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 0.05, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Quy ─æß╗òi 200mm/─æiß╗âm, 1 c├óy = 4m theo DT-16" },
+-            new() { Name = "Bulong nß║Ñm nhß╗▒a", Material = "Nhß╗▒a", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_BOLT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage }
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao trß║ºn giß╗»a kho lß║ính: 2 tuyß║┐n V bo R40 hai b├¬n v├ích, ├íp dß╗Ñng panel 100/125/150/180/200 khi T<15┬░C" },
++            new() { Name = "Foam PU b╞ím tß║íi chß╗ù", Position = PosCanhTren, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao trß║ºn giß╗»a kho lß║ính: 1 tuyß║┐n foam b╞ím tß║íi chß╗ù, quy ─æß╗òi 3 md/chai, ├íp dß╗Ñng panel 100/125/150/180/200 khi T<15┬░C" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao bi├¬n trß║ºn kho lß║ính: 1 tuyß║┐n V bo R40 ph├¡a trong" },
++            new() { Name = "V 80x80", Material = "Nh├┤m", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao bi├¬n trß║ºn kho lß║ính: 1 tuyß║┐n V 80x80 anodized ph├¡a ngo├ái" },
++            new() { Name = "Foam PU b╞ím tß║íi chß╗ù", Position = PosCanhTren, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao bi├¬n trß║ºn kho lß║ính: 1 tuyß║┐n foam b╞ím tß║íi chß╗ù, quy ─æß╗òi 3 md/chai" },
++            new() { Name = SheetTrim01, Material = "Tole", Position = PosCanhTren, Unit = "md", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_FREE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích m├⌐p tß╗▒ do kho lß║ính: 1 tuyß║┐n diß╗üm t├┤n" },
++            new() { Name = "V bo R40", Material = "Nh├┤m", Position = PosCanhDuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ch├ón v├ích kho lß║ính tr├¬n bß╗ç ch├ón (curb): 2 tuyß║┐n V bo R40 hai b├¬n panel" },
++            new() { Name = ColdStorageBottomUChannelBaseName, Material = "Nh├┤m / Th├⌐p mß║í kß║╜m", Position = PosCanhDuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ch├ón v├ích kho lß║ính tr├¬n bß╗ç ch├ón (curb): 1 tuyß║┐n U ch├ón v├ích, bß╗Ñng U = chiß╗üu d├áy panel + 3mm; panel 50/75 d├╣ng nh├┤m, c├▓n lß║íi d├╣ng th├⌐p mß║í kß║╜m" },
++            new() { Name = "V├¡t No.5 + tß║»c k├¬ nhß╗▒a", Material = "Th├⌐p mß║í kß║╜m + Nhß╗▒a", Position = PosCanhDuoi, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = RiveAt500Factor, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Cß╗æ ─æß╗ïnh U ch├ón v├ích kho lß║ính xuß╗æng bß╗ç ch├ón (curb): v├¡t + tß║»c k├¬ nhß╗▒a @500" },
++            new() { Name = "Foam PU b╞ím tß║íi chß╗ù", Position = PosCanhDuoi, Unit = "chai", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ch├ón v├ích kho lß║ính tr├¬n bß╗ç ch├ón (curb): foam PU b╞ím tß║íi chß╗ù, quy ─æß╗òi 3 md/chai" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, Factor = 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao giß╗»a kho lß║ính: 2 tuyß║┐n V bo R40 hai b├¬n panel" },
++            new() { Name = "Foam PU b╞ím tß║íi chß╗ù", Position = PosDauCuoi, Unit = "chai", CalcRule = AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao giß╗»a kho lß║ính: 1 tuyß║┐n foam b╞ím tß║íi chß╗ù, quy ─æß╗òi 3 md/chai" },
++            new() { Name = VBoR40Name, Material = "Nh├┤m", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao bi├¬n kho lß║ính: 1 tuyß║┐n V bo R40 ph├¡a trong" },
++            new() { Name = "V 80x80", Material = "Nh├┤m", Position = PosDauCuoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao bi├¬n kho lß║ính: 1 tuyß║┐n V 80x80 ph├¡a ngo├ái" },
++            new() { Name = "Foam PU b╞ím tß║íi chß╗ù", Position = PosDauCuoi, Unit = "chai", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = 0.33, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao bi├¬n kho lß║ính: 1 tuyß║┐n foam b╞ím tß║íi chß╗ù, quy ─æß╗òi 3 md/chai" },
++            new() { Name = SheetTrim01, Material = "Tole", Position = PosMoiNoi, Unit = "md", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Diß╗üm t├┤n che khe nß╗æi giß╗»a 2 tß║Ñm panel" },
++            new() { Name = SheetTrim01, Material = "Tole", Position = PosLoMo, Unit = "md", CalcRule = AccessoryCalcRule.PER_OPENING_PERIMETER_TWO_FACES, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Diß╗üm t├┤n viß╗ün lß╗ù mß╗ƒ, t├¡nh theo chu vi 2 mß║╖t" },
++            new() { Name = "Bß╗Ö cß╗¡a ─æi kho lß║ính", Position = PosCuaDi, Unit = "bß╗Ö", CalcRule = AccessoryCalcRule.PER_DOOR_OPENING_QTY, Factor = 1.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "S╞í bß╗Ö theo sß╗æ l╞░ß╗úng cß╗¡a ─æi kho lß║ính" },
++            new() { Name = SealantMC202, Position = PosMoiNoi, Unit = "chai", CalcRule = AccessoryCalcRule.PER_JOINT_LENGTH, Factor = SealantMc202BottleFactor, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "B╞ím sealant giß╗»a ng├ám panel, quy ─æß╗òi 6 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhDungLM, Unit = "chai", CalcRule = AccessoryCalcRule.PER_OPENING_VERTICAL_EDGES, Factor = SiliconeSn505JointBottleFactor, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "B╞ím k├¡n cß║ính ─æß╗⌐ng lß╗ù mß╗ƒ kho lß║ính, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhDauLM, Unit = "chai", CalcRule = AccessoryCalcRule.PER_OPENING_HORIZONTAL_TOP_LENGTH, Factor = SiliconeSn505JointBottleFactor, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "B╞ím k├¡n cß║ính ─æß║ºu lß╗ù mß╗ƒ kho lß║ính, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhSillLM, Unit = "chai", CalcRule = AccessoryCalcRule.PER_OPENING_SILL_LENGTH, Factor = SiliconeSn505JointBottleFactor, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "B╞ím k├¡n cß║ính sill lß╗ù mß╗ƒ kho lß║ính, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_CENTER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao trß║ºn giß╗»a kho lß║ính: 2 tuyß║┐n silicone, quy ─æß╗òi 15 md/chai, ├íp dß╗Ñng panel 100/125/150/180/200 khi T<15┬░C" },
++            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_CEILING_PERIMETER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích giao bi├¬n trß║ºn kho lß║ính: 2 tuyß║┐n silicone ho├án thiß╗çn, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosDinhVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_TOP_PANEL_FREE_LENGTH, Factor = SiliconeSn505JointBottleFactor, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß╗ënh v├ích m├⌐p tß╗▒ do kho lß║ính: 1 tuyß║┐n silicone ho├án thiß╗çn, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosChanVach, Unit = "chai", CalcRule = AccessoryCalcRule.PER_BOTTOM_EDGE_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Ch├ón v├ích kho lß║ính tr├¬n bß╗ç ch├ón (curb): bß║»n theo 2 tuyß║┐n V bo R40, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhHo, Unit = "chai", CalcRule = AccessoryCalcRule.PER_END_PANEL_CENTER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao giß╗»a kho lß║ính: 2 tuyß║┐n silicone ho├án thiß╗çn, quy ─æß╗òi 15 md/chai" },
++            new() { Name = SiliconeSN505, Position = PosCanhHo, Unit = "chai", CalcRule = AccessoryCalcRule.PER_END_PANEL_PERIMETER_LENGTH, Factor = SiliconeSn505JointBottleFactor * 2.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "─Éß║ºu/cuß╗æi v├ích giao bi├¬n kho lß║ính: 2 tuyß║┐n silicone ho├án thiß╗çn, quy ─æß╗òi 15 md/chai" },
++            new() { Name = "Rive ├ÿ4.2├ù12", Material = "Nh├┤m", Position = PosVach, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 6.0, CategoryScope = DefaultCategoryScope, Application = AppColdStorage, Note = "Rive nh├┤m cß╗æ ─æß╗ïnh phß╗Ñ kiß╗çn, quy ─æß╗òi s╞í bß╗Ö theo chiß╗üu d├ái v├ích" },
++            new() { Name = "Thanh T 68x75", Material = "Nh├┤m", Position = PosTreoTNh├┤m, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH, Factor = 1.0 / 6.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Tß╗òng chiß╗üu d├ái tuyß║┐n treo thanh T, quy ─æß╗òi 1 c├óy = 6m" },
++            new() { Name = "Bß║ún m├ú 50x325x3", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "1 bß║ún m├ú cho mß╗ùi ─æiß╗âm treo thanh T" },
++            new() { Name = "T─âng ─æ╞í M12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "1 t─âng ─æ╞í cho mß╗ùi ─æiß╗âm treo thanh T" },
++            new() { Name = "C├íp treo ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_WIRE_ROPE_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Tß╗òng chiß╗üu d├ái c├íp treo thanh T, nh├ón theo Thß║ú c├íp (mm)" },
++            new() { Name = "C├╣m xiß║┐t c├íp ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoTNh├┤m, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 3.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "3 c├╣m xiß║┐t c├íp cho mß╗ùi ─æiß╗âm treo thanh T" },
++            new() { Name = "ß╗Éng ├ÿ114", Material = "PVC", Position = PosTreoTNh├┤m, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY, Factor = 0.125, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "ß╗Éng PVC chß╗Ñp ─æiß╗âm treo T, quy ─æß╗òi 500mm/─æiß╗âm, 1 c├óy = 4m theo DT-15" },
++            new() { Name = "Thanh C 100x50", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_LENGTH, Factor = 1.0 / 6.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Tß╗òng chiß╗üu d├ái tuyß║┐n treo bulong nß║Ñm/thanh C, quy ─æß╗òi 1 c├óy = 6m" },
++            new() { Name = "Ty ren M12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 0.35 / 3.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Ty ren M12 quy ─æß╗òi 350mm/─æiß╗âm, 1 c├óy = 3m" },
++            new() { Name = "T─âng ─æ╞í M12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "1 t─âng ─æ╞í cho mß╗ùi ─æiß╗âm treo bulong nß║Ñm" },
++            new() { Name = "C├íp treo ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "md", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_WIRE_ROPE_LENGTH, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "Tß╗òng chiß╗üu d├ái c├íp treo bulong nß║Ñm, nh├ón theo Thß║ú c├íp (mm)" },
++            new() { Name = "C├╣m xiß║┐t c├íp ├ÿ12", Material = "Th├⌐p mß║í kß║╜m", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 3.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "3 c├╣m xiß║┐t c├íp cho mß╗ùi ─æiß╗âm treo bulong nß║Ñm" },
++            new() { Name = "ß╗Éng ├ÿ114", Material = "PVC", Position = PosTreoBulongNam, Unit = "c├óy", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY, Factor = 0.05, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "ß╗Éng PVC chß╗Ñp bulong nß║Ñm, quy ─æß╗òi 200mm/─æiß╗âm, 1 c├óy = 4m theo DT-16" },
++            new() { Name = ColdStorageMushroomBoltName, Material = "Nhß╗▒a", Position = PosTreoBulongNam, Unit = "c├íi", CalcRule = AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_BOLT_QTY, Factor = 1.0, CategoryScope = "Trß║ºn", Application = AppColdStorage, Note = "1 bulong nß║Ñm cho mß╗ùi ─æiß╗âm li├¬n kß║┐t panel vß╗¢i thanh C" }
+         };
+     }
+ }

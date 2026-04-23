@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.EditorInput;
 using ShopDrawing.Plugin.Core;
@@ -18,6 +18,7 @@ namespace ShopDrawing.Plugin
             InitLayersForDocument(Application.DocumentManager.MdiActiveDocument);
             EnsurePlotStyleForDocument(Application.DocumentManager.MdiActiveDocument);
             HookAnnotationScaleForDocument(Application.DocumentManager.MdiActiveDocument);
+            HookAutoUpdateForDocument(Application.DocumentManager.MdiActiveDocument);
 
             Application.DocumentManager.DocumentCreated   += (_, e) =>
             {
@@ -25,6 +26,7 @@ namespace ShopDrawing.Plugin
                 InitLayersForDocument(e.Document);
                 EnsurePlotStyleForDocument(e.Document);
                 HookAnnotationScaleForDocument(e.Document);
+                HookAutoUpdateForDocument(e.Document);
             };
             Application.DocumentManager.DocumentActivated += (_, e) =>
             {
@@ -32,6 +34,7 @@ namespace ShopDrawing.Plugin
                 InitLayersForDocument(e.Document);
                 EnsurePlotStyleForDocument(e.Document);
                 HookAnnotationScaleForDocument(e.Document);
+                HookAutoUpdateForDocument(e.Document);
                 // Cập nhật palette ngay khi chuyển sang document khác
                 SyncScaleFromDocument(e.Document);
             };
@@ -61,6 +64,23 @@ namespace ShopDrawing.Plugin
         }
 
         public void Terminate() { }
+
+        // ───────────────────────── Auto Update Hook ─────────────────────────
+        private static void HookAutoUpdateForDocument(Document? doc)
+        {
+            if (doc == null) return;
+            doc.CommandEnded -= OnDocumentCommandEnded;
+            doc.CommandEnded += OnDocumentCommandEnded;
+        }
+
+        private static void OnDocumentCommandEnded(object sender, CommandEventArgs e)
+        {
+            string cmd = e.GlobalCommandName.ToUpperInvariant();
+            if (cmd == "ERASE" || cmd == "U" || cmd == "UNDO" || cmd == "REDO" || cmd == "GRIP_STRETCH" || cmd == "MOVE" || cmd == "STRETCH" || cmd == "SCALE" || cmd == "ROTATE" || cmd == "COPY")
+            {
+                ShopDrawingRuntimeServices.Settings.NotifyWasteUpdated();
+            }
+        }
 
         // ───────────────────────── Layer Init ─────────────────────────
         private static void InitLayersForDocument(Document? doc)

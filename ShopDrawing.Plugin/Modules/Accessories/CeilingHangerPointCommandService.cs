@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using ShopDrawing.Plugin.Core;
+using ShopDrawing.Plugin.Runtime;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace ShopDrawing.Plugin.Modules.Accessories
@@ -21,6 +22,17 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             {
                 return;
             }
+
+            // Show selection dialog first
+            var dialog = new ShopDrawing.Plugin.UI.CornerApplicationSelectionDialog();
+            bool? dialogResult = Application.ShowModalWindow(dialog);
+            if (dialogResult != true)
+            {
+                return;
+            }
+            string selectedApp = dialog.SelectedApplication;
+            ShopDrawingRuntimeSettings settings = ShopDrawingRuntimeServices.Settings;
+            string selectedSpec = settings.DefaultSpec;
 
             Editor ed = doc.Editor;
             int insertedCount = 0;
@@ -66,10 +78,17 @@ namespace ShopDrawing.Plugin.Modules.Accessories
 
                         ms.AppendEntity(blockRef);
                         tr.AddNewlyCreatedDBObject(blockRef, true);
+                        
+                        AddAttributesToMarker(tr, blockId, blockRef, pointKind, selectedApp, selectedSpec);
                         insertedCount++;
                     }
 
                     tr.Commit();
+                }
+
+                if (insertedCount > 0)
+                {
+                    ShopDrawingRuntimeServices.Settings.NotifyWasteUpdated();
                 }
 
                 ed.WriteMessage($"\nĐã đặt {insertedCount} điểm treo {GetPromptLabel(pointKind)}.");
@@ -77,6 +96,44 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             catch (Exception ex)
             {
                 ed.WriteMessage($"\nLỗi pick điểm treo: {ex.Message}");
+            }
+        }
+
+        private static void AddAttributesToMarker(
+            Transaction tr,
+            ObjectId blockDefId,
+            BlockReference blockReference,
+            CeilingHangerPointKind pointKind,
+            string application,
+            string specKey)
+        {
+            var btr = (BlockTableRecord)tr.GetObject(blockDefId, OpenMode.ForRead);
+            foreach (ObjectId entityId in btr)
+            {
+                if (tr.GetObject(entityId, OpenMode.ForRead) is not AttributeDefinition attributeDefinition
+                    || attributeDefinition.Constant)
+                {
+                    continue;
+                }
+
+                var attributeReference = new AttributeReference();
+                attributeReference.SetAttributeFromBlock(attributeDefinition, blockReference.BlockTransform);
+                attributeReference.Position = attributeDefinition.Position.TransformBy(blockReference.BlockTransform);
+                
+                string text = attributeDefinition.Tag.ToUpperInvariant() switch
+                {
+                    "APP" => application ?? string.Empty,
+                    "SPEC" => specKey ?? string.Empty,
+                    "HANGER_KIND" => pointKind.ToString(),
+                    _ => string.Empty
+                };
+
+                attributeReference.TextString = text;
+                attributeReference.Layer = blockReference.Layer;
+                attributeReference.Invisible = attributeDefinition.Invisible;
+
+                blockReference.AttributeCollection.AppendAttribute(attributeReference);
+                tr.AddNewlyCreatedDBObject(attributeReference, true);
             }
         }
 
@@ -123,7 +180,37 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                 AddLine(marker, tr, new Point3d(-1.0, 0, 0), new Point3d(1.0, 0, 0));
             }
 
+            AddAttribute(marker, tr, "APP", "APP", string.Empty, new Point3d(0, 0, 0), true);
+            AddAttribute(marker, tr, "SPEC", "SPEC", string.Empty, new Point3d(0, 0, 0), true);
+            AddAttribute(marker, tr, "HANGER_KIND", "HANGER_KIND", pointKind.ToString(), new Point3d(0, 0, 0), true);
+
             return markerId;
+        }
+
+        private static void AddAttribute(
+            BlockTableRecord marker,
+            Transaction tr,
+            string tag,
+            string prompt,
+            string defaultValue,
+            Point3d position,
+            bool invisible)
+        {
+            var attr = new AttributeDefinition
+            {
+                Position = position,
+                Tag = tag,
+                Prompt = prompt,
+                TextString = defaultValue,
+                Height = 1.0,
+                Justify = AttachmentPoint.MiddleCenter,
+                AlignmentPoint = position,
+                Invisible = invisible,
+                Layer = "0"
+            };
+
+            marker.AppendEntity(attr);
+            tr.AddNewlyCreatedDBObject(attr, true);
         }
 
         private static void AddLine(BlockTableRecord marker, Transaction tr, Point3d start, Point3d end)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ShopDrawing.Plugin.Core;
@@ -11,36 +11,39 @@ namespace ShopDrawing.Plugin.Modules.Accessories
         private const string CeilingCategory = "Tr\u1ea7n";
         private const string WallCategory = "V\u00e1ch";
 
-        public IReadOnlyList<ShopdrawingAccessorySummaryRow> BuildCeilingSummary(ShopdrawingAccessorySnapshot snapshot)
+        public IReadOnlyList<ShopdrawingAccessorySummaryRow> BuildCeilingSummary(IEnumerable<ShopdrawingAccessorySnapshot> snapshots)
         {
             var rows = new List<ShopdrawingAccessorySummaryRow>();
-            foreach (TenderAccessory accessory in AccessoryDataManager.GetDefaults())
+            foreach (var snapshot in snapshots)
             {
-                if (!IsMatchingScope(accessory.CategoryScope, CeilingCategory)
-                    || !IsMatchingScope(accessory.Application, snapshot.Application)
-                    || !IsMatchingScope(accessory.SpecKey, snapshot.SpecKey))
+                foreach (TenderAccessory accessory in AccessoryDataManager.GetDefaults())
                 {
-                    continue;
-                }
+                    if (!IsMatchingScope(accessory.CategoryScope, CeilingCategory)
+                        || !IsMatchingScope(accessory.Application, snapshot.Application)
+                        || !IsMatchingScope(accessory.SpecKey, snapshot.SpecKey))
+                    {
+                        continue;
+                    }
 
-                if (!TryGetCeilingBasisValue(snapshot, accessory.CalcRule, out double basisValue) || basisValue <= 0)
-                {
-                    continue;
-                }
+                    if (!TryGetCeilingBasisValue(snapshot, accessory.CalcRule, out double basisValue) || basisValue <= 0)
+                    {
+                        continue;
+                    }
 
-                rows.Add(new ShopdrawingAccessorySummaryRow(
-                    accessory.CategoryScope,
-                    accessory.Application,
-                    accessory.SpecKey,
-                    accessory.Name,
-                    accessory.Material,
-                    accessory.Position,
-                    accessory.Unit,
-                    accessory.CalcRule,
-                    basisValue,
-                    accessory.Factor,
-                    basisValue * accessory.Factor,
-                    accessory.Note));
+                    rows.Add(new ShopdrawingAccessorySummaryRow(
+                        accessory.CategoryScope,
+                        accessory.Application,
+                        accessory.SpecKey,
+                        accessory.Name,
+                        accessory.Material,
+                        accessory.Position,
+                        accessory.Unit,
+                        accessory.CalcRule,
+                        basisValue,
+                        accessory.Factor,
+                        basisValue * accessory.Factor,
+                        accessory.Note));
+                }
             }
 
             return AggregateRows(rows);

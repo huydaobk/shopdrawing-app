@@ -1,5 +1,11 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-23] - v0.2.47 Ceiling Hanger Interactive Selection ☂️
+### Changed
+- **Ceiling Hanger UX**: Nâng cấp lệnh "Pick điểm treo thanh T" và "Pick điểm treo bulong nấm". Bổ sung Popup chọn Hạng mục ứng dụng (Ngoài nhà, Phòng sạch, Kho lạnh) trước khi pick điểm, tương tự như lệnh Pick góc.
+- **BOM Logic**: Tách biệt logic bóc tách phụ kiện điểm treo trần theo từng Hạng mục ứng dụng được người dùng chỉ định.
+- **BOM UI**: Thêm logic cập nhật bảng thống kê BOM realtime (tự động load lại danh sách) ngay sau khi người dùng Pick xong điểm treo.
+
 ## [2026-04-23] - v0.2.46 Auto-refresh BOM upon Deletion ♻️
 ### Fixed
 - **BOM Logic**: Sửa lỗi `eWasErased` gây crash ngầm khi xóa marker (góc/tường) trên CAD và tính toán lại BOM.

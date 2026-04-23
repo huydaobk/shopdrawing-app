@@ -5,27 +5,34 @@ namespace ShopDrawing.Plugin.Modules.Accessories
 {
     internal sealed class ShopdrawingAccessoryScanner
     {
-        public ShopdrawingAccessorySnapshot ScanCeiling(Transaction tr, Database db, ShopDrawingRuntimeSettings settings)
+        private class CeilingSnapshotBuilder
+        {
+            public double TLineLengthM { get; set; }
+            public double MushroomLineLengthM { get; set; }
+            public int MushroomBoltCount { get; set; }
+            public int THangerPointCount { get; set; }
+            public int MushroomHangerPointCount { get; set; }
+        }
+
+        public System.Collections.Generic.IReadOnlyList<ShopdrawingAccessorySnapshot> ScanCeiling(Transaction tr, Database db, ShopDrawingRuntimeSettings settings)
         {
             if (tr.GetObject(db.BlockTableId, OpenMode.ForRead) is not BlockTable bt
                 || tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) is not BlockTableRecord ms)
             {
-                return new ShopdrawingAccessorySnapshot(
-                    settings.DefaultSpec,
-                    settings.DefaultApplication,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    settings.DefaultCeilingCableDropMm / 1000.0);
+                return new System.Collections.Generic.List<ShopdrawingAccessorySnapshot>();
             }
 
-            double tLineLengthM = 0;
-            double mushroomLineLengthM = 0;
-            int mushroomBoltCount = 0;
-            int tHangerPointCount = 0;
-            int mushroomHangerPointCount = 0;
+            var builders = new System.Collections.Generic.Dictionary<(string App, string Spec), CeilingSnapshotBuilder>();
+
+            CeilingSnapshotBuilder GetBuilder((string App, string Spec) key)
+            {
+                if (!builders.TryGetValue(key, out var builder))
+                {
+                    builder = new CeilingSnapshotBuilder();
+                    builders[key] = builder;
+                }
+                return builder;
+            }
 
             foreach (ObjectId id in ms)
             {
@@ -36,35 +43,75 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                     continue;
                 }
 
+                var key = GetEntityScope(tr, entity, settings);
+                var builder = GetBuilder(key);
+
                 switch (entity.Layer)
                 {
                     case "SD_CEILING_T":
-                        tLineLengthM += GetEntityLengthM(entity);
+                        builder.TLineLengthM += GetEntityLengthM(entity);
                         break;
                     case "SD_CEILING_MUSHROOM":
-                        mushroomLineLengthM += GetEntityLengthM(entity);
+                        builder.MushroomLineLengthM += GetEntityLengthM(entity);
                         break;
                     case "SD_CEILING_BOLT":
-                        mushroomBoltCount += CountPointEntity(entity);
+                        builder.MushroomBoltCount += CountPointEntity(entity);
                         break;
                     case "SD_CEILING_T_HANGER":
-                        tHangerPointCount += CountPointEntity(entity);
+                        builder.THangerPointCount += CountPointEntity(entity);
                         break;
                     case "SD_CEILING_MUSHROOM_HANGER":
-                        mushroomHangerPointCount += CountPointEntity(entity);
+                        builder.MushroomHangerPointCount += CountPointEntity(entity);
                         break;
                 }
             }
 
-            return new ShopdrawingAccessorySnapshot(
-                settings.DefaultSpec,
-                settings.DefaultApplication,
-                tLineLengthM,
-                mushroomLineLengthM,
-                mushroomBoltCount,
-                tHangerPointCount,
-                mushroomHangerPointCount,
-                settings.DefaultCeilingCableDropMm / 1000.0);
+            var results = new System.Collections.Generic.List<ShopdrawingAccessorySnapshot>();
+            foreach (var kvp in builders)
+            {
+                // Only include if there is actual data
+                if (kvp.Value.TLineLengthM > 0 || kvp.Value.MushroomLineLengthM > 0 || kvp.Value.MushroomBoltCount > 0 || kvp.Value.THangerPointCount > 0 || kvp.Value.MushroomHangerPointCount > 0)
+                {
+                    results.Add(new ShopdrawingAccessorySnapshot(
+                        kvp.Key.Spec,
+                        kvp.Key.App,
+                        kvp.Value.TLineLengthM,
+                        kvp.Value.MushroomLineLengthM,
+                        kvp.Value.MushroomBoltCount,
+                        kvp.Value.THangerPointCount,
+                        kvp.Value.MushroomHangerPointCount,
+                        settings.DefaultCeilingCableDropMm / 1000.0));
+                }
+            }
+
+            return results;
+        }
+
+        private static (string App, string Spec) GetEntityScope(Transaction tr, Entity entity, ShopDrawingRuntimeSettings settings)
+        {
+            string app = settings.DefaultApplication;
+            string spec = settings.DefaultSpec;
+
+            if (entity is BlockReference br)
+            {
+                foreach (ObjectId attId in br.AttributeCollection)
+                {
+                    if (attId.IsErased) continue;
+                    if (tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att)
+                    {
+                        if (att.Tag.Equals("APP", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!string.IsNullOrWhiteSpace(att.TextString)) app = att.TextString;
+                        }
+                        else if (att.Tag.Equals("SPEC", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!string.IsNullOrWhiteSpace(att.TextString)) spec = att.TextString;
+                        }
+                    }
+                }
+            }
+
+            return (app, spec);
         }
 
         private static double GetEntityLengthM(Entity entity)

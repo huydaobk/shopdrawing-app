@@ -111,6 +111,11 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                 }
 
                 ed.WriteMessage($"\nĐã đặt {insertedCount} marker {GetDisplayLabel(kind)}.");
+
+                if (insertedCount > 0)
+                {
+                    settings.NotifyWasteUpdated();
+                }
             }
             catch (Exception ex)
             {

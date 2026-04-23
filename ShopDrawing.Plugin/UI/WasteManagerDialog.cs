@@ -1088,7 +1088,7 @@ namespace ShopDrawing.Plugin.UI
                                 rows = ShopDrawingCommands.BomManager.ScanDocumentForPanels(tr, doc.Database);
 
                                 ShopDrawingRuntimeSettings settings = ShopDrawingRuntimeServices.Settings;
-                                ShopdrawingAccessorySnapshot ceilingSnapshot = _ceilingAccessoryScanner.ScanCeiling(tr, doc.Database, settings);
+                                IReadOnlyList<ShopdrawingAccessorySnapshot> ceilingSnapshots = _ceilingAccessoryScanner.ScanCeiling(tr, doc.Database, settings);
                                 IReadOnlyList<ShopdrawingWallAccessorySnapshot> wallSnapshots = _wallAccessoryScanner.ScanWalls(
                                     tr,
                                     doc.Database,
@@ -1100,7 +1100,7 @@ namespace ShopDrawing.Plugin.UI
                                     settings.DefaultApplication,
                                     settings.DefaultSpec);
 
-                                accessoryRows = _accessoryBomService.BuildCeilingSummary(ceilingSnapshot)
+                                accessoryRows = _accessoryBomService.BuildCeilingSummary(ceilingSnapshots)
                                     .Concat(_accessoryBomService.BuildWallSummary(wallSnapshots))
                                     .Concat(_accessoryBomService.BuildPlanCornerSummary(planCornerSnapshots))
                                     .OrderBy(x => x.CategoryScope, StringComparer.OrdinalIgnoreCase)

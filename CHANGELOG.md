@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-23] - v0.2.45 Corner Marker Interactive Selection 🏗️
+### Changed
+- **Corner Marker UX**: Nâng cấp lệnh "Pick góc" trên giao diện Palette. Thay vì ngầm định chèn góc theo hạng mục mặc định của dự án, hệ thống sẽ hiển thị một Popup nhỏ gọn cho phép người dùng chủ động chọn Hạng mục ứng dụng (Ngoài nhà, Phòng sạch, Kho lạnh) ngay trước khi pick điểm.
+- Khối lượng phụ kiện đi kèm (V, Rive, Silicone, Foam) sẽ tự động được gán và chiết tính chuẩn xác theo loại hạng mục được chọn.
+
 ## [2026-04-22] - v0.2.44 Elevation Openings UX Polish 🛠️
 ### Fixed
 - **Elevation Opening Keywords**: Đồng bộ từ khóa chọn loại lỗ mở mặt đứng `[cửa Đi(D)/cửa Sổ(S)]` giống với mặt bằng, tránh lỗi nhận nhầm thành Cửa đi do sai cú pháp.

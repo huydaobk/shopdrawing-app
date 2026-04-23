@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -152,7 +152,9 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
             if (bt.Has(blockName))
             {
-                return bt[blockName];
+                ObjectId existingId = bt[blockName];
+                EnsureAttributesExist(tr, existingId, pointKind);
+                return existingId;
             }
 
             bt.UpgradeOpen();
@@ -185,6 +187,32 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             AddAttribute(marker, tr, "HANGER_KIND", "HANGER_KIND", pointKind.ToString(), new Point3d(0, 0, 0), true);
 
             return markerId;
+        }
+
+        private static void EnsureAttributesExist(Transaction tr, ObjectId blockDefId, CeilingHangerPointKind pointKind)
+        {
+            var btr = (BlockTableRecord)tr.GetObject(blockDefId, OpenMode.ForRead);
+            bool hasApp = false;
+            bool hasSpec = false;
+            bool hasHangerKind = false;
+
+            foreach (ObjectId entityId in btr)
+            {
+                if (tr.GetObject(entityId, OpenMode.ForRead) is AttributeDefinition attDef)
+                {
+                    if (attDef.Tag.Equals("APP", StringComparison.OrdinalIgnoreCase)) hasApp = true;
+                    if (attDef.Tag.Equals("SPEC", StringComparison.OrdinalIgnoreCase)) hasSpec = true;
+                    if (attDef.Tag.Equals("HANGER_KIND", StringComparison.OrdinalIgnoreCase)) hasHangerKind = true;
+                }
+            }
+
+            if (!hasApp || !hasSpec || !hasHangerKind)
+            {
+                btr.UpgradeOpen();
+                if (!hasApp) AddAttribute(btr, tr, "APP", "APP", string.Empty, new Point3d(0, 0, 0), true);
+                if (!hasSpec) AddAttribute(btr, tr, "SPEC", "SPEC", string.Empty, new Point3d(0, 0, 0), true);
+                if (!hasHangerKind) AddAttribute(btr, tr, "HANGER_KIND", "HANGER_KIND", pointKind.ToString(), new Point3d(0, 0, 0), true);
+            }
         }
 
         private static void AddAttribute(

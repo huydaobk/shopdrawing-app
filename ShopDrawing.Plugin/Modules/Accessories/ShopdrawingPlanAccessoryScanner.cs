@@ -10,8 +10,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
         public IReadOnlyList<ShopdrawingPlanAccessorySnapshot> ScanWallCorners(
             Transaction tr,
             Database db,
-            string fallbackApplication,
-            string fallbackSpecKey)
+            Runtime.ShopDrawingRuntimeSettings settings)
         {
             if (tr.GetObject(db.BlockTableId, OpenMode.ForRead) is not BlockTable bt
                 || tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) is not BlockTableRecord ms)
@@ -43,17 +42,33 @@ namespace ShopDrawing.Plugin.Modules.Accessories
 
                 if (!double.TryParse(heightText, out double heightMm) || heightMm <= 0)
                 {
-                    continue;
+                    string heightRaw = ReadAttribute(blockReference, tr, "HEIGHT");
+                    if (string.IsNullOrWhiteSpace(heightRaw))
+                    {
+                        heightMm = settings.DefaultWallHeight;
+                    }
+                    else
+                    {
+                        var match = System.Text.RegularExpressions.Regex.Match(heightRaw, @"\d+");
+                        if (match.Success)
+                        {
+                            heightMm = double.Parse(match.Value);
+                        }
+                        else
+                        {
+                            heightMm = settings.DefaultWallHeight;
+                        }
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(application))
                 {
-                    application = fallbackApplication;
+                    application = settings.DefaultApplication;
                 }
 
                 if (string.IsNullOrWhiteSpace(specKey))
                 {
-                    specKey = fallbackSpecKey;
+                    specKey = settings.DefaultSpec;
                 }
 
                 if (string.IsNullOrWhiteSpace(kind))

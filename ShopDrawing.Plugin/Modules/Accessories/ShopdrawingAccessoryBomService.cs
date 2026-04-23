@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ShopDrawing.Plugin.Core;
@@ -241,8 +241,12 @@ namespace ShopDrawing.Plugin.Modules.Accessories
         {
             string normalizedConfigured = TenderAccessoryRules.NormalizeScope(configuredValue);
             string normalizedCurrent = TenderAccessoryRules.NormalizeScope(currentValue);
-            return TenderAccessoryRules.IsAllScope(normalizedConfigured)
+            bool isMatch = TenderAccessoryRules.IsAllScope(normalizedConfigured)
                 || string.Equals(normalizedConfigured, normalizedCurrent, StringComparison.OrdinalIgnoreCase);
+
+            PluginLogger.Info($"[IsMatchingScope] Configured: '{configuredValue}' (Norm: '{normalizedConfigured}') | Current: '{currentValue}' (Norm: '{normalizedCurrent}') => Match: {isMatch}");
+            
+            return isMatch;
         }
     }
 }

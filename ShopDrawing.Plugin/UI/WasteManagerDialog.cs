@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -1097,8 +1097,7 @@ namespace ShopDrawing.Plugin.UI
                                 IReadOnlyList<ShopdrawingPlanAccessorySnapshot> planCornerSnapshots = _planAccessoryScanner.ScanWallCorners(
                                     tr,
                                     doc.Database,
-                                    settings.DefaultApplication,
-                                    settings.DefaultSpec);
+                                    settings);
 
                                 accessoryRows = _accessoryBomService.BuildCeilingSummary(ceilingSnapshots)
                                     .Concat(_accessoryBomService.BuildWallSummary(wallSnapshots))

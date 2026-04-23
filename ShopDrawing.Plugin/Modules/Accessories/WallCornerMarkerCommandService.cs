@@ -194,7 +194,9 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
             if (bt.Has(blockName))
             {
-                return bt[blockName];
+                ObjectId existingId = bt[blockName];
+                EnsureAttributesExist(tr, existingId, kind);
+                return existingId;
             }
 
             bt.UpgradeOpen();
@@ -227,6 +229,35 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             AddAttribute(marker, tr, "CORNER_KIND", "CORNER_KIND", kind.ToString(), new Point3d(0, 0, 0), true);
 
             return markerId;
+        }
+
+        private static void EnsureAttributesExist(Transaction tr, ObjectId blockDefId, WallCornerMarkerKind kind)
+        {
+            var btr = (BlockTableRecord)tr.GetObject(blockDefId, OpenMode.ForRead);
+            bool hasApp = false;
+            bool hasSpec = false;
+            bool hasHeightMm = false;
+            bool hasCornerKind = false;
+
+            foreach (ObjectId entityId in btr)
+            {
+                if (tr.GetObject(entityId, OpenMode.ForRead) is AttributeDefinition attDef)
+                {
+                    if (attDef.Tag.Equals("APP", StringComparison.OrdinalIgnoreCase)) hasApp = true;
+                    if (attDef.Tag.Equals("SPEC", StringComparison.OrdinalIgnoreCase)) hasSpec = true;
+                    if (attDef.Tag.Equals("HEIGHT_MM", StringComparison.OrdinalIgnoreCase)) hasHeightMm = true;
+                    if (attDef.Tag.Equals("CORNER_KIND", StringComparison.OrdinalIgnoreCase)) hasCornerKind = true;
+                }
+            }
+
+            if (!hasApp || !hasSpec || !hasHeightMm || !hasCornerKind)
+            {
+                btr.UpgradeOpen();
+                if (!hasHeightMm) AddAttribute(btr, tr, "HEIGHT_MM", "HEIGHT_MM", "3000", new Point3d(0, 0, 0), true);
+                if (!hasApp) AddAttribute(btr, tr, "APP", "APP", string.Empty, new Point3d(0, 0, 0), true);
+                if (!hasSpec) AddAttribute(btr, tr, "SPEC", "SPEC", string.Empty, new Point3d(0, 0, 0), true);
+                if (!hasCornerKind) AddAttribute(btr, tr, "CORNER_KIND", "CORNER_KIND", kind.ToString(), new Point3d(0, 0, 0), true);
+            }
         }
 
         private static void AddLine(BlockTableRecord marker, Transaction tr, Point3d start, Point3d end)

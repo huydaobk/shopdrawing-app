@@ -1,6 +1,6 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
-## [2026-04-24] - v0.2.55 Shopdrawing Excel BOM Synchronization 📊
+## [2026-04-24] - v0.2.56 Shopdrawing Excel BOM Synchronization 📊
 ### Changed
 - **Excel Export**: Nâng cấp module xuất file báo cáo Excel (Lệnh Sản Xuất, Quản lý Spec, Đặt hàng Phụ kiện). Đồng bộ hoàn toàn logic tính toán hao hụt `WasteFactor` từ giao diện UI vào công thức tính khối lượng phụ kiện.
 - **Accessory Calculation**: Bổ sung hàm làm tròn lên (`Math.Ceiling`) cho mọi đơn vị phụ kiện (cây, hộp, con) để xuất dữ liệu nguyên trên BOM, chống sai số khi đặt hàng.

@@ -2675,32 +2675,40 @@ namespace ShopDrawing.Plugin.UI
 
 
 
-                List<BomRow> rows;
+                List<BomRow> rows = new List<BomRow>();
+                List<ShopdrawingAccessorySummaryRow> accessoryRows = new List<ShopdrawingAccessorySummaryRow>();
 
                 using (var cadLock = SafeCadLock.TryLock())
-
                 {
-
                     if (cadLock == null) return;
 
                     using (var tr = doc.Database.TransactionManager.StartTransaction())
-
                     {
+                        rows = ShopDrawingCommands.BomManager.ScanDocumentForPanels(tr, doc.Database);
+                        
+                        ShopDrawingRuntimeSettings settings = ShopDrawingRuntimeServices.Settings;
+                        var ceilingSnapshots = _ceilingAccessoryScanner.ScanCeiling(tr, doc.Database, settings);
+                        var wallSnapshots = _wallAccessoryScanner.ScanWalls(tr, doc.Database, settings.DefaultApplication, settings.DefaultSpec);
+                        var planCornerSnapshots = _planAccessoryScanner.ScanWallCorners(tr, doc.Database, settings);
 
-                    rows = ShopDrawingCommands.BomManager.ScanDocumentForPanels(tr, doc.Database);
+                        accessoryRows = _accessoryBomService.BuildCeilingSummary(ceilingSnapshots)
+                            .Concat(_accessoryBomService.BuildWallSummary(wallSnapshots))
+                            .Concat(_accessoryBomService.BuildPlanCornerSummary(planCornerSnapshots))
+                            .OrderBy(x => x.CategoryScope, StringComparer.OrdinalIgnoreCase)
+                            .ThenBy(x => x.Application, StringComparer.OrdinalIgnoreCase)
+                            .ThenBy(x => x.Position, StringComparer.OrdinalIgnoreCase)
+                            .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
 
-                    tr.Commit();
-
+                        tr.Commit();
+                    }
                 }
 
-                }
-
-
+                var calculator = new ShopdrawingBomCalculator();
+                var report = calculator.CalculateReport(rows, ShopDrawingCommands.WasteRepo?.GetAll() ?? new List<WastePanel>(), accessoryRows);
 
                 var exporter = new ExcelExporter();
-
-                exporter.ExportFullBom(rows, ShopDrawingCommands.WasteRepo, dlg.FileName);
-
+                exporter.ExportFullBom(report, dlg.FileName);
 
 
                 UiFeedback.ShowInfo($"Xuất thành công!\n\n{dlg.FileName}", "Xuất Excel");

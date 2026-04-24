@@ -1,8 +1,8 @@
-﻿using ShopDrawing.Plugin.Models;
+using ShopDrawing.Plugin.Models;
 
 namespace ShopDrawing.Plugin.Modules.Accessories
 {
-    internal sealed record ShopdrawingAccessorySummaryRow(
+    public sealed record ShopdrawingAccessorySummaryRow(
         string CategoryScope,
         string Application,
         string SpecKey,

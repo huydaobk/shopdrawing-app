@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Windows;
@@ -7,6 +8,8 @@ using Microsoft.Win32;
 using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Data;
 using ShopDrawing.Plugin.Models;
+using ShopDrawing.Plugin.Modules.Accessories;
+using ShopDrawing.Plugin.Runtime;
 using ShopDrawing.Plugin.UI;
 using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 
@@ -70,21 +73,45 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 if (dlg.ShowDialog() != true) return;
 
                 List<BomRow> rows;
+                List<ShopdrawingAccessorySummaryRow> accessoryRows;
                 using (doc.LockDocument())
                 using (var tr = doc.Database.TransactionManager.StartTransaction())
                 {
                     rows = bomManager.ScanDocumentForPanels(tr, doc.Database);
+                    
+                    ShopDrawingRuntimeSettings settings = ShopDrawingRuntimeServices.Settings;
+                    var ceilingScanner = new ShopdrawingAccessoryScanner();
+                    var wallScanner = new ShopdrawingWallAccessoryScanner();
+                    var planScanner = new ShopdrawingPlanAccessoryScanner();
+                    var accessoryService = new ShopdrawingAccessoryBomService();
+
+                    var ceilingSnapshots = ceilingScanner.ScanCeiling(tr, doc.Database, settings);
+                    var wallSnapshots = wallScanner.ScanWalls(tr, doc.Database, settings.DefaultApplication, settings.DefaultSpec);
+                    var planCornerSnapshots = planScanner.ScanWallCorners(tr, doc.Database, settings);
+
+                    accessoryRows = accessoryService.BuildCeilingSummary(ceilingSnapshots)
+                        .Concat(accessoryService.BuildWallSummary(wallSnapshots))
+                        .Concat(accessoryService.BuildPlanCornerSummary(planCornerSnapshots))
+                        .OrderBy(x => x.CategoryScope, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(x => x.Application, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(x => x.Position, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
                     tr.Commit();
                 }
 
-                if (rows.Count == 0)
+                if (rows.Count == 0 && accessoryRows.Count == 0)
                 {
-                    doc.Editor.WriteMessage("\n⚠️ Không tìm thấy tấm Panel nào để xuất Excel.");
+                    doc.Editor.WriteMessage("\n⚠️ Không tìm thấy dữ liệu nào để xuất Excel.");
                     return;
                 }
 
+                var calculator = new ShopdrawingBomCalculator();
+                var report = calculator.CalculateReport(rows, wasteRepo?.GetAll() ?? new List<WastePanel>(), accessoryRows);
+
                 var exporter = new ExcelExporter();
-                exporter.ExportFullBom(rows, wasteRepo, dlg.FileName);
+                exporter.ExportFullBom(report, dlg.FileName);
                 doc.Editor.WriteMessage($"\n✅ Xuất BOM thành công ra: {dlg.FileName}");
             }
             catch (Exception ex)

@@ -1,4 +1,4 @@
-﻿namespace ShopDrawing.Plugin.Modules.Accessories
+namespace ShopDrawing.Plugin.Modules.Accessories
 {
     internal sealed record ShopdrawingAccessorySnapshot(
         string SpecKey,
@@ -8,5 +8,6 @@
         int CeilingMushroomBoltCount,
         int CeilingTHangerPointCount,
         int CeilingMushroomHangerPointCount,
-        double CeilingCableDropM);
+        double TotalCeilingTCableDropM,
+        double TotalCeilingMushroomCableDropM);
 }

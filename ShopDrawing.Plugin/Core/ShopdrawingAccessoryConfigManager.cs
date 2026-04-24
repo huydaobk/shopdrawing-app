@@ -67,13 +67,26 @@ namespace ShopDrawing.Plugin.Core
             // Remove legacy height-based corner accessories for Shopdrawing
             defaultAccessories.RemoveAll(a => a.CalcRule == AccessoryCalcRule.PER_OUTSIDE_CORNER_HEIGHT || a.CalcRule == AccessoryCalcRule.PER_INSIDE_CORNER_HEIGHT);
 
-            // Add the new "Góc ngã ba" accessory
+            // Add the new "Góc ngã ba" accessory for Cleanroom and Cold Storage
             defaultAccessories.Add(new TenderAccessory
             {
                 CategoryScope = "Vách",
-                Application = "Tất cả",
+                Application = AccessoryDataManager.AppCleanroom,
                 SpecKey = "Tất cả",
-                Name = "Góc ngã ba",
+                Name = "Góc ngã ba - Sơn tĩnh điện",
+                Material = "Nhôm",
+                Position = "Góc ngoài",
+                Unit = "cái",
+                CalcRule = AccessoryCalcRule.PER_OUTSIDE_CORNER_QTY,
+                Factor = 2.0,
+                Note = "2 cái/góc"
+            });
+            defaultAccessories.Add(new TenderAccessory
+            {
+                CategoryScope = "Vách",
+                Application = AccessoryDataManager.AppColdStorage,
+                SpecKey = "Tất cả",
+                Name = "Góc ngã ba - Anode",
                 Material = "Nhôm",
                 Position = "Góc ngoài",
                 Unit = "cái",

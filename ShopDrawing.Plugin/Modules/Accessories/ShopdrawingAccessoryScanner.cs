@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using ShopDrawing.Plugin.Runtime;
 
 namespace ShopDrawing.Plugin.Modules.Accessories
@@ -12,6 +12,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             public int MushroomBoltCount { get; set; }
             public int THangerPointCount { get; set; }
             public int MushroomHangerPointCount { get; set; }
+            public double TotalTCableDropM { get; set; }
+            public double TotalMushroomCableDropM { get; set; }
         }
 
         public System.Collections.Generic.IReadOnlyList<ShopdrawingAccessorySnapshot> ScanCeiling(Transaction tr, Database db, ShopDrawingRuntimeSettings settings)
@@ -58,10 +60,18 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         builder.MushroomBoltCount += CountPointEntity(entity);
                         break;
                     case "SD_CEILING_T_HANGER":
-                        builder.THangerPointCount += CountPointEntity(entity);
+                        if (CountPointEntity(entity) > 0)
+                        {
+                            builder.THangerPointCount++;
+                            builder.TotalTCableDropM += GetCableDropM(tr, entity, settings);
+                        }
                         break;
                     case "SD_CEILING_MUSHROOM_HANGER":
-                        builder.MushroomHangerPointCount += CountPointEntity(entity);
+                        if (CountPointEntity(entity) > 0)
+                        {
+                            builder.MushroomHangerPointCount++;
+                            builder.TotalMushroomCableDropM += GetCableDropM(tr, entity, settings);
+                        }
                         break;
                 }
             }
@@ -80,7 +90,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         kvp.Value.MushroomBoltCount,
                         kvp.Value.THangerPointCount,
                         kvp.Value.MushroomHangerPointCount,
-                        settings.DefaultCeilingCableDropMm / 1000.0));
+                        kvp.Value.TotalTCableDropM,
+                        kvp.Value.TotalMushroomCableDropM));
                 }
             }
 
@@ -112,6 +123,28 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             }
 
             return (app, spec);
+        }
+
+        private static double GetCableDropM(Transaction tr, Entity entity, ShopDrawingRuntimeSettings settings)
+        {
+            if (entity is BlockReference br)
+            {
+                foreach (ObjectId attId in br.AttributeCollection)
+                {
+                    if (attId.IsErased) continue;
+                    if (tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att)
+                    {
+                        if (att.Tag.Equals("CABLE_DROP", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (double.TryParse(att.TextString, out double dropMm))
+                            {
+                                return dropMm / 1000.0;
+                            }
+                        }
+                    }
+                }
+            }
+            return settings.DefaultCeilingCableDropMm / 1000.0;
         }
 
         private static double GetEntityLengthM(Entity entity)

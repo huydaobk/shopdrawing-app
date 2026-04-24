@@ -28,7 +28,6 @@ namespace ShopDrawing.Plugin.Modules.Accessories
 
             Editor ed = doc.Editor;
             int insertedCount = 0;
-            double lastHeightMm = 3000.0;
 
             try
             {
@@ -70,27 +69,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                             return;
                         }
 
-                        PromptDoubleOptions heightOptions = new PromptDoubleOptions(
-                            $"\nNhập chiều cao {GetDisplayLabel(kind)} (mm) <{lastHeightMm:F0}>: ")
-                        {
-                            AllowNegative = false,
-                            AllowZero = false,
-                            AllowNone = true,
-                            DefaultValue = lastHeightMm,
-                            UseDefaultValue = true
-                        };
-
-                        PromptDoubleResult heightResult = ed.GetDouble(heightOptions);
-                        if (heightResult.Status == PromptStatus.Cancel)
-                        {
-                            return;
-                        }
-
-                        double heightMm = heightResult.Status == PromptStatus.None
-                            ? lastHeightMm
-                            : heightResult.Value;
-
-                        lastHeightMm = heightMm;
+                        double heightMm = 3000.0; // Default height internally, or whatever
 
                         InsertMarker(
                             doc.Database,
@@ -141,6 +120,15 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                 ScaleFactors = new Scale3d(scale, scale, 1.0)
             };
 
+            if (application == AccessoryDataManager.AppCleanroom)
+            {
+                blockReference.Color = Color.FromColorIndex(ColorMethod.ByAci, 3); // Green
+            }
+            else if (application == AccessoryDataManager.AppColdStorage)
+            {
+                blockReference.Color = Color.FromColorIndex(ColorMethod.ByAci, 4); // Cyan
+            }
+
             ms.AppendEntity(blockReference);
             tr.AddNewlyCreatedDBObject(blockReference, true);
 
@@ -170,7 +158,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             return tag.ToUpperInvariant() switch
             {
                 "ITEM" => GetDisplayLabel(kind).ToUpperInvariant(),
-                "HEIGHT" => $"H={heightMm:F0}",
+                "HEIGHT" => "",
                 "HEIGHT_MM" => $"{heightMm:F0}",
                 "APP" => application ?? string.Empty,
                 "SPEC" => specKey ?? string.Empty,

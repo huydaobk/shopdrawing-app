@@ -24,15 +24,20 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             }
 
             // Show selection dialog first
-            var dialog = new ShopDrawing.Plugin.UI.CornerApplicationSelectionDialog();
+            double initialDrop = ShopDrawingRuntimeServices.Settings.DefaultCeilingCableDropMm;
+            var dialog = new ShopDrawing.Plugin.UI.CornerApplicationSelectionDialog(true, initialDrop);
             bool? dialogResult = Application.ShowModalWindow(dialog);
             if (dialogResult != true)
             {
                 return;
             }
             string selectedApp = dialog.SelectedApplication;
+            double selectedCableDrop = dialog.CableDropMm;
             ShopDrawingRuntimeSettings settings = ShopDrawingRuntimeServices.Settings;
             string selectedSpec = settings.DefaultSpec;
+
+            // Remember user's choice for next time in the same session
+            settings.DefaultCeilingCableDropMm = selectedCableDrop;
 
             Editor ed = doc.Editor;
             int insertedCount = 0;
@@ -79,7 +84,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         ms.AppendEntity(blockRef);
                         tr.AddNewlyCreatedDBObject(blockRef, true);
                         
-                        AddAttributesToMarker(tr, blockId, blockRef, pointKind, selectedApp, selectedSpec);
+                        AddAttributesToMarker(tr, blockId, blockRef, pointKind, selectedApp, selectedSpec, selectedCableDrop);
                         insertedCount++;
                     }
 
@@ -105,7 +110,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             BlockReference blockReference,
             CeilingHangerPointKind pointKind,
             string application,
-            string specKey)
+            string specKey,
+            double cableDropMm)
         {
             var btr = (BlockTableRecord)tr.GetObject(blockDefId, OpenMode.ForRead);
             foreach (ObjectId entityId in btr)
@@ -125,6 +131,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                     "APP" => application ?? string.Empty,
                     "SPEC" => specKey ?? string.Empty,
                     "HANGER_KIND" => pointKind.ToString(),
+                    "CABLE_DROP" => cableDropMm.ToString("F0"),
                     _ => string.Empty
                 };
 
@@ -185,6 +192,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             AddAttribute(marker, tr, "APP", "APP", string.Empty, new Point3d(0, 0, 0), true);
             AddAttribute(marker, tr, "SPEC", "SPEC", string.Empty, new Point3d(0, 0, 0), true);
             AddAttribute(marker, tr, "HANGER_KIND", "HANGER_KIND", pointKind.ToString(), new Point3d(0, 0, 0), true);
+            AddAttribute(marker, tr, "CABLE_DROP", "CABLE_DROP", "1500", new Point3d(0, 0, 0), true);
 
             return markerId;
         }
@@ -195,6 +203,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             bool hasApp = false;
             bool hasSpec = false;
             bool hasHangerKind = false;
+            bool hasCableDrop = false;
 
             foreach (ObjectId entityId in btr)
             {
@@ -203,15 +212,17 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                     if (attDef.Tag.Equals("APP", StringComparison.OrdinalIgnoreCase)) hasApp = true;
                     if (attDef.Tag.Equals("SPEC", StringComparison.OrdinalIgnoreCase)) hasSpec = true;
                     if (attDef.Tag.Equals("HANGER_KIND", StringComparison.OrdinalIgnoreCase)) hasHangerKind = true;
+                    if (attDef.Tag.Equals("CABLE_DROP", StringComparison.OrdinalIgnoreCase)) hasCableDrop = true;
                 }
             }
 
-            if (!hasApp || !hasSpec || !hasHangerKind)
+            if (!hasApp || !hasSpec || !hasHangerKind || !hasCableDrop)
             {
                 btr.UpgradeOpen();
                 if (!hasApp) AddAttribute(btr, tr, "APP", "APP", string.Empty, new Point3d(0, 0, 0), true);
                 if (!hasSpec) AddAttribute(btr, tr, "SPEC", "SPEC", string.Empty, new Point3d(0, 0, 0), true);
                 if (!hasHangerKind) AddAttribute(btr, tr, "HANGER_KIND", "HANGER_KIND", pointKind.ToString(), new Point3d(0, 0, 0), true);
+                if (!hasCableDrop) AddAttribute(btr, tr, "CABLE_DROP", "CABLE_DROP", "1500", new Point3d(0, 0, 0), true);
             }
         }
 

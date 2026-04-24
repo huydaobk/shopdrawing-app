@@ -134,10 +134,10 @@ namespace ShopDrawing.Plugin.Modules.Accessories
             {
                 AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_LENGTH => snapshot.CeilingTLineLengthM,
                 AccessoryCalcRule.PER_COLD_STORAGE_T_SUSPENSION_POINT_QTY => snapshot.CeilingTHangerPointCount,
-                AccessoryCalcRule.PER_COLD_STORAGE_T_WIRE_ROPE_LENGTH => snapshot.CeilingTHangerPointCount * snapshot.CeilingCableDropM,
+                AccessoryCalcRule.PER_COLD_STORAGE_T_WIRE_ROPE_LENGTH => snapshot.TotalCeilingTCableDropM,
                 AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_LENGTH => snapshot.CeilingMushroomLineLengthM,
                 AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_SUSPENSION_POINT_QTY => snapshot.CeilingMushroomHangerPointCount,
-                AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_WIRE_ROPE_LENGTH => snapshot.CeilingMushroomHangerPointCount * snapshot.CeilingCableDropM,
+                AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_WIRE_ROPE_LENGTH => snapshot.TotalCeilingMushroomCableDropM,
                 AccessoryCalcRule.PER_COLD_STORAGE_MUSHROOM_BOLT_QTY => snapshot.CeilingMushroomBoltCount,
                 _ => 0
             };

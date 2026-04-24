@@ -7,25 +7,34 @@ namespace ShopDrawing.Plugin.UI
     internal sealed class CornerApplicationSelectionDialog : Window
     {
         private readonly ComboBox _cboApplication;
+        private readonly TextBox _txtCableDrop;
+        private readonly bool _showCableDrop;
 
         public string SelectedApplication { get; private set; } = AccessoryDataManager.AppExterior;
+        public double CableDropMm { get; private set; }
 
-        public CornerApplicationSelectionDialog()
+        public CornerApplicationSelectionDialog(bool showCableDropInput = false, double initialCableDropMm = 1500)
         {
-            Title = "Chọn hạng mục ứng dụng";
+            Title = showCableDropInput ? "Cấu hình điểm treo" : "Chọn hạng mục ứng dụng";
             Width = 320;
-            Height = 160;
+            Height = showCableDropInput ? 200 : 160;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             ResizeMode = ResizeMode.NoResize;
+            _showCableDrop = showCableDropInput;
+            CableDropMm = initialCableDropMm;
 
             var grid = new Grid { Margin = new Thickness(15) };
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            if (showCableDropInput)
+            {
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            }
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
             var textBlock = new TextBlock
             {
-                Text = "Vui lòng chọn hạng mục cho phụ kiện góc:",
+                Text = showCableDropInput ? "Chọn hạng mục và chiều dài thả cáp:" : "Vui lòng chọn hạng mục cho phụ kiện góc:",
                 Margin = new Thickness(0, 0, 0, 10)
             };
             Grid.SetRow(textBlock, 0);
@@ -36,7 +45,6 @@ namespace ShopDrawing.Plugin.UI
                 Margin = new Thickness(0, 0, 0, 15)
             };
             
-            _cboApplication.Items.Add(new ComboBoxItem { Content = "Ngoài nhà", Tag = AccessoryDataManager.AppExterior });
             _cboApplication.Items.Add(new ComboBoxItem { Content = "Phòng sạch", Tag = AccessoryDataManager.AppCleanroom });
             _cboApplication.Items.Add(new ComboBoxItem { Content = "Kho lạnh", Tag = AccessoryDataManager.AppColdStorage });
             
@@ -45,13 +53,30 @@ namespace ShopDrawing.Plugin.UI
             Grid.SetRow(_cboApplication, 1);
             grid.Children.Add(_cboApplication);
 
+            if (showCableDropInput)
+            {
+                var cableDropPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 15) };
+                cableDropPanel.Children.Add(new TextBlock { Text = "Thả cáp (mm):", VerticalAlignment = VerticalAlignment.Center, Width = 90 });
+                
+                _txtCableDrop = new TextBox
+                {
+                    Text = initialCableDropMm.ToString("F0"),
+                    Width = 100,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                cableDropPanel.Children.Add(_txtCableDrop);
+
+                Grid.SetRow(cableDropPanel, 2);
+                grid.Children.Add(cableDropPanel);
+            }
+
             var buttonPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Bottom
             };
-            Grid.SetRow(buttonPanel, 2);
+            Grid.SetRow(buttonPanel, showCableDropInput ? 3 : 2);
 
             var btnOk = new Button
             {
@@ -66,6 +91,15 @@ namespace ShopDrawing.Plugin.UI
                 {
                     SelectedApplication = appStr;
                 }
+                
+                if (_showCableDrop && _txtCableDrop != null)
+                {
+                    if (double.TryParse(_txtCableDrop.Text, out double parsedVal) && parsedVal >= 0)
+                    {
+                        CableDropMm = parsedVal;
+                    }
+                }
+                
                 DialogResult = true;
                 Close();
             };

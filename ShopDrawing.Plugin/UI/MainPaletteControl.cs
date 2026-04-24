@@ -376,28 +376,6 @@ namespace ShopDrawing.Plugin.UI
             stackGap.Children.Add(txtGap);
             settingsSection.Children.Add(stackGap);
 
-            var stackCableDrop = CreateSettingRow("Thả cáp:", 80);
-            var txtCableDrop = new TextBox
-            {
-                Width = 50,
-                Text = initialSettings.DefaultCeilingCableDropMm.ToString("F0"),
-                VerticalContentAlignment = VerticalAlignment.Center,
-                ToolTip = "Chiều dài thả cáp/ty treo (mm)"
-            };
-            txtCableDrop.LostFocus += (_, _) =>
-            {
-                if (_paletteFacade.TrySetCeilingCableDrop(txtCableDrop.Text))
-                {
-                    txtCableDrop.ClearValue(BackgroundProperty);
-                    txtCableDrop.ToolTip = "Chiều dài thả cáp/ty treo (mm)";
-                    return;
-                }
-
-                txtCableDrop.Background = new SolidColorBrush(Color.FromRgb(100, 40, 40));
-                txtCableDrop.ToolTip = "Nhập số lớn hơn hoặc bằng 0";
-            };
-            stackCableDrop.Children.Add(txtCableDrop);
-            settingsSection.Children.Add(RegisterCeilingModeElement(stackCableDrop));
 
 
 

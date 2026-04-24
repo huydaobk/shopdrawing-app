@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -261,7 +261,8 @@ namespace ShopDrawing.Plugin.Core
                     JointLeft = jointLeft,
                     JointRight = jointRight,
                     WidthMm = widthMm,
-                    LengthMm = lengthMm
+                    LengthMm = lengthMm,
+                    Priority = ""
                 });
             }
 
@@ -285,7 +286,7 @@ namespace ShopDrawing.Plugin.Core
                 }
             }
 
-            return data.GroupBy(x => new { x.Id, x.Spec, x.Status, x.WallCode, x.JointLeft, x.JointRight, x.WidthMm, x.LengthMm })
+            return data.GroupBy(x => new { x.Id, x.Spec, x.Status, x.WallCode, x.JointLeft, x.JointRight, x.WidthMm, x.LengthMm, x.Priority })
                        .Select(g => new BomRow
                        {
                            Id = g.Key.Id,
@@ -297,6 +298,7 @@ namespace ShopDrawing.Plugin.Core
                            JointRight = g.Key.JointRight,
                            WidthMm = g.Key.WidthMm,
                            LengthMm = g.Key.LengthMm,
+                           Priority = g.Key.Priority,
                            Qty = g.Count()
                        })
                        .OrderBy(r => r.Id)
@@ -329,7 +331,8 @@ namespace ShopDrawing.Plugin.Core
                 JointLeft = string.Empty,
                 JointRight = string.Empty,
                 WidthMm = Math.Min(widthMm, lengthMm),
-                LengthMm = Math.Max(widthMm, lengthMm)
+                LengthMm = Math.Max(widthMm, lengthMm),
+                Priority = TryGetMetadataValue(metadata, "PRIORITY")
             };
 
             return true;

@@ -11,6 +11,7 @@ namespace ShopDrawing.Plugin.Core
     {
         public class FactoryOrderRow
         {
+            public string Priority { get; set; } = "";
             public string Spec { get; set; } = "";
             public double ThickMm { get; set; }
             public double WidthMm { get; set; }
@@ -89,8 +90,10 @@ namespace ShopDrawing.Plugin.Core
 
             // Calculate Factory Orders
             var factoryGroups = bomRows
-                .GroupBy(b => new { b.Spec, b.WidthMm, b.LengthMm, b.ThickMm })
-                .OrderBy(g => g.Key.Spec)
+                .Where(b => !b.Status.Contains("TÁI") && !b.Status.Contains("♻"))
+                .GroupBy(b => new { b.Spec, b.Priority, b.WidthMm, b.LengthMm, b.ThickMm })
+                .OrderBy(g => g.Key.Priority)
+                .ThenBy(g => g.Key.Spec)
                 .ThenByDescending(g => g.Key.LengthMm)
                 .ThenBy(g => g.Key.WidthMm);
 
@@ -111,6 +114,7 @@ namespace ShopDrawing.Plugin.Core
 
                 report.FactoryOrders.Add(new FactoryOrderRow
                 {
+                    Priority = g.Key.Priority,
                     Spec = g.Key.Spec,
                     ThickMm = g.Key.ThickMm,
                     WidthMm = g.Key.WidthMm,

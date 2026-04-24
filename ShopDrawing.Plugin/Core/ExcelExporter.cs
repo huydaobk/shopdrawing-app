@@ -32,28 +32,21 @@ namespace ShopDrawing.Plugin.Core
             var sumIntegerStyle = CreateSumIntegerStyle(wb);
             var computedStyle = CreateComputedStyle(wb);
             var wrapStyle = CreateWrapStyle(wb);
-            var sectionStyle = CreateColoredSectionStyle(wb, IndexedColors.DarkBlue.Index);
-            var accessorySectionStyle = CreateColoredSectionStyle(wb, IndexedColors.DarkGreen.Index);
 
             // ────────────────────────────────────────────
-            // SHEET 1: BOM CHI TIẾT
+            // SHEET 1: LỆNH SẢN XUẤT (A4 Portrait)
             // ────────────────────────────────────────────
-            CreateBomSheet(wb, report.BomRows, headerStyle, dataStyle, sumStyle, sumIntegerStyle, computedStyle, titleStyle);
+            CreateProductionSheet(wb, report.FactoryOrders, headerStyle, dataStyle, sumStyle, sumIntegerStyle, computedStyle, titleStyle, wrapStyle);
 
             // ────────────────────────────────────────────
-            // SHEET 2: HAO HỤT
+            // SHEET 2: QUẢN LÝ SPEC (A4 Portrait)
             // ────────────────────────────────────────────
-            CreateWasteSheet(wb, report.WastePanels, headerStyle, dataStyle, sumStyle, computedStyle, titleStyle);
+            CreateSpecSheet(wb, report.FactoryOrders, headerStyle, dataStyle, titleStyle);
 
             // ────────────────────────────────────────────
-            // SHEET 3: TỔNG HỢP + ĐẶT HÀNG NHÀ MÁY
+            // SHEET 3: ĐẶT HÀNG PHỤ KIỆN (A4 Landscape)
             // ────────────────────────────────────────────
-            CreateSummarySheet(wb, report, headerStyle, dataStyle, sumStyle, sumIntegerStyle, computedStyle, titleStyle, sectionStyle);
-
-            // ────────────────────────────────────────────
-            // SHEET 4: PHỤ KIỆN
-            // ────────────────────────────────────────────
-            CreateAccessorySheet(wb, report.AccessoryRows, headerStyle, dataStyle, sumStyle, computedStyle, titleStyle, accessorySectionStyle, wrapStyle);
+            CreateAccessorySheet(wb, report.AccessoryRows, headerStyle, dataStyle, titleStyle, wrapStyle);
 
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
@@ -61,23 +54,30 @@ namespace ShopDrawing.Plugin.Core
             }
         }
 
-        private void CreateBomSheet(IWorkbook wb, List<BomRow> rows,
-            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle, ICellStyle computedStyle, ICellStyle titleStyle)
+        private void CreateProductionSheet(IWorkbook wb, List<ShopdrawingBomCalculator.FactoryOrderRow> orders,
+            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle, ICellStyle computedStyle, ICellStyle titleStyle, ICellStyle wrapStyle)
         {
-            ISheet sh = wb.CreateSheet("BOM Chi Tiết");
+            ISheet sh = wb.CreateSheet("Lệnh Sản Xuất");
             sh.DefaultRowHeightInPoints = 20;
+
+            // A4 Portrait, Fit All Columns on One Page
+            sh.PrintSetup.PaperSize = (short)PaperSize.A4;
+            sh.PrintSetup.Landscape = false;
+            sh.PrintSetup.FitWidth = 1;
+            sh.PrintSetup.FitHeight = 0;
+            sh.FitToPage = true;
 
             var titleRow = sh.CreateRow(0);
             titleRow.HeightInPoints = 25;
             var titleCell = titleRow.CreateCell(0);
-            titleCell.SetCellValue("BẢNG KÊ VẬT TƯ TẤM PANEL (BOM)");
+            titleCell.SetCellValue("LỆNH SẢN XUẤT");
             titleCell.CellStyle = titleStyle;
-            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 7));
+            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 8));
 
             var dateRow = sh.CreateRow(1);
             dateRow.CreateCell(0).SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
 
-            string[] headers = { "STT", "MÃ TẤM", "CẤU TẠO", "RỘNG (mm)", "DÀI (mm)", "NGÀM T/P", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "TRẠNG THÁI", "MÃ VÁCH" };
+            string[] headers = { "STT", "ƯU TIÊN", "CẤU TẠO", "DÀY (mm)", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
             int headerRowIdx = 3;
             IRow hdr = sh.CreateRow(headerRowIdx);
             hdr.HeightInPoints = 22;
@@ -88,64 +88,123 @@ namespace ShopDrawing.Plugin.Core
 
             int r = headerRowIdx + 1;
             int dataStart = r;
-            foreach (var row in rows)
+            int stt = 1;
+            foreach (var order in orders)
             {
                 IRow dr = sh.CreateRow(r);
-                SetCell(dr, 0, r - headerRowIdx, dataStyle);
-                SetCell(dr, 1, string.IsNullOrWhiteSpace(row.DisplayId) ? row.Id : row.DisplayId, dataStyle);
-                SetCell(dr, 2, row.Spec, dataStyle);
-                SetCell(dr, 3, row.WidthMm, dataStyle);
-                SetCell(dr, 4, row.LengthMm, dataStyle);
-                SetCell(dr, 5, $"{row.JointLeft}/{row.JointRight}", dataStyle);
-                SetCell(dr, 6, row.Qty, dataStyle);
+                SetCell(dr, 0, stt++, dataStyle);
+                SetCell(dr, 1, order.Priority ?? "", dataStyle);
+                SetCell(dr, 2, order.Spec ?? "", wrapStyle);
+                SetCell(dr, 3, order.ThickMm, dataStyle);
+                SetCell(dr, 4, order.WidthMm, dataStyle);
+                SetCell(dr, 5, order.LengthMm, dataStyle);
+                SetCell(dr, 6, order.Qty, dataStyle);
                 
-                // Use Excel formula for Area
-                // Area = (Width * Length) / 1000000 * Qty
-                SetFormulaCell(dr, 7, $"{CellRef(r, 3)}*{CellRef(r, 4)}/1000000*{CellRef(r, 6)}", computedStyle);
+                SetFormulaCell(dr, 7, $"{CellRef(r, 4)}*{CellRef(r, 5)}/1000000*{CellRef(r, 6)}", computedStyle);
                 
-                SetCell(dr, 8, row.Status, dataStyle);
-                SetCell(dr, 9, row.WallCode, dataStyle);
+                SetCell(dr, 8, order.Note ?? "", wrapStyle);
                 r++;
             }
 
-            // Summary row using formulas
-            IRow sr = sh.CreateRow(r);
-            SetCell(sr, 0, "TỔNG", sumStyle);
-            for (int i = 1; i <= 5; i++) SetCell(sr, i, "", sumStyle);
+            IRow fs = sh.CreateRow(r);
+            SetCell(fs, 0, "TỔNG ĐẶT HÀNG", sumStyle);
+            for(int i=1;i<=5;i++) SetCell(fs, i, "", sumStyle);
             sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 5));
             
             if (r > dataStart)
             {
-                SetFormulaCell(sr, 6, $"SUM({CellRef(dataStart, 6)}:{CellRef(r - 1, 6)})", sumIntegerStyle);
-                SetFormulaCell(sr, 7, $"SUM({CellRef(dataStart, 7)}:{CellRef(r - 1, 7)})", sumStyle);
+                SetFormulaCell(fs, 6, $"SUM({CellRef(dataStart, 6)}:{CellRef(r - 1, 6)})", sumIntegerStyle);
+                SetFormulaCell(fs, 7, $"SUM({CellRef(dataStart, 7)}:{CellRef(r - 1, 7)})", sumStyle);
             }
             else
             {
-                SetCell(sr, 6, 0, sumIntegerStyle);
-                SetCell(sr, 7, 0, sumStyle);
+                SetCell(fs, 6, 0, sumIntegerStyle);
+                SetCell(fs, 7, 0, sumStyle);
             }
-            SetCell(sr, 8, "", sumStyle);
-            SetCell(sr, 9, "", sumStyle);
+            SetCell(fs, 8, "", sumStyle);
 
-            ApplyColumnWidths(sh, new[] { 6, 12, 12, 12, 12, 12, 10, 14, 15, 15 });
+            ApplyColumnWidths(sh, new[] { 5, 10, 20, 10, 10, 10, 10, 14, 25 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
 
-        private void CreateWasteSheet(IWorkbook wb, List<WastePanel> allWaste,
-            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle computedStyle, ICellStyle titleStyle)
+        private void CreateSpecSheet(IWorkbook wb, List<ShopdrawingBomCalculator.FactoryOrderRow> orders, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle)
         {
-            ISheet sh = wb.CreateSheet("Hao Hụt");
+            ISheet sh = wb.CreateSheet("Quản lý Spec");
             sh.DefaultRowHeightInPoints = 20;
+
+            // A4 Portrait
+            sh.PrintSetup.PaperSize = (short)PaperSize.A4;
+            sh.PrintSetup.Landscape = false;
+            sh.PrintSetup.FitWidth = 1;
+            sh.PrintSetup.FitHeight = 0;
+            sh.FitToPage = true;
 
             var titleRow = sh.CreateRow(0);
             titleRow.HeightInPoints = 25;
             var titleCell = titleRow.CreateCell(0);
-            titleCell.SetCellValue("THỐNG KÊ HAO HỤT");
+            titleCell.SetCellValue("BẢNG QUẢN LÝ SPEC");
+            titleCell.CellStyle = titleStyle;
+            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+
+            string[] headers = { "STT", "MÃ SP", "LOẠI PANEL", "ĐỘ DÀY (mm)", "NGÀM", "TÔN MẶT NGOÀI", "TÔN MẶT TRONG" };
+            int headerRowIdx = 2;
+            IRow hdr = sh.CreateRow(headerRowIdx);
+            hdr.HeightInPoints = 22;
+            for (int i = 0; i < headers.Length; i++)
+            {
+                SetCell(hdr, i, headers[i], headerStyle);
+            }
+
+            var uniqueSpecs = orders.Select(o => o.Spec).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToList();
+
+            int r = headerRowIdx + 1;
+            int stt = 1;
+            foreach (var spec in uniqueSpecs)
+            {
+                var parts = spec.Split('|').Select(p => p.Trim()).ToArray();
+                string loai = parts.Length > 0 ? parts[0] : "";
+                string day = parts.Length > 1 ? parts[1].Replace("mm", "").Trim() : "";
+                string ngam = parts.Length > 2 ? parts[2] : "";
+                string outFace = parts.Length > 3 ? parts[3] : "";
+                string inFace = parts.Length > 4 ? parts[4] : "";
+
+                IRow dr = sh.CreateRow(r);
+                SetCell(dr, 0, stt++, dataStyle);
+                SetCell(dr, 1, spec, dataStyle); // MÃ SP
+                SetCell(dr, 2, loai, dataStyle); // LOẠI PANEL
+                SetCell(dr, 3, day, dataStyle);  // ĐỘ DÀY
+                SetCell(dr, 4, ngam, dataStyle); // NGÀM
+                SetCell(dr, 5, outFace, dataStyle); // TÔN MẶT NGOÀI
+                SetCell(dr, 6, inFace, dataStyle); // TÔN MẶT TRONG
+                r++;
+            }
+
+            ApplyColumnWidths(sh, new[] { 5, 20, 15, 12, 15, 25, 25 });
+            sh.CreateFreezePane(0, headerRowIdx + 1);
+            SetZoom(sh, 90);
+        }
+
+        private void CreateAccessorySheet(IWorkbook wb, List<ShopdrawingAccessorySummaryRow> accessoryRows, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle, ICellStyle wrapStyle)
+        {
+            ISheet sh = wb.CreateSheet("Đặt Hàng Phụ Kiện");
+            sh.DefaultRowHeightInPoints = 20;
+
+            // A4 Landscape
+            sh.PrintSetup.PaperSize = (short)PaperSize.A4;
+            sh.PrintSetup.Landscape = true;
+            sh.PrintSetup.FitWidth = 1;
+            sh.PrintSetup.FitHeight = 0;
+            sh.FitToPage = true;
+
+            var titleRow = sh.CreateRow(0);
+            titleRow.HeightInPoints = 25;
+            var titleCell = titleRow.CreateCell(0);
+            titleCell.SetCellValue("ĐẶT HÀNG PHỤ KIỆN");
             titleCell.CellStyle = titleStyle;
             sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 7));
 
-            string[] headers = { "STT", "MÃ TẤM", "CẤU TẠO", "RỘNG (mm)", "DÀI (mm)", "DIỆN TÍCH (m²)", "NGUỒN", "TRẠNG THÁI", "MÃ VÁCH" };
+            string[] headers = { "STT", "HẠNG MỤC", "VỊ TRÍ / ỨNG DỤNG", "TÊN PHỤ KIỆN", "QUY CÁCH", "ĐVT", "SỐ LƯỢNG", "GHI CHÚ" };
             int headerRowIdx = 2;
             IRow hdr = sh.CreateRow(headerRowIdx);
             hdr.HeightInPoints = 22;
@@ -155,203 +214,6 @@ namespace ShopDrawing.Plugin.Core
             }
 
             int r = headerRowIdx + 1;
-            int dataStart = r;
-            foreach (var w in allWaste)
-            {
-                IRow dr = sh.CreateRow(r);
-                SetCell(dr, 0, r - headerRowIdx, dataStyle);
-                SetCell(dr, 1, w.PanelCode, dataStyle);
-                SetCell(dr, 2, w.PanelSpec, dataStyle);
-                SetCell(dr, 3, w.WidthMm, dataStyle);
-                SetCell(dr, 4, w.LengthMm, dataStyle);
-                
-                // Formula: Area = (Width * Length) / 1000000
-                SetFormulaCell(dr, 5, $"{CellRef(r, 3)}*{CellRef(r, 4)}/1000000", computedStyle);
-                
-                SetCell(dr, 6, w.SourceTypeDisplay, dataStyle);
-                SetCell(dr, 7, w.StatusDisplay, dataStyle);
-                SetCell(dr, 8, w.SourceWall, dataStyle);
-                r++;
-            }
-
-            // Note: Since calculating sum conditionally based on another column's string value 
-            // is tricky with simple formulas, we can rely on SUMIF
-            r++;
-            IRow s1 = sh.CreateRow(r);
-            SetCell(s1, 0, "Tổng m² Đã bỏ:", sumStyle);
-            for(int i=1;i<=4;i++) SetCell(s1, i, "", sumStyle);
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 4));
-            
-            if (r > dataStart + 1)
-            {
-                SetFormulaCell(s1, 5, $"SUMIF({CellRef(dataStart, 7)}:{CellRef(dataStart + allWaste.Count - 1, 7)},\"discarded\",{CellRef(dataStart, 5)}:{CellRef(dataStart + allWaste.Count - 1, 5)})", sumStyle);
-            }
-            else
-            {
-                SetCell(s1, 5, 0, sumStyle);
-            }
-            for(int i=6;i<=8;i++) SetCell(s1, i, "", sumStyle);
-
-            IRow s2 = sh.CreateRow(r + 1);
-            SetCell(s2, 0, "Tổng m² Sẵn sàng:", sumStyle);
-            for(int i=1;i<=4;i++) SetCell(s2, i, "", sumStyle);
-            sh.AddMergedRegion(new CellRangeAddress(r + 1, r + 1, 0, 4));
-            
-            if (r > dataStart + 1)
-            {
-                SetFormulaCell(s2, 5, $"SUMIF({CellRef(dataStart, 7)}:{CellRef(dataStart + allWaste.Count - 1, 7)},\"available\",{CellRef(dataStart, 5)}:{CellRef(dataStart + allWaste.Count - 1, 5)})", sumStyle);
-            }
-            else
-            {
-                SetCell(s2, 5, 0, sumStyle);
-            }
-            for(int i=6;i<=8;i++) SetCell(s2, i, "", sumStyle);
-
-            ApplyColumnWidths(sh, new[] { 6, 12, 12, 12, 12, 14, 15, 15, 15 });
-            sh.CreateFreezePane(0, headerRowIdx + 1);
-            SetZoom(sh, 90);
-        }
-
-        private void CreateSummarySheet(IWorkbook wb, ShopdrawingBomCalculator.ShopdrawingReport report,
-            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle, ICellStyle computedStyle, ICellStyle titleStyle, ICellStyle sectionStyle)
-        {
-            ISheet sh = wb.CreateSheet("Tổng Hợp Panel");
-            sh.DefaultRowHeightInPoints = 20;
-
-            int r = 0;
-            var titleRow = sh.CreateRow(r);
-            titleRow.HeightInPoints = 25;
-            var titleCell = titleRow.CreateCell(0);
-            titleCell.SetCellValue("A. TỔNG HỢP DỰ ÁN");
-            titleCell.CellStyle = titleStyle;
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 2));
-            r+=2;
-
-            var summaryData = new (string Label, string Value)[]
-            {
-                ("Tổng số tấm", $"{report.Summary.TotalPanelQty} tấm"),
-                ("Tổng m² panel", $"{report.Summary.TotalPanelArea:F2} m²"),
-                ("", ""),
-                ("Tổng m² hao hụt (Đã bỏ)", $"{report.Summary.DiscardedArea:F3} m²"),
-                ("TỶ LỆ HAO HỤT", $"{report.Summary.WastePercent:F1} %"),
-                ("", ""),
-                ("Chi tiết - Tấm lẻ (REM)", $"{report.Summary.RemArea:F3} m²"),
-                ("Chi tiết - Bậc thang (STEP)", $"{report.Summary.StepArea:F3} m²"),
-                ("Chi tiết - Lỗ mở (OPEN)", $"{report.Summary.OpenArea:F3} m²"),
-                ("Chi tiết - Cắt tận dụng (TRIM)", $"{report.Summary.TrimArea:F3} m²"),
-                ("", ""),
-                ("Tấm lẻ còn dùng được", $"{report.Summary.AvailableQty} tấm ({report.Summary.AvailableArea:F3} m²)")
-            };
-
-            foreach (var (label, value) in summaryData)
-            {
-                if (string.IsNullOrEmpty(label)) { r++; continue; }
-                IRow dr = sh.CreateRow(r);
-                SetCell(dr, 0, label, dataStyle);
-                SetCell(dr, 1, value, dataStyle);
-                if (label == "TỶ LỆ HAO HỤT")
-                {
-                    dr.GetCell(0).CellStyle = sumStyle;
-                    dr.GetCell(1).CellStyle = sumStyle;
-                }
-                r++;
-            }
-
-            r += 2;
-            var factTitle = sh.CreateRow(r);
-            factTitle.HeightInPoints = 22;
-            var factCell = factTitle.CreateCell(0);
-            factCell.SetCellValue("B. ĐẶT HÀNG NHÀ MÁY (gộp theo kích thước)");
-            factCell.CellStyle = sectionStyle;
-            for(int i=1;i<=7;i++) SetCell(factTitle, i, "", sectionStyle);
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 7));
-            r++;
-
-            string[] fHeaders = { "STT", "CẤU TẠO", "ĐỘ DÀY (mm)", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
-            int headerRowIdx = r;
-            IRow fhdr = sh.CreateRow(headerRowIdx);
-            fhdr.HeightInPoints = 22;
-            for (int i = 0; i < fHeaders.Length; i++)
-            {
-                SetCell(fhdr, i, fHeaders[i], headerStyle);
-            }
-            r++;
-
-            int stt = 1;
-            int dataStart = r;
-            foreach (var order in report.FactoryOrders)
-            {
-                IRow dr = sh.CreateRow(r);
-                SetCell(dr, 0, stt++, dataStyle);
-                SetCell(dr, 1, order.Spec, dataStyle);
-                SetCell(dr, 2, order.ThickMm, dataStyle);
-                SetCell(dr, 3, order.WidthMm, dataStyle);
-                SetCell(dr, 4, order.LengthMm, dataStyle);
-                SetCell(dr, 5, order.Qty, dataStyle);
-                
-                // Area = (Width * Length) / 1000000 * Qty
-                SetFormulaCell(dr, 6, $"{CellRef(r, 3)}*{CellRef(r, 4)}/1000000*{CellRef(r, 5)}", computedStyle);
-                
-                SetCell(dr, 7, order.Note, dataStyle);
-                r++;
-            }
-
-            IRow fs = sh.CreateRow(r);
-            SetCell(fs, 0, "TỔNG ĐẶT HÀNG", sumStyle);
-            for(int i=1;i<=4;i++) SetCell(fs, i, "", sumStyle);
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 4));
-            
-            if (r > dataStart)
-            {
-                SetFormulaCell(fs, 5, $"SUM({CellRef(dataStart, 5)}:{CellRef(r - 1, 5)})", sumIntegerStyle);
-                SetFormulaCell(fs, 6, $"SUM({CellRef(dataStart, 6)}:{CellRef(r - 1, 6)})", sumStyle);
-            }
-            else
-            {
-                SetCell(fs, 5, 0, sumIntegerStyle);
-                SetCell(fs, 6, 0, sumStyle);
-            }
-            SetCell(fs, 7, "", sumStyle);
-
-            ApplyColumnWidths(sh, new[] { 6, 20, 12, 12, 12, 12, 15, 35 });
-            sh.CreateFreezePane(0, headerRowIdx + 1);
-            SetZoom(sh, 90);
-        }
-        
-        private void CreateAccessorySheet(IWorkbook wb, List<ShopdrawingAccessorySummaryRow> accessoryRows,
-            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle computedStyle, ICellStyle titleStyle, ICellStyle sectionStyle, ICellStyle wrapStyle)
-        {
-            ISheet sh = wb.CreateSheet("Phụ kiện");
-            sh.DefaultRowHeightInPoints = 20;
-
-            int r = 0;
-            var titleRow = sh.CreateRow(r);
-            titleRow.HeightInPoints = 25;
-            var titleCell = titleRow.CreateCell(0);
-            titleCell.SetCellValue("BẢNG TỔNG HỢP PHỤ KIỆN");
-            titleCell.CellStyle = titleStyle;
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 5));
-            r += 2;
-
-            var factTitle = sh.CreateRow(r);
-            factTitle.HeightInPoints = 22;
-            var factCell = factTitle.CreateCell(0);
-            factCell.SetCellValue("CHI TIẾT PHỤ KIỆN");
-            factCell.CellStyle = sectionStyle;
-            for(int i=1;i<=10;i++) SetCell(factTitle, i, "", sectionStyle);
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 10));
-            r++;
-
-            string[] headers = { "STT", "HẠNG MỤC", "ỨNG DỤNG", "VẬT LIỆU", "TÊN PHỤ KIỆN", "QUY CÁCH", "ĐVT", "KHỐI LƯỢNG", "HỆ SỐ", "TỔNG", "GHI CHÚ" };
-            int headerRowIdx = r;
-            IRow hdr = sh.CreateRow(headerRowIdx);
-            hdr.HeightInPoints = 22;
-            for (int i = 0; i < headers.Length; i++)
-            {
-                SetCell(hdr, i, headers[i], headerStyle);
-            }
-            r++;
-
             int stt = 1;
             foreach (var acc in accessoryRows)
             {
@@ -359,21 +221,31 @@ namespace ShopDrawing.Plugin.Core
                 SetCell(dr, 0, stt++, dataStyle);
                 SetCell(dr, 1, acc.CategoryScope, dataStyle);
                 SetCell(dr, 2, acc.Application, dataStyle);
-                SetCell(dr, 3, acc.Material, dataStyle);
-                SetCell(dr, 4, acc.Name, wrapStyle);
-                SetCell(dr, 5, acc.Position, dataStyle);
-                SetCell(dr, 6, acc.Unit, dataStyle);
-                SetCell(dr, 7, acc.BasisValue, computedStyle);
-                SetCell(dr, 8, acc.Factor, computedStyle);
+                SetCell(dr, 3, acc.Name, wrapStyle);
                 
-                // Final = Basis * Factor
-                SetFormulaCell(dr, 9, $"{CellRef(r, 7)}*{CellRef(r, 8)}", computedStyle);
+                string quyCach = string.Join(" - ", new[] { acc.Material, acc.Position }.Where(x => !string.IsNullOrEmpty(x)));
+                SetCell(dr, 4, quyCach, dataStyle);
                 
-                SetCell(dr, 10, acc.Note, dataStyle);
+                string dvtMua = acc.Unit;
+                double slMua = acc.BasisValue * acc.Factor;
+                
+                if (acc.Unit?.ToLower() == "m")
+                {
+                    dvtMua = "Cây";
+                    slMua = Math.Ceiling(slMua / 6.0);
+                }
+                else if (acc.Unit?.ToLower() == "cái")
+                {
+                    dvtMua = "Hộp";
+                }
+                
+                SetCell(dr, 5, dvtMua, dataStyle);
+                SetCell(dr, 6, slMua, dataStyle); 
+                SetCell(dr, 7, acc.Note, wrapStyle);
                 r++;
             }
 
-            ApplyColumnWidths(sh, new[] { 6, 12, 15, 12, 35, 15, 8, 12, 10, 12, 30 });
+            ApplyColumnWidths(sh, new[] { 5, 15, 20, 30, 25, 10, 12, 30 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }

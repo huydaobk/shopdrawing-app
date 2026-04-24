@@ -146,14 +146,14 @@ namespace ShopDrawing.Plugin.Core
             var titleCell = titleRow.CreateCell(0);
             titleCell.SetCellValue("BẢNG QUẢN LÝ SPEC");
             titleCell.CellStyle = titleStyle;
-            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 18));
+            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 17));
 
             var listRow = sh.CreateRow(3);
             listRow.HeightInPoints = 22;
             var listCell = listRow.CreateCell(0);
             listCell.SetCellValue("DANH SÁCH SPEC DỰ ÁN");
             listCell.CellStyle = headerStyle;
-            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 18));
+            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 17));
 
             string[] mainHeaders = { "STT", "Mã spec", "Khổ tấm (mm)", "Loại panel", "Tỷ trọng", "Chiều dày (mm)", "Chống cháy", "FM", "MẶT TRÊN", "", "", "", "", "MẶT DƯỚI", "", "", "", "" };
             string[] subHeaders = { "", "", "", "", "", "", "", "", "Màu sắc", "Vật liệu", "Độ mạ", "Dày tôn", "Profile", "Màu sắc", "Vật liệu", "Độ mạ", "Dày tôn", "Profile" };
@@ -216,7 +216,7 @@ namespace ShopDrawing.Plugin.Core
                 r++;
             }
 
-            ApplyColumnWidths(sh, new[] { 5, 20, 12, 15, 12, 15, 15, 8, 12, 12, 12, 10, 12, 12, 12, 12, 10, 12 });
+            ApplyColumnWidths(sh, new[] { 5, 12, 12, 12, 10, 12, 12, 6, 10, 10, 10, 9, 10, 10, 10, 10, 9, 10 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }

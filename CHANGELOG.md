@@ -1,5 +1,12 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-04-24] - v0.2.49 Shopdrawing Excel BOM Synchronization 📊
+### Changed
+- **Excel Export**: Nâng cấp module xuất file báo cáo Excel (Lệnh Sản Xuất, Quản lý Spec, Đặt hàng Phụ kiện). Đồng bộ hoàn toàn logic tính toán hao hụt `WasteFactor` từ giao diện UI vào công thức tính khối lượng phụ kiện.
+- **Accessory Calculation**: Bổ sung hàm làm tròn lên (`Math.Ceiling`) cho mọi đơn vị phụ kiện (cây, hộp, con) để xuất dữ liệu nguyên trên BOM, chống sai số khi đặt hàng.
+- **Excel Formatting**: Khôi phục chuẩn định dạng Quản lý Spec (19 cột). Bổ sung thiết lập tự động chèn công thức Excel (`=SUM`, `=`...) cho các dòng TỔNG để tính tổng số lượng/diện tích. Thiết lập in ấn A4 chuẩn cho tất cả các Sheet.
+- **BOM Priority Integration**: Liên kết cột Ưu tiên trên Sheet Lệnh Sản Xuất thẳng vào `BatchNo` (Đợt giao hàng) được gán trên CAD, tự động đồng bộ khi xuất Excel.
+
 ## [2026-04-23] - v0.2.48 Real-time BOM Auto-Refresh on CAD Edit 🔄
 ### Fixed
 - **BOM Realtime Sync**: Hook vào sự kiện `Document.CommandEnded` của AutoCAD để tự động gọi `NotifyWasteUpdated()` ngay sau khi người dùng thực thi các lệnh CAD thay đổi đối tượng (ERASE, UNDO, REDO, MOVE, COPY, ROTATE, SCALE, STRETCH, GRIP_STRETCH). Bảng "Phụ Kiện" trong WasteManagerDialog sẽ tự cập nhật realtime mà không cần thao tác thủ công.

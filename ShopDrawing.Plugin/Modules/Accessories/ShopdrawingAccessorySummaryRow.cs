@@ -13,6 +13,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
         AccessoryCalcRule Rule,
         double BasisValue,
         double Factor,
+        double WasteFactor,
         double Quantity,
         string Note);
 }

@@ -41,7 +41,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         accessory.CalcRule,
                         basisValue,
                         accessory.Factor,
-                        basisValue * accessory.Factor,
+                        accessory.WasteFactor,
+                        (basisValue * accessory.Factor) * (1 + accessory.WasteFactor / 100.0),
                         accessory.Note));
                 }
             }
@@ -79,7 +80,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         accessory.CalcRule,
                         basisValue,
                         accessory.Factor,
-                        basisValue * accessory.Factor,
+                        accessory.WasteFactor,
+                        (basisValue * accessory.Factor) * (1 + accessory.WasteFactor / 100.0),
                         $"{snapshot.WallCode}: {accessory.Note}"));
                 }
             }
@@ -117,7 +119,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         accessory.CalcRule,
                         basisValue,
                         accessory.Factor,
-                        basisValue * accessory.Factor,
+                        accessory.WasteFactor,
+                        (basisValue * accessory.Factor) * (1 + accessory.WasteFactor / 100.0),
                         $"PLAN: {accessory.Note}"));
                 }
             }
@@ -218,7 +221,8 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                         row.Position,
                         row.Unit,
                         row.Rule,
-                        row.Factor
+                        row.Factor,
+                        row.WasteFactor
                     })
                 .Select(group => new ShopdrawingAccessorySummaryRow(
                     group.Key.CategoryScope,
@@ -231,6 +235,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                     group.Key.Rule,
                     group.Sum(x => x.BasisValue),
                     group.Key.Factor,
+                    group.Key.WasteFactor,
                     group.Sum(x => x.Quantity),
                     string.Join(" | ", group.Select(x => x.Note).Distinct(StringComparer.OrdinalIgnoreCase))))
                 .OrderBy(row => row.Application, StringComparer.OrdinalIgnoreCase)

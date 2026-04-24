@@ -5,6 +5,7 @@ using System.Linq;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
+using ShopDrawing.Plugin.Commands;
 using ShopDrawing.Plugin.Data;
 using ShopDrawing.Plugin.Models;
 using ShopDrawing.Plugin.Modules.Accessories;
@@ -46,7 +47,7 @@ namespace ShopDrawing.Plugin.Core
             // ────────────────────────────────────────────
             // SHEET 3: ĐẶT HÀNG PHỤ KIỆN (A4 Landscape)
             // ────────────────────────────────────────────
-            CreateAccessorySheet(wb, report.AccessoryRows, headerStyle, dataStyle, titleStyle, wrapStyle);
+            CreateAccessorySheet(wb, report.AccessoryRows, headerStyle, dataStyle, titleStyle, wrapStyle, sumStyle, sumIntegerStyle);
 
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
@@ -77,7 +78,7 @@ namespace ShopDrawing.Plugin.Core
             var dateRow = sh.CreateRow(1);
             dateRow.CreateCell(0).SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
 
-            string[] headers = { "STT", "ƯU TIÊN", "CẤU TẠO", "DÀY (mm)", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
+            string[] headers = { "STT", "ƯU TIÊN", "CẤU TẠO", "KÝ HIỆU", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
             int headerRowIdx = 3;
             IRow hdr = sh.CreateRow(headerRowIdx);
             hdr.HeightInPoints = 22;
@@ -95,7 +96,7 @@ namespace ShopDrawing.Plugin.Core
                 SetCell(dr, 0, stt++, dataStyle);
                 SetCell(dr, 1, order.Priority ?? "", dataStyle);
                 SetCell(dr, 2, order.Spec ?? "", wrapStyle);
-                SetCell(dr, 3, order.ThickMm, dataStyle);
+                SetCell(dr, 3, order.PanelIds ?? "", wrapStyle);
                 SetCell(dr, 4, order.WidthMm, dataStyle);
                 SetCell(dr, 5, order.LengthMm, dataStyle);
                 SetCell(dr, 6, order.Qty, dataStyle);
@@ -135,7 +136,7 @@ namespace ShopDrawing.Plugin.Core
 
             // A4 Portrait
             sh.PrintSetup.PaperSize = (short)PaperSize.A4;
-            sh.PrintSetup.Landscape = false;
+            sh.PrintSetup.Landscape = true; // Use Landscape since 19 columns
             sh.PrintSetup.FitWidth = 1;
             sh.PrintSetup.FitHeight = 0;
             sh.FitToPage = true;
@@ -145,47 +146,84 @@ namespace ShopDrawing.Plugin.Core
             var titleCell = titleRow.CreateCell(0);
             titleCell.SetCellValue("BẢNG QUẢN LÝ SPEC");
             titleCell.CellStyle = titleStyle;
-            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 18));
 
-            string[] headers = { "STT", "MÃ SP", "LOẠI PANEL", "ĐỘ DÀY (mm)", "NGÀM", "TÔN MẶT NGOÀI", "TÔN MẶT TRONG" };
-            int headerRowIdx = 2;
-            IRow hdr = sh.CreateRow(headerRowIdx);
-            hdr.HeightInPoints = 22;
-            for (int i = 0; i < headers.Length; i++)
+            var listRow = sh.CreateRow(3);
+            listRow.HeightInPoints = 22;
+            var listCell = listRow.CreateCell(0);
+            listCell.SetCellValue("DANH SÁCH SPEC DỰ ÁN");
+            listCell.CellStyle = headerStyle;
+            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 18));
+
+            string[] mainHeaders = { "STT", "Mã spec", "Mã ký hiệu", "Khổ tôn (mm)", "Loại panel", "Tỷ trọng", "Chiều dày (mm)", "Ngàm nối", "FM", "MẶT TRÊN", "", "", "", "", "MẶT DƯỚI", "", "", "", "" };
+            string[] subHeaders = { "", "", "", "", "", "", "", "", "", "Màu mặt", "Vật liệu", "Mã màu tôn", "Độ dày", "Bề mặt", "Màu mặt", "Vật liệu", "Mã màu tôn", "Độ dày", "Bề mặt" };
+
+            int headerRowIdx = 4;
+            IRow hdr1 = sh.CreateRow(headerRowIdx);
+            hdr1.HeightInPoints = 22;
+            for (int i = 0; i < mainHeaders.Length; i++)
             {
-                SetCell(hdr, i, headers[i], headerStyle);
+                SetCell(hdr1, i, mainHeaders[i], headerStyle);
             }
+
+            IRow hdr2 = sh.CreateRow(headerRowIdx + 1);
+            hdr2.HeightInPoints = 22;
+            for (int i = 0; i < subHeaders.Length; i++)
+            {
+                SetCell(hdr2, i, subHeaders[i], headerStyle);
+            }
+
+            for (int i = 0; i <= 8; i++)
+            {
+                sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx + 1, i, i));
+            }
+            sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx, 9, 13));
+            sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx, 14, 18));
 
             var uniqueSpecs = orders.Select(o => o.Spec).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToList();
 
-            int r = headerRowIdx + 1;
+            int r = headerRowIdx + 2;
             int stt = 1;
-            foreach (var spec in uniqueSpecs)
+            foreach (var specStr in uniqueSpecs)
             {
-                var parts = spec.Split('|').Select(p => p.Trim()).ToArray();
-                string loai = parts.Length > 0 ? parts[0] : "";
-                string day = parts.Length > 1 ? parts[1].Replace("mm", "").Trim() : "";
+                var parts = specStr.Split('|').Select(p => p.Trim()).ToArray();
+                string specKey = parts.Length > 0 ? parts[0] : specStr;
                 string ngam = parts.Length > 2 ? parts[2] : "";
-                string outFace = parts.Length > 3 ? parts[3] : "";
-                string inFace = parts.Length > 4 ? parts[4] : "";
+
+                var specDef = ShopDrawingCommands.SpecManager?.GetByKey(specKey);
 
                 IRow dr = sh.CreateRow(r);
                 SetCell(dr, 0, stt++, dataStyle);
-                SetCell(dr, 1, spec, dataStyle); // MÃ SP
-                SetCell(dr, 2, loai, dataStyle); // LOẠI PANEL
-                SetCell(dr, 3, day, dataStyle);  // ĐỘ DÀY
-                SetCell(dr, 4, ngam, dataStyle); // NGÀM
-                SetCell(dr, 5, outFace, dataStyle); // TÔN MẶT NGOÀI
-                SetCell(dr, 6, inFace, dataStyle); // TÔN MẶT TRONG
+                SetCell(dr, 1, specKey, dataStyle);
+                SetCell(dr, 2, specDef?.Description ?? "", dataStyle);
+                SetCell(dr, 3, specDef?.PanelWidth.ToString() ?? "", dataStyle);
+                SetCell(dr, 4, specDef?.PanelType ?? "", dataStyle);
+                SetCell(dr, 5, specDef?.Density ?? "", dataStyle);
+                SetCell(dr, 6, specDef?.Thickness.ToString() ?? "", dataStyle);
+                SetCell(dr, 7, ngam, dataStyle);
+                SetCell(dr, 8, (specDef?.FmApproved == true) ? "Có" : "Không", dataStyle);
+                
+                SetCell(dr, 9, specDef?.FacingColor ?? "", dataStyle);
+                SetCell(dr, 10, specDef?.TopFacing ?? "", dataStyle);
+                SetCell(dr, 11, specDef?.FacingColor ?? "", dataStyle);
+                SetCell(dr, 12, specDef?.TopSteelThickness.ToString() ?? "", dataStyle);
+                SetCell(dr, 13, specDef?.TopProfile ?? "", dataStyle);
+                
+                SetCell(dr, 14, specDef?.BottomFacingColor ?? "", dataStyle);
+                SetCell(dr, 15, specDef?.BottomFacing ?? "", dataStyle);
+                SetCell(dr, 16, specDef?.BottomFacingColor ?? "", dataStyle);
+                SetCell(dr, 17, specDef?.BottomSteelThickness.ToString() ?? "", dataStyle);
+                SetCell(dr, 18, specDef?.BottomProfile ?? "", dataStyle);
+                
                 r++;
             }
 
-            ApplyColumnWidths(sh, new[] { 5, 20, 15, 12, 15, 25, 25 });
-            sh.CreateFreezePane(0, headerRowIdx + 1);
+            ApplyColumnWidths(sh, new[] { 5, 20, 15, 12, 15, 12, 15, 12, 8, 12, 12, 12, 10, 12, 12, 12, 12, 10, 12 });
+            sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }
 
-        private void CreateAccessorySheet(IWorkbook wb, List<ShopdrawingAccessorySummaryRow> accessoryRows, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle, ICellStyle wrapStyle)
+        private void CreateAccessorySheet(IWorkbook wb, List<ShopdrawingAccessorySummaryRow> accessoryRows, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle, ICellStyle wrapStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle)
         {
             ISheet sh = wb.CreateSheet("Đặt Hàng Phụ Kiện");
             sh.DefaultRowHeightInPoints = 20;
@@ -214,6 +252,7 @@ namespace ShopDrawing.Plugin.Core
             }
 
             int r = headerRowIdx + 1;
+            int dataStart = r;
             int stt = 1;
             foreach (var acc in accessoryRows)
             {
@@ -227,7 +266,7 @@ namespace ShopDrawing.Plugin.Core
                 SetCell(dr, 4, quyCach, dataStyle);
                 
                 string dvtMua = acc.Unit;
-                double slMua = acc.BasisValue * acc.Factor;
+                double slMua = acc.BasisValue * acc.Factor * (1.0 + acc.WasteFactor / 100.0);
                 
                 if (acc.Unit?.ToLower() == "m")
                 {
@@ -237,6 +276,11 @@ namespace ShopDrawing.Plugin.Core
                 else if (acc.Unit?.ToLower() == "cái")
                 {
                     dvtMua = "Hộp";
+                    slMua = Math.Ceiling(slMua);
+                }
+                else
+                {
+                    slMua = Math.Ceiling(slMua);
                 }
                 
                 SetCell(dr, 5, dvtMua, dataStyle);
@@ -244,6 +288,21 @@ namespace ShopDrawing.Plugin.Core
                 SetCell(dr, 7, acc.Note, wrapStyle);
                 r++;
             }
+
+            IRow fs = sh.CreateRow(r);
+            SetCell(fs, 0, "TỔNG CỘNG", sumStyle);
+            for(int i=1; i<=5; i++) SetCell(fs, i, "", sumStyle);
+            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 5));
+            
+            if (r > dataStart)
+            {
+                SetFormulaCell(fs, 6, $"SUM({CellRef(dataStart, 6)}:{CellRef(r - 1, 6)})", sumIntegerStyle);
+            }
+            else
+            {
+                SetCell(fs, 6, 0, sumIntegerStyle);
+            }
+            SetCell(fs, 7, "", sumStyle);
 
             ApplyColumnWidths(sh, new[] { 5, 15, 20, 30, 25, 10, 12, 30 });
             sh.CreateFreezePane(0, headerRowIdx + 1);

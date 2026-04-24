@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ShopDrawing.Plugin.Commands;
 using ShopDrawing.Plugin.Data;
 using ShopDrawing.Plugin.Models;
 using ShopDrawing.Plugin.Modules.Accessories;
@@ -12,6 +13,7 @@ namespace ShopDrawing.Plugin.Core
         public class FactoryOrderRow
         {
             public string Priority { get; set; } = "";
+            public string PanelIds { get; set; } = "";
             public string Spec { get; set; } = "";
             public double ThickMm { get; set; }
             public double WidthMm { get; set; }
@@ -89,13 +91,36 @@ namespace ShopDrawing.Plugin.Core
                 .Sum(w => (w.WidthMm * w.LengthMm) / 1_000_000.0);
 
             // Calculate Factory Orders
-            var factoryGroups = bomRows
+            var factorySource = bomRows
                 .Where(b => !b.Status.Contains("TÁI") && !b.Status.Contains("♻"))
-                .GroupBy(b => new { b.Spec, b.Priority, b.WidthMm, b.LengthMm, b.ThickMm })
-                .OrderBy(g => g.Key.Priority)
-                .ThenBy(g => g.Key.Spec)
+                .ToList();
+
+            var standardWidths = factorySource
+                .GroupBy(r => r.WallCode ?? "")
+                .ToDictionary(g => g.Key, g => g.Max(r => r.WidthMm));
+
+            var factoryGroups = factorySource
+                .Select(r => {
+                    double w = r.WidthMm;
+                    string wc = r.WallCode ?? "";
+                    if (standardWidths.ContainsKey(wc) && w < standardWidths[wc])
+                    {
+                        w = standardWidths[wc];
+                    }
+                    return new { r.Id, r.Spec, WidthMm = w, r.LengthMm, r.ThickMm, r.Qty, r.Status, r.WallCode };
+                })
+                .GroupBy(b => new { b.Id, b.Spec, b.WidthMm, b.LengthMm, b.ThickMm })
+                .OrderBy(g => g.Key.Spec)
                 .ThenByDescending(g => g.Key.LengthMm)
-                .ThenBy(g => g.Key.WidthMm);
+                .ThenBy(g => g.Key.Id);
+
+            string defaultSpec = ShopDrawingCommands.DefaultSpec;
+            if (string.IsNullOrEmpty(defaultSpec))
+            {
+                var allSpecs = ShopDrawingCommands.SpecManager?.GetAll();
+                if (allSpecs != null && allSpecs.Count > 0)
+                    defaultSpec = allSpecs[0].Key;
+            }
 
             foreach (var g in factoryGroups)
             {
@@ -103,19 +128,27 @@ namespace ShopDrawing.Plugin.Core
                 double area = (g.Key.WidthMm * g.Key.LengthMm) / 1_000_000.0 * qty;
                 string note = "";
 
-                bool hasCut = g.Any(x => x.Status == "✂ CẮT" || x.Status == "CẮT");
-                bool hasReused = g.Any(x => x.Status.Contains("TÁI") || x.Status.Contains("♻"));
-                
+                bool hasCut = g.Any(x => !string.IsNullOrEmpty(x.Status) && (x.Status.Contains("CẮT") || x.Status.Contains("✂")));
                 if (hasCut) note += "Cắt tại công trường";
-                if (hasReused) note += (note.Length > 0 ? " + " : "") + "Tận dụng kho";
 
                 var walls = g.Select(x => x.WallCode).Where(w => !string.IsNullOrEmpty(w)).Distinct();
                 if (walls.Any()) note += (note.Length > 0 ? " | " : "") + string.Join(",", walls);
 
+                string finalSpec = string.IsNullOrWhiteSpace(g.Key.Spec) ? defaultSpec : g.Key.Spec;
+
+                string firstPanelId = g.Key.Id?.Split(',').FirstOrDefault()?.Trim() ?? "";
+                string batchNo = "";
+                var allBatches = ShopDrawingCommands.WasteRepo?.GetAllBatches();
+                if (allBatches != null && allBatches.TryGetValue(firstPanelId, out int bNo))
+                {
+                    if (bNo > 0) batchNo = bNo.ToString();
+                }
+
                 report.FactoryOrders.Add(new FactoryOrderRow
                 {
-                    Priority = g.Key.Priority,
-                    Spec = g.Key.Spec,
+                    Priority = batchNo,
+                    PanelIds = g.Key.Id,
+                    Spec = finalSpec,
                     ThickMm = g.Key.ThickMm,
                     WidthMm = g.Key.WidthMm,
                     LengthMm = g.Key.LengthMm,

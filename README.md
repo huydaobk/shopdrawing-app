@@ -75,7 +75,7 @@ Project hiện đang map tới đường dẫn cài đặt mặc định của A
 | **Core Framework** | Registry, CAD Threading lock, Logging | 🟢 Stable |
 | **Waste Repository** | SQLite DB, Matcher, Tái tạo rác thừa | 🟢 Stable |
 | **Tender BOM** | Bóc BOM khối lượng vách/trần, Auto-tracing biên dạng, Link-line, Gom Group CAD block, Pick 2 điểm khoảng cách lỗ mở | 🟢 Stable (v0.2.18) |
-| **Shopdrawing** | Bóc BOM Phụ kiện, Quản lý Spec, Đồng bộ BOM từ UI sang Excel, Làm tròn phụ kiện | 🟢 Stable (v0.2.56) |
+| **Shopdrawing** | Bóc BOM Phụ kiện, Quản lý Spec, Đồng bộ BOM từ UI sang Excel, Làm tròn phụ kiện | 🟢 Stable (v0.2.57) |
 | **Layout & PDF** | Xếp viewport auto-scale, Xuất PDF/Model | 🟢 Stable |
 | **SmartDimension** | Tự động Dimension các layer khung thép | 🟢 Stable |
 | **Test Coverage** | Unit test thuật toán `TenderBom` và `LayoutPacking` | 🟡 In-Progress |

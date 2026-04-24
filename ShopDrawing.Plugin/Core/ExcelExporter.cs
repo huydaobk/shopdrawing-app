@@ -155,8 +155,8 @@ namespace ShopDrawing.Plugin.Core
             listCell.CellStyle = headerStyle;
             sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 18));
 
-            string[] mainHeaders = { "STT", "Mã spec", "Mã ký hiệu", "Khổ tôn (mm)", "Loại panel", "Tỷ trọng", "Chiều dày (mm)", "Ngàm nối", "FM", "MẶT TRÊN", "", "", "", "", "MẶT DƯỚI", "", "", "", "" };
-            string[] subHeaders = { "", "", "", "", "", "", "", "", "", "Màu mặt", "Vật liệu", "Mã màu tôn", "Độ dày", "Bề mặt", "Màu mặt", "Vật liệu", "Mã màu tôn", "Độ dày", "Bề mặt" };
+            string[] mainHeaders = { "STT", "Mã spec", "Khổ tấm (mm)", "Loại panel", "Tỷ trọng", "Chiều dày (mm)", "Chống cháy", "FM", "MẶT TRÊN", "", "", "", "", "MẶT DƯỚI", "", "", "", "" };
+            string[] subHeaders = { "", "", "", "", "", "", "", "", "Màu sắc", "Vật liệu", "Độ mạ", "Dày tôn", "Profile", "Màu sắc", "Vật liệu", "Độ mạ", "Dày tôn", "Profile" };
 
             int headerRowIdx = 4;
             IRow hdr1 = sh.CreateRow(headerRowIdx);
@@ -173,12 +173,12 @@ namespace ShopDrawing.Plugin.Core
                 SetCell(hdr2, i, subHeaders[i], headerStyle);
             }
 
-            for (int i = 0; i <= 8; i++)
+            for (int i = 0; i <= 7; i++)
             {
                 sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx + 1, i, i));
             }
-            sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx, 9, 13));
-            sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx, 14, 18));
+            sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx, 8, 12));
+            sh.AddMergedRegion(new CellRangeAddress(headerRowIdx, headerRowIdx, 13, 17));
 
             var uniqueSpecs = orders.Select(o => o.Spec).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s).ToList();
 
@@ -188,37 +188,35 @@ namespace ShopDrawing.Plugin.Core
             {
                 var parts = specStr.Split('|').Select(p => p.Trim()).ToArray();
                 string specKey = parts.Length > 0 ? parts[0] : specStr;
-                string ngam = parts.Length > 2 ? parts[2] : "";
 
                 var specDef = ShopDrawingCommands.SpecManager?.GetByKey(specKey);
 
                 IRow dr = sh.CreateRow(r);
                 SetCell(dr, 0, stt++, dataStyle);
                 SetCell(dr, 1, specKey, dataStyle);
-                SetCell(dr, 2, specDef?.Description ?? "", dataStyle);
-                SetCell(dr, 3, specDef?.PanelWidth.ToString() ?? "", dataStyle);
-                SetCell(dr, 4, specDef?.PanelType ?? "", dataStyle);
-                SetCell(dr, 5, specDef?.Density ?? "", dataStyle);
-                SetCell(dr, 6, specDef?.Thickness.ToString() ?? "", dataStyle);
-                SetCell(dr, 7, ngam, dataStyle);
-                SetCell(dr, 8, (specDef?.FmApproved == true) ? "Có" : "Không", dataStyle);
+                SetCell(dr, 2, specDef?.PanelWidth.ToString() ?? "", dataStyle);
+                SetCell(dr, 3, specDef?.PanelType ?? "", dataStyle);
+                SetCell(dr, 4, specDef?.Density ?? "", dataStyle);
+                SetCell(dr, 5, specDef?.Thickness.ToString() ?? "", dataStyle);
+                SetCell(dr, 6, specDef?.FireRating ?? "-", dataStyle);
+                SetCell(dr, 7, (specDef?.FmApproved == true) ? "Có" : "Không", dataStyle);
                 
-                SetCell(dr, 9, specDef?.FacingColor ?? "", dataStyle);
-                SetCell(dr, 10, specDef?.TopFacing ?? "", dataStyle);
-                SetCell(dr, 11, specDef?.FacingColor ?? "", dataStyle);
-                SetCell(dr, 12, specDef?.TopSteelThickness.ToString() ?? "", dataStyle);
-                SetCell(dr, 13, specDef?.TopProfile ?? "", dataStyle);
+                SetCell(dr, 8, specDef?.FacingColor ?? "", dataStyle);
+                SetCell(dr, 9, specDef?.TopFacing ?? "", dataStyle);
+                SetCell(dr, 10, specDef?.TopCoating ?? "", dataStyle);
+                SetCell(dr, 11, specDef?.TopSteelThickness.ToString() ?? "", dataStyle);
+                SetCell(dr, 12, specDef?.TopProfile ?? "", dataStyle);
                 
-                SetCell(dr, 14, specDef?.BottomFacingColor ?? "", dataStyle);
-                SetCell(dr, 15, specDef?.BottomFacing ?? "", dataStyle);
-                SetCell(dr, 16, specDef?.BottomFacingColor ?? "", dataStyle);
-                SetCell(dr, 17, specDef?.BottomSteelThickness.ToString() ?? "", dataStyle);
-                SetCell(dr, 18, specDef?.BottomProfile ?? "", dataStyle);
+                SetCell(dr, 13, specDef?.BottomFacingColor ?? "", dataStyle);
+                SetCell(dr, 14, specDef?.BottomFacing ?? "", dataStyle);
+                SetCell(dr, 15, specDef?.BottomCoating ?? "", dataStyle);
+                SetCell(dr, 16, specDef?.BottomSteelThickness.ToString() ?? "", dataStyle);
+                SetCell(dr, 17, specDef?.BottomProfile ?? "", dataStyle);
                 
                 r++;
             }
 
-            ApplyColumnWidths(sh, new[] { 5, 20, 15, 12, 15, 12, 15, 12, 8, 12, 12, 12, 10, 12, 12, 12, 12, 10, 12 });
+            ApplyColumnWidths(sh, new[] { 5, 20, 12, 15, 12, 15, 15, 8, 12, 12, 12, 10, 12, 12, 12, 12, 10, 12 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }

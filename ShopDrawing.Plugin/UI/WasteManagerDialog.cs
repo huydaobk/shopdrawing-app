@@ -985,6 +985,7 @@ namespace ShopDrawing.Plugin.UI
             _configGrid.Columns.Add(new DataGridComboBoxColumn { Header = "Mã quy tắc", SelectedValueBinding = new Binding("CalcRule") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, SelectedValuePath = "Value", DisplayMemberPath = "Label", ItemsSource = TenderAccessoryRules.GetRuleOptions().ToArray(), Width = 240 });
             _configGrid.Columns.Add(new DataGridTextColumn { Header = "Diễn giải", Binding = new Binding("RuleDescription"), Width = 220, IsReadOnly = true });
             _configGrid.Columns.Add(new DataGridTextColumn { Header = "Hệ số", Binding = new Binding("Factor") { StringFormat = "F2", UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 65 });
+            _configGrid.Columns.Add(new DataGridTextColumn { Header = "Hao hụt (%)", Binding = new Binding("WasteFactor") { StringFormat = "F1", UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 80 });
             _configGrid.Columns.Add(new DataGridTextColumn { Header = "Ghi chú", Binding = new Binding("Note") { UpdateSourceTrigger = UpdateSourceTrigger.LostFocus }, Width = 340 });
 
             _configGrid.CellEditEnding += (s, e) => {

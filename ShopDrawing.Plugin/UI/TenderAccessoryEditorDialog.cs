@@ -1,4 +1,4 @@
-﻿﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -51,7 +51,7 @@ namespace ShopDrawing.Plugin.UI
                 }
             }
 
-            EnforceLockedWasteFactor();
+            SortRowsByApplication();
             SortRowsByApplication();
             ReindexRows();
 
@@ -142,7 +142,7 @@ namespace ShopDrawing.Plugin.UI
             _grid.Columns.Add(CreateRuleComboColumn("Mã quy tắc", "CalcRule", _ruleOptions, 240));
             _grid.Columns.Add(CreateReadOnlyColumn("Diễn giải", "RuleDescription", 220));
             _grid.Columns.Add(CreateTextColumn("Hệ số", "Factor", 65, "F2"));
-            _grid.Columns.Add(CreateTextColumn("Hao hụt (%)", "WasteFactor", 80, "F1", true));
+            _grid.Columns.Add(CreateTextColumn("Hao hụt (%)", "WasteFactor", 80, "F1", false));
             _grid.Columns.Add(CreateTextColumn("Điều chỉnh", "Adjustment", 80, "F2"));
             _grid.Columns.Add(CreateCheckColumn("Nhập tay", "IsManualOnly", 65));
             _grid.Columns.Add(CreateTextColumn("Ghi chú", "Note", 340));
@@ -191,11 +191,10 @@ namespace ShopDrawing.Plugin.UI
                 Unit = "md",
                 CalcRule = AccessoryCalcRule.PER_WALL_LENGTH,
                 Factor = 1,
-                WasteFactor = AccessoryDataManager.LockedTenderWastePercent,
+                WasteFactor = 3.0,
                 Note = string.Empty
             });
 
-            EnforceLockedWasteFactor();
             SortRowsByApplication();
             ReindexRows();
         }
@@ -232,7 +231,7 @@ namespace ShopDrawing.Plugin.UI
                 _rows.Add(TenderAccessoryRow.FromModel(item));
             }
 
-            EnforceLockedWasteFactor();
+            SortRowsByApplication();
             SortRowsByApplication();
             ReindexRows();
         }
@@ -241,7 +240,6 @@ namespace ShopDrawing.Plugin.UI
         {
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
             {
-                EnforceLockedWasteFactor();
                 SortRowsByApplication();
                 foreach (var row in _rows)
                 {
@@ -255,18 +253,9 @@ namespace ShopDrawing.Plugin.UI
 
         private void SaveAndClose()
         {
-            EnforceLockedWasteFactor();
             SortRowsByApplication();
             ReindexRows();
             DialogResult = true;
-        }
-
-        private void EnforceLockedWasteFactor()
-        {
-            foreach (var row in _rows)
-            {
-                row.WasteFactor = AccessoryDataManager.LockedTenderWastePercent;
-            }
         }
 
         private void SortRowsByApplication()
@@ -442,7 +431,7 @@ namespace ShopDrawing.Plugin.UI
         public string Unit { get; set; } = "md";
         public AccessoryCalcRule CalcRule { get; set; }
         public double Factor { get; set; } = 1.0;
-        public double WasteFactor { get; set; } = AccessoryDataManager.LockedTenderWastePercent;
+        public double WasteFactor { get; set; } = 0.0;
         public double Adjustment { get; set; }
         public bool IsManualOnly { get; set; }
         public string Note { get; set; } = string.Empty;
@@ -462,7 +451,7 @@ namespace ShopDrawing.Plugin.UI
                 Unit = accessory.Unit,
                 CalcRule = accessory.CalcRule,
                 Factor = accessory.Factor,
-                WasteFactor = AccessoryDataManager.LockedTenderWastePercent,
+                WasteFactor = accessory.WasteFactor,
                 Adjustment = accessory.Adjustment,
                 IsManualOnly = accessory.IsManualOnly,
                 Note = accessory.Note
@@ -482,7 +471,7 @@ namespace ShopDrawing.Plugin.UI
                 Unit = string.IsNullOrWhiteSpace(Unit) ? "md" : Unit.Trim(),
                 CalcRule = CalcRule,
                 Factor = Factor,
-                WasteFactor = AccessoryDataManager.LockedTenderWastePercent,
+                WasteFactor = WasteFactor,
                 Adjustment = Adjustment,
                 IsManualOnly = IsManualOnly,
                 Note = Note?.Trim() ?? string.Empty

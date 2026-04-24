@@ -227,7 +227,6 @@ namespace ShopDrawing.Plugin.Core
             list.AddRange(GetCleanroomCeilingDefaults());
             list.AddRange(GetColdStorageDefaults());
             var defaults = DeduplicateAndSort(ExpandLineBasedRiveAccessories(list));
-            EnforceLockedTenderWaste(defaults);
             return defaults;
         }
 
@@ -284,7 +283,6 @@ namespace ShopDrawing.Plugin.Core
             SynchronizeConfiguredAccessories(normalized, canonicalDefaults);
             MergeMissingDefaults(normalized, canonicalDefaults);
             var result = DeduplicateAndSort(normalized);
-            EnforceLockedTenderWaste(result);
             return result;
         }
 
@@ -990,17 +988,6 @@ namespace ShopDrawing.Plugin.Core
                 IsManualOnly = source.IsManualOnly,
                 Note = note
             };
-        }
-
-        private static void EnforceLockedTenderWaste(IEnumerable<TenderAccessory> accessories)
-        {
-            foreach (var accessory in accessories)
-            {
-                if (accessory == null)
-                    continue;
-
-                accessory.WasteFactor = LockedTenderWastePercent;
-            }
         }
 
         private static int CompareAccessories(TenderAccessory left, TenderAccessory right)

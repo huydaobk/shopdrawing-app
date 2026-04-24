@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -239,7 +239,7 @@ namespace ShopDrawing.Plugin.Core
                         BasisLabel = TenderAccessoryRules.GetBasisLabel(accessory.CalcRule),
                         BasisValue = bucketBasis,
                         Factor = accessory.Factor,
-                        WastePercent = GetLockedWastePercent(),
+                        WastePercent = accessory.WasteFactor,
                         AutoQuantity = bucketAuto,
                         Adjustment = bucketAdjustment,
                         FinalQuantity = bucketFinal,
@@ -684,7 +684,7 @@ namespace ShopDrawing.Plugin.Core
 
         private static double CalculateFinalQuantity(TenderAccessory accessory, double totalAuto)
         {
-            double wastePercent = GetLockedWastePercent();
+            double wastePercent = accessory.WasteFactor;
             double quantity = accessory.IsManualOnly
                 ? accessory.Adjustment
                 : totalAuto * (1.0 + wastePercent / 100.0) + accessory.Adjustment;
@@ -694,17 +694,12 @@ namespace ShopDrawing.Plugin.Core
 
         private static double CalculateFinalQuantity(TenderAccessory accessory, double totalAuto, double adjustment)
         {
-            double wastePercent = GetLockedWastePercent();
+            double wastePercent = accessory.WasteFactor;
             double quantity = accessory.IsManualOnly
                 ? adjustment
                 : totalAuto * (1.0 + wastePercent / 100.0) + adjustment;
 
             return Round2(Math.Max(0, quantity));
-        }
-
-        private static double GetLockedWastePercent()
-        {
-            return AccessoryDataManager.LockedTenderWastePercent;
         }
 
         private static double AllocateAccessoryAdjustment(

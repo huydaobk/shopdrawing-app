@@ -67,7 +67,7 @@ namespace ShopDrawing.Plugin.Core
             sh.DefaultRowHeightInPoints = 20;
 
             // A4 Portrait, Fit All Columns on One Page
-            sh.PrintSetup.PaperSize = (short)PaperSize.A4;
+            sh.PrintSetup.PaperSize = 9; // 9 = A4
             sh.PrintSetup.Landscape = false;
             sh.PrintSetup.FitWidth = 1;
             sh.PrintSetup.FitHeight = 0;
@@ -104,7 +104,7 @@ namespace ShopDrawing.Plugin.Core
             string[] headers = { "STT", "ƯU TIÊN", "TẦNG", "CẤU TẠO", "KÝ HIỆU", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
             int headerRowIdx = 5;
             IRow hdr = sh.CreateRow(headerRowIdx);
-            hdr.HeightInPoints = 22;
+            hdr.HeightInPoints = 33;
             for (int i = 0; i < headers.Length; i++)
             {
                 SetCell(hdr, i, headers[i], headerStyle);
@@ -158,9 +158,9 @@ namespace ShopDrawing.Plugin.Core
             ISheet sh = wb.CreateSheet("Quản lý Spec");
             sh.DefaultRowHeightInPoints = 20;
 
-            // A4 Portrait
-            sh.PrintSetup.PaperSize = (short)PaperSize.A4;
-            sh.PrintSetup.Landscape = true; // Use Landscape since 19 columns
+            // A4 Landscape (18 columns)
+            sh.PrintSetup.PaperSize = 9; // 9 = A4
+            sh.PrintSetup.Landscape = true;
             sh.PrintSetup.FitWidth = 1;
             sh.PrintSetup.FitHeight = 0;
             sh.FitToPage = true;
@@ -205,14 +205,14 @@ namespace ShopDrawing.Plugin.Core
 
             int headerRowIdx = 6;
             IRow hdr1 = sh.CreateRow(headerRowIdx);
-            hdr1.HeightInPoints = 22;
+            hdr1.HeightInPoints = 33;
             for (int i = 0; i < mainHeaders.Length; i++)
             {
                 SetCell(hdr1, i, mainHeaders[i], headerStyle);
             }
 
             IRow hdr2 = sh.CreateRow(headerRowIdx + 1);
-            hdr2.HeightInPoints = 22;
+            hdr2.HeightInPoints = 33;
             for (int i = 0; i < subHeaders.Length; i++)
             {
                 SetCell(hdr2, i, subHeaders[i], headerStyle);
@@ -272,7 +272,7 @@ namespace ShopDrawing.Plugin.Core
             sh.DefaultRowHeightInPoints = 20;
 
             // A4 Landscape
-            sh.PrintSetup.PaperSize = (short)PaperSize.A4;
+            sh.PrintSetup.PaperSize = 9; // 9 = A4
             sh.PrintSetup.Landscape = true;
             sh.PrintSetup.FitWidth = 1;
             sh.PrintSetup.FitHeight = 0;
@@ -309,7 +309,7 @@ namespace ShopDrawing.Plugin.Core
             string[] headers = { "STT", "HẠNG MỤC", "VỊ TRÍ / ỨNG DỤNG", "TÊN PHỤ KIỆN", "QUY CÁCH", "ĐVT", "SỐ LƯỢNG", "GHI CHÚ" };
             int headerRowIdx = 5;
             IRow hdr = sh.CreateRow(headerRowIdx);
-            hdr.HeightInPoints = 22;
+            hdr.HeightInPoints = 33;
             for (int i = 0; i < headers.Length; i++)
             {
                 SetCell(hdr, i, headers[i], headerStyle);
@@ -423,7 +423,9 @@ namespace ShopDrawing.Plugin.Core
             s.VerticalAlignment = VerticalAlignment.Center;
             if (s is XSSFCellStyle xs)
             {
-                xs.SetFillForegroundColor(new XSSFColor(new byte[] { 79, 129, 189 }));
+                var blueColor = new XSSFColor();
+                blueColor.ARGBHex = "FF4F81BD";
+                xs.SetFillForegroundColor(blueColor);
                 s.FillPattern = FillPattern.SolidForeground;
             }
             SetBorders(s);

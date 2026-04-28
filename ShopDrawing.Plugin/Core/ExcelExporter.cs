@@ -23,10 +23,15 @@ namespace ShopDrawing.Plugin.Core
 
         public void ExportFullBom(ShopdrawingBomCalculator.ShopdrawingReport report, string filePath)
         {
+            var profile = new ProjectProfileManager().LoadOrDefault();
+            string projectName = string.IsNullOrWhiteSpace(profile.ProjectName) ? "Chưa khai báo" : profile.ProjectName;
+            string projectAddress = string.IsNullOrWhiteSpace(profile.ProjectAddress) ? "Chưa khai báo" : profile.ProjectAddress;
+
             IWorkbook wb = new XSSFWorkbook();
 
             // === Styles ===
             var titleStyle = CreateTitleStyle(wb);
+            var metadataStyle = CreateMetadataStyle(wb);
             var headerStyle = CreateHeaderStyle(wb);
             var dataStyle = CreateDataStyle(wb);
             var sumStyle = CreateSumStyle(wb);
@@ -37,17 +42,17 @@ namespace ShopDrawing.Plugin.Core
             // ────────────────────────────────────────────
             // SHEET 1: LỆNH SẢN XUẤT (A4 Portrait)
             // ────────────────────────────────────────────
-            CreateProductionSheet(wb, report.FactoryOrders, headerStyle, dataStyle, sumStyle, sumIntegerStyle, computedStyle, titleStyle, wrapStyle);
+            CreateProductionSheet(wb, report.FactoryOrders, headerStyle, dataStyle, sumStyle, sumIntegerStyle, computedStyle, titleStyle, wrapStyle, metadataStyle, projectName, projectAddress);
 
             // ────────────────────────────────────────────
             // SHEET 2: QUẢN LÝ SPEC (A4 Portrait)
             // ────────────────────────────────────────────
-            CreateSpecSheet(wb, report.FactoryOrders, headerStyle, dataStyle, titleStyle);
+            CreateSpecSheet(wb, report.FactoryOrders, headerStyle, dataStyle, titleStyle, metadataStyle, projectName, projectAddress);
 
             // ────────────────────────────────────────────
             // SHEET 3: ĐẶT HÀNG PHỤ KIỆN (A4 Landscape)
             // ────────────────────────────────────────────
-            CreateAccessorySheet(wb, report.AccessoryRows, headerStyle, dataStyle, titleStyle, wrapStyle, sumStyle, sumIntegerStyle);
+            CreateAccessorySheet(wb, report.AccessoryRows, headerStyle, dataStyle, titleStyle, wrapStyle, sumStyle, sumIntegerStyle, metadataStyle, projectName, projectAddress);
 
             using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
@@ -56,7 +61,7 @@ namespace ShopDrawing.Plugin.Core
         }
 
         private void CreateProductionSheet(IWorkbook wb, List<ShopdrawingBomCalculator.FactoryOrderRow> orders,
-            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle, ICellStyle computedStyle, ICellStyle titleStyle, ICellStyle wrapStyle)
+            ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle, ICellStyle computedStyle, ICellStyle titleStyle, ICellStyle wrapStyle, ICellStyle metadataStyle, string projectName, string projectAddress)
         {
             ISheet sh = wb.CreateSheet("Lệnh Sản Xuất");
             sh.DefaultRowHeightInPoints = 20;
@@ -69,17 +74,35 @@ namespace ShopDrawing.Plugin.Core
             sh.FitToPage = true;
 
             var titleRow = sh.CreateRow(0);
-            titleRow.HeightInPoints = 25;
+            titleRow.HeightInPoints = 30;
             var titleCell = titleRow.CreateCell(0);
             titleCell.SetCellValue("LỆNH SẢN XUẤT");
             titleCell.CellStyle = titleStyle;
             sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 9));
 
-            var dateRow = sh.CreateRow(1);
-            dateRow.CreateCell(0).SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            var projectRow = sh.CreateRow(1);
+            projectRow.HeightInPoints = 24;
+            var projectCell = projectRow.CreateCell(0);
+            projectCell.SetCellValue($"Dự án: {projectName}");
+            projectCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(1, 1, 0, 9));
+
+            var addressRow = sh.CreateRow(2);
+            addressRow.HeightInPoints = 24;
+            var addressCell = addressRow.CreateCell(0);
+            addressCell.SetCellValue($"Địa chỉ: {projectAddress}");
+            addressCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(2, 2, 0, 9));
+
+            var dateRow = sh.CreateRow(3);
+            dateRow.HeightInPoints = 24;
+            var dateCell = dateRow.CreateCell(0);
+            dateCell.SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            dateCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 9));
 
             string[] headers = { "STT", "ƯU TIÊN", "TẦNG", "CẤU TẠO", "KÝ HIỆU", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
-            int headerRowIdx = 3;
+            int headerRowIdx = 5;
             IRow hdr = sh.CreateRow(headerRowIdx);
             hdr.HeightInPoints = 22;
             for (int i = 0; i < headers.Length; i++)
@@ -130,7 +153,7 @@ namespace ShopDrawing.Plugin.Core
             SetZoom(sh, 90);
         }
 
-        private void CreateSpecSheet(IWorkbook wb, List<ShopdrawingBomCalculator.FactoryOrderRow> orders, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle)
+        private void CreateSpecSheet(IWorkbook wb, List<ShopdrawingBomCalculator.FactoryOrderRow> orders, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle, ICellStyle metadataStyle, string projectName, string projectAddress)
         {
             ISheet sh = wb.CreateSheet("Quản lý Spec");
             sh.DefaultRowHeightInPoints = 20;
@@ -143,23 +166,44 @@ namespace ShopDrawing.Plugin.Core
             sh.FitToPage = true;
 
             var titleRow = sh.CreateRow(0);
-            titleRow.HeightInPoints = 25;
+            titleRow.HeightInPoints = 30;
             var titleCell = titleRow.CreateCell(0);
             titleCell.SetCellValue("BẢNG QUẢN LÝ SPEC");
             titleCell.CellStyle = titleStyle;
             sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 17));
 
-            var listRow = sh.CreateRow(3);
+            var projectRow = sh.CreateRow(1);
+            projectRow.HeightInPoints = 24;
+            var projectCell = projectRow.CreateCell(0);
+            projectCell.SetCellValue($"Dự án: {projectName}");
+            projectCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(1, 1, 0, 17));
+
+            var addressRow = sh.CreateRow(2);
+            addressRow.HeightInPoints = 24;
+            var addressCell = addressRow.CreateCell(0);
+            addressCell.SetCellValue($"Địa chỉ: {projectAddress}");
+            addressCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(2, 2, 0, 17));
+
+            var dateRow = sh.CreateRow(3);
+            dateRow.HeightInPoints = 24;
+            var dateCell = dateRow.CreateCell(0);
+            dateCell.SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            dateCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 17));
+
+            var listRow = sh.CreateRow(5);
             listRow.HeightInPoints = 22;
             var listCell = listRow.CreateCell(0);
             listCell.SetCellValue("DANH SÁCH SPEC DỰ ÁN");
             listCell.CellStyle = headerStyle;
-            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 17));
+            sh.AddMergedRegion(new CellRangeAddress(5, 5, 0, 17));
 
             string[] mainHeaders = { "STT", "Mã spec", "Khổ tấm (mm)", "Loại panel", "Tỷ trọng", "Chiều dày (mm)", "Chống cháy", "FM", "MẶT TRÊN", "", "", "", "", "MẶT DƯỚI", "", "", "", "" };
             string[] subHeaders = { "", "", "", "", "", "", "", "", "Màu sắc", "Vật liệu", "Độ mạ", "Dày tôn", "Profile", "Màu sắc", "Vật liệu", "Độ mạ", "Dày tôn", "Profile" };
 
-            int headerRowIdx = 4;
+            int headerRowIdx = 6;
             IRow hdr1 = sh.CreateRow(headerRowIdx);
             hdr1.HeightInPoints = 22;
             for (int i = 0; i < mainHeaders.Length; i++)
@@ -222,7 +266,7 @@ namespace ShopDrawing.Plugin.Core
             SetZoom(sh, 90);
         }
 
-        private void CreateAccessorySheet(IWorkbook wb, List<ShopdrawingAccessorySummaryRow> accessoryRows, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle, ICellStyle wrapStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle)
+        private void CreateAccessorySheet(IWorkbook wb, List<ShopdrawingAccessorySummaryRow> accessoryRows, ICellStyle headerStyle, ICellStyle dataStyle, ICellStyle titleStyle, ICellStyle wrapStyle, ICellStyle sumStyle, ICellStyle sumIntegerStyle, ICellStyle metadataStyle, string projectName, string projectAddress)
         {
             ISheet sh = wb.CreateSheet("Đặt Hàng Phụ Kiện");
             sh.DefaultRowHeightInPoints = 20;
@@ -235,14 +279,35 @@ namespace ShopDrawing.Plugin.Core
             sh.FitToPage = true;
 
             var titleRow = sh.CreateRow(0);
-            titleRow.HeightInPoints = 25;
+            titleRow.HeightInPoints = 30;
             var titleCell = titleRow.CreateCell(0);
             titleCell.SetCellValue("ĐẶT HÀNG PHỤ KIỆN");
             titleCell.CellStyle = titleStyle;
             sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 7));
 
+            var projectRow = sh.CreateRow(1);
+            projectRow.HeightInPoints = 24;
+            var projectCell = projectRow.CreateCell(0);
+            projectCell.SetCellValue($"Dự án: {projectName}");
+            projectCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(1, 1, 0, 7));
+
+            var addressRow = sh.CreateRow(2);
+            addressRow.HeightInPoints = 24;
+            var addressCell = addressRow.CreateCell(0);
+            addressCell.SetCellValue($"Địa chỉ: {projectAddress}");
+            addressCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(2, 2, 0, 7));
+
+            var dateRow = sh.CreateRow(3);
+            dateRow.HeightInPoints = 24;
+            var dateCell = dateRow.CreateCell(0);
+            dateCell.SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            dateCell.CellStyle = metadataStyle;
+            sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 7));
+
             string[] headers = { "STT", "HẠNG MỤC", "VỊ TRÍ / ỨNG DỤNG", "TÊN PHỤ KIỆN", "QUY CÁCH", "ĐVT", "SỐ LƯỢNG", "GHI CHÚ" };
-            int headerRowIdx = 2;
+            int headerRowIdx = 5;
             IRow hdr = sh.CreateRow(headerRowIdx);
             hdr.HeightInPoints = 22;
             for (int i = 0; i < headers.Length; i++)
@@ -350,8 +415,8 @@ namespace ShopDrawing.Plugin.Core
             var s = wb.CreateCellStyle();
             var f = wb.CreateFont();
             f.IsBold = true;
-            f.FontHeightInPoints = 11;
-            f.FontName = "Arial";
+            f.FontHeightInPoints = 13;
+            f.FontName = "Times New Roman";
             s.SetFont(f);
             s.Alignment = HorizontalAlignment.Center;
             s.VerticalAlignment = VerticalAlignment.Center;
@@ -365,8 +430,8 @@ namespace ShopDrawing.Plugin.Core
         {
             var s = wb.CreateCellStyle();
             var f = wb.CreateFont();
-            f.FontName = "Arial";
-            f.FontHeightInPoints = 11;
+            f.FontName = "Times New Roman";
+            f.FontHeightInPoints = 13;
             s.SetFont(f);
             s.VerticalAlignment = VerticalAlignment.Center;
             SetBorders(s);
@@ -394,8 +459,8 @@ namespace ShopDrawing.Plugin.Core
             var s = CreateDataStyle(wb);
             var f = wb.CreateFont();
             f.IsBold = true;
-            f.FontName = "Arial";
-            f.FontHeightInPoints = 11;
+            f.FontName = "Times New Roman";
+            f.FontHeightInPoints = 13;
             s.SetFont(f);
             s.Alignment = HorizontalAlignment.Center;
             s.DataFormat = wb.CreateDataFormat().GetFormat("#,##0.00");
@@ -417,9 +482,23 @@ namespace ShopDrawing.Plugin.Core
             var f = wb.CreateFont();
             f.IsBold = true;
             f.FontHeightInPoints = 14;
-            f.FontName = "Arial";
+            f.FontName = "Times New Roman";
             s.SetFont(f);
             s.Alignment = HorizontalAlignment.Left;
+            s.VerticalAlignment = VerticalAlignment.Center;
+            return s;
+        }
+
+        private ICellStyle CreateMetadataStyle(IWorkbook wb)
+        {
+            var s = wb.CreateCellStyle();
+            var f = wb.CreateFont();
+            f.IsItalic = true;
+            f.FontHeightInPoints = 13;
+            f.FontName = "Times New Roman";
+            s.SetFont(f);
+            s.Alignment = HorizontalAlignment.Left;
+            s.VerticalAlignment = VerticalAlignment.Center;
             return s;
         }
 
@@ -429,8 +508,8 @@ namespace ShopDrawing.Plugin.Core
             var f = wb.CreateFont();
             f.IsBold = true;
             f.Color = NPOI.HSSF.Util.HSSFColor.White.Index;
-            f.FontName = "Arial";
-            f.FontHeightInPoints = 12;
+            f.FontName = "Times New Roman";
+            f.FontHeightInPoints = 13;
             s.SetFont(f);
             s.FillForegroundColor = colorIndex;
             s.FillPattern = FillPattern.SolidForeground;

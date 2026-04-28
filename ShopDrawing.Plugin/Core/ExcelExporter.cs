@@ -33,7 +33,6 @@ namespace ShopDrawing.Plugin.Core
             var titleStyle = CreateTitleStyle(wb);
             var metadataStyle = CreateMetadataStyle(wb);
             var headerStyle = CreateHeaderStyle(wb);
-            var specHeaderStyle = CreateSpecHeaderStyle(wb);
             var dataStyle = CreateDataStyle(wb);
             var sumStyle = CreateSumStyle(wb);
             var sumIntegerStyle = CreateSumIntegerStyle(wb);
@@ -48,7 +47,7 @@ namespace ShopDrawing.Plugin.Core
             // ────────────────────────────────────────────
             // SHEET 2: QUẢN LÝ SPEC (A4 Portrait)
             // ────────────────────────────────────────────
-            CreateSpecSheet(wb, report.FactoryOrders, specHeaderStyle, dataStyle, titleStyle, metadataStyle, projectName, projectAddress);
+            CreateSpecSheet(wb, report.FactoryOrders, headerStyle, dataStyle, titleStyle, metadataStyle, projectName, projectAddress);
 
             // ────────────────────────────────────────────
             // SHEET 3: ĐẶT HÀNG PHỤ KIỆN (A4 Landscape)
@@ -412,20 +411,6 @@ namespace ShopDrawing.Plugin.Core
         }
 
         private ICellStyle CreateHeaderStyle(IWorkbook wb)
-        {
-            var s = wb.CreateCellStyle();
-            var f = wb.CreateFont();
-            f.IsBold = true;
-            f.FontHeightInPoints = 13;
-            f.FontName = "Times New Roman";
-            s.SetFont(f);
-            s.Alignment = HorizontalAlignment.Center;
-            s.VerticalAlignment = VerticalAlignment.Center;
-            SetBorders(s);
-            return s;
-        }
-
-        private ICellStyle CreateSpecHeaderStyle(IWorkbook wb)
         {
             var s = wb.CreateCellStyle();
             var f = wb.CreateFont();

@@ -33,6 +33,7 @@ namespace ShopDrawing.Plugin.Core
             var titleStyle = CreateTitleStyle(wb);
             var metadataStyle = CreateMetadataStyle(wb);
             var headerStyle = CreateHeaderStyle(wb);
+            var specHeaderStyle = CreateSpecHeaderStyle(wb);
             var dataStyle = CreateDataStyle(wb);
             var sumStyle = CreateSumStyle(wb);
             var sumIntegerStyle = CreateSumIntegerStyle(wb);
@@ -47,7 +48,7 @@ namespace ShopDrawing.Plugin.Core
             // ────────────────────────────────────────────
             // SHEET 2: QUẢN LÝ SPEC (A4 Portrait)
             // ────────────────────────────────────────────
-            CreateSpecSheet(wb, report.FactoryOrders, headerStyle, dataStyle, titleStyle, metadataStyle, projectName, projectAddress);
+            CreateSpecSheet(wb, report.FactoryOrders, specHeaderStyle, dataStyle, titleStyle, metadataStyle, projectName, projectAddress);
 
             // ────────────────────────────────────────────
             // SHEET 3: ĐẶT HÀNG PHỤ KIỆN (A4 Landscape)
@@ -148,7 +149,7 @@ namespace ShopDrawing.Plugin.Core
             }
             SetCell(fs, 9, "", sumStyle);
 
-            ApplyColumnWidths(sh, new[] { 5, 10, 15, 20, 10, 10, 10, 10, 14, 25 });
+            ApplyColumnWidths(sh, new[] { 6, 10, 12, 15, 13, 14, 13, 12, 16, 30 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -261,7 +262,7 @@ namespace ShopDrawing.Plugin.Core
                 r++;
             }
 
-            ApplyColumnWidths(sh, new[] { 5, 12, 12, 12, 10, 12, 12, 6, 10, 10, 10, 9, 10, 10, 10, 10, 9, 10 });
+            ApplyColumnWidths(sh, new[] { 6, 15, 13, 13, 12, 15, 12, 10, 12, 13, 13, 13, 13, 13, 13, 13, 13, 13 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }
@@ -363,7 +364,7 @@ namespace ShopDrawing.Plugin.Core
             }
             SetCell(fs, 7, "", sumStyle);
 
-            ApplyColumnWidths(sh, new[] { 5, 15, 20, 30, 25, 10, 12, 30 });
+            ApplyColumnWidths(sh, new[] { 6, 15, 20, 35, 30, 10, 12, 40 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -420,8 +421,26 @@ namespace ShopDrawing.Plugin.Core
             s.SetFont(f);
             s.Alignment = HorizontalAlignment.Center;
             s.VerticalAlignment = VerticalAlignment.Center;
-            s.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Grey25Percent.Index;
-            s.FillPattern = FillPattern.SolidForeground;
+            SetBorders(s);
+            return s;
+        }
+
+        private ICellStyle CreateSpecHeaderStyle(IWorkbook wb)
+        {
+            var s = wb.CreateCellStyle();
+            var f = wb.CreateFont();
+            f.IsBold = true;
+            f.FontHeightInPoints = 13;
+            f.FontName = "Times New Roman";
+            f.Color = NPOI.HSSF.Util.HSSFColor.White.Index;
+            s.SetFont(f);
+            s.Alignment = HorizontalAlignment.Center;
+            s.VerticalAlignment = VerticalAlignment.Center;
+            if (s is XSSFCellStyle xs)
+            {
+                xs.SetFillForegroundColor(new XSSFColor(new byte[] { 79, 129, 189 }));
+                s.FillPattern = FillPattern.SolidForeground;
+            }
             SetBorders(s);
             return s;
         }

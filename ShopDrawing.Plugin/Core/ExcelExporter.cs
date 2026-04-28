@@ -29,6 +29,12 @@ namespace ShopDrawing.Plugin.Core
 
             IWorkbook wb = new XSSFWorkbook();
 
+            // Set workbook default font = Times New Roman 11pt
+            // This makes column width units accurate for TNR 11pt (no font-scaling mismatch)
+            var defaultFont = wb.GetFontAt(0);
+            defaultFont.FontName = "Times New Roman";
+            defaultFont.FontHeightInPoints = 11;
+
             // === Styles ===
             var titleStyle = CreateTitleStyle(wb);
             var metadataStyle = CreateMetadataStyle(wb);
@@ -66,12 +72,11 @@ namespace ShopDrawing.Plugin.Core
             ISheet sh = wb.CreateSheet("Lệnh Sản Xuất");
             sh.DefaultRowHeightInPoints = 20;
 
-            // A4 Portrait, Fit All Columns on One Page
+            // A4 Portrait - No Scaling
             sh.PrintSetup.PaperSize = 9; // 9 = A4
             sh.PrintSetup.Landscape = false;
-            sh.PrintSetup.FitWidth = 1;
-            sh.PrintSetup.FitHeight = 0;
-            sh.FitToPage = true;
+            sh.PrintSetup.Scale = 100;
+            sh.FitToPage = false;
 
             var titleRow = sh.CreateRow(0);
             titleRow.HeightInPoints = 30;
@@ -164,12 +169,11 @@ namespace ShopDrawing.Plugin.Core
             ISheet sh = wb.CreateSheet("Quản lý Spec");
             sh.DefaultRowHeightInPoints = 20;
 
-            // A4 Landscape (18 columns)
+            // A4 Landscape - No Scaling
             sh.PrintSetup.PaperSize = 9; // 9 = A4
             sh.PrintSetup.Landscape = true;
-            sh.PrintSetup.FitWidth = 1;
-            sh.PrintSetup.FitHeight = 0;
-            sh.FitToPage = true;
+            sh.PrintSetup.Scale = 100;
+            sh.FitToPage = false;
 
             var titleRow = sh.CreateRow(0);
             titleRow.HeightInPoints = 30;
@@ -283,12 +287,11 @@ namespace ShopDrawing.Plugin.Core
             ISheet sh = wb.CreateSheet("Đặt Hàng Phụ Kiện");
             sh.DefaultRowHeightInPoints = 20;
 
-            // A4 Landscape
+            // A4 Landscape - No Scaling
             sh.PrintSetup.PaperSize = 9; // 9 = A4
             sh.PrintSetup.Landscape = true;
-            sh.PrintSetup.FitWidth = 1;
-            sh.PrintSetup.FitHeight = 0;
-            sh.FitToPage = true;
+            sh.PrintSetup.Scale = 100;
+            sh.FitToPage = false;
 
             var titleRow = sh.CreateRow(0);
             titleRow.HeightInPoints = 30;
@@ -464,7 +467,7 @@ namespace ShopDrawing.Plugin.Core
             var s = wb.CreateCellStyle();
             var f = wb.CreateFont();
             f.IsBold = true;
-            f.FontHeightInPoints = 13;
+            f.FontHeightInPoints = 11; // Reduced from 13pt for No Scaling print mode
             f.FontName = "Times New Roman";
             f.Color = NPOI.HSSF.Util.HSSFColor.White.Index;
             s.SetFont(f);
@@ -487,7 +490,7 @@ namespace ShopDrawing.Plugin.Core
             var s = wb.CreateCellStyle();
             var f = wb.CreateFont();
             f.FontName = "Times New Roman";
-            f.FontHeightInPoints = 13;
+            f.FontHeightInPoints = 10; // Reduced from 13pt for No Scaling print mode
             s.SetFont(f);
             s.VerticalAlignment = VerticalAlignment.Center;
             SetBorders(s);
@@ -516,7 +519,7 @@ namespace ShopDrawing.Plugin.Core
             var f = wb.CreateFont();
             f.IsBold = true;
             f.FontName = "Times New Roman";
-            f.FontHeightInPoints = 13;
+            f.FontHeightInPoints = 10; // Reduced from 13pt for No Scaling print mode
             s.SetFont(f);
             s.Alignment = HorizontalAlignment.Center;
             s.DataFormat = wb.CreateDataFormat().GetFormat("#,##0.00");
@@ -550,7 +553,7 @@ namespace ShopDrawing.Plugin.Core
             var s = wb.CreateCellStyle();
             var f = wb.CreateFont();
             f.IsItalic = true;
-            f.FontHeightInPoints = 13;
+            f.FontHeightInPoints = 10; // Reduced from 13pt for No Scaling print mode
             f.FontName = "Times New Roman";
             s.SetFont(f);
             s.Alignment = HorizontalAlignment.Left;
@@ -565,7 +568,7 @@ namespace ShopDrawing.Plugin.Core
             f.IsBold = true;
             f.Color = NPOI.HSSF.Util.HSSFColor.White.Index;
             f.FontName = "Times New Roman";
-            f.FontHeightInPoints = 13;
+            f.FontHeightInPoints = 11; // Reduced from 13pt for No Scaling print mode
             s.SetFont(f);
             s.FillForegroundColor = colorIndex;
             s.FillPattern = FillPattern.SolidForeground;

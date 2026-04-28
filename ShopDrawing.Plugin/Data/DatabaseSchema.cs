@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System.IO;
 
 namespace ShopDrawing.Plugin.Data
@@ -62,9 +62,13 @@ namespace ShopDrawing.Plugin.Data
                 migrate.CommandText = sql;
                 migrate.ExecuteNonQuery();
             }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("duplicate column name"))
+            {
+                // Ignore expected error when column already exists
+            }
             catch (System.Exception ex)
             {
-                ShopDrawing.Plugin.Core.PluginLogger.Warn("Suppressed exception: " + ex.Message);
+                ShopDrawing.Plugin.Core.PluginLogger.Warn("Migration exception: " + ex.Message);
             }
         }
     }

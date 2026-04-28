@@ -909,7 +909,7 @@ namespace ShopDrawing.Plugin.UI
 
             var btnAdd = new Button { Content = "Thêm dòng", Background = new SolidColorBrush(Color.FromRgb(39, 174, 96)), Foreground = Brushes.White, Padding = new Thickness(10, 2, 10, 2), Margin = new Thickness(0, 0, 6, 0) };
             btnAdd.Click += (s, e) => {
-                _configRows.Add(new TenderAccessoryRow { Index = _configRows.Count + 1, CategoryScope = "Tất cả", Application = "Tất cả", SpecKey = "Tất cả", Unit = "md", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 1 });
+                _configRows.Add(new TenderAccessoryRow { Index = _configRows.Count + 1, CategoryScope = AccessoryDataManager.DefaultCategoryScope, Application = AccessoryDataManager.DefaultApplication, SpecKey = "Tất cả", Unit = "md", CalcRule = AccessoryCalcRule.PER_WALL_LENGTH, Factor = 1 });
             };
             toolbar.Children.Add(btnAdd);
 
@@ -963,6 +963,7 @@ namespace ShopDrawing.Plugin.UI
             // Read config data
             _configRows.Clear();
             var accessories = ShopdrawingAccessoryConfigManager.GetAll();
+            accessories = AccessoryDataManager.NormalizeConfiguredAccessories(accessories);
             foreach (var item in accessories)
             {
                 _configRows.Add(TenderAccessoryRow.FromModel(item));

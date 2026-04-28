@@ -153,8 +153,8 @@ namespace ShopDrawing.Plugin.Core
 
             // WrapText is enabled on header style, so columns can stay narrower
             AutoFitColumns(sh, 10,
-                new[] { 5, 8,  8, 10, 10, 10, 10, 10, 14, 20 },
-                new[] { 8, 15, 15, 20, 18, 18, 18, 16, 22, 55 });
+                new[] { 7, 8,  8, 10, 10, 10, 10, 10, 14, 20 },
+                new[] { 9, 15, 15, 20, 18, 18, 18, 16, 22, 55 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -272,8 +272,8 @@ namespace ShopDrawing.Plugin.Core
 
             // WrapText is enabled on header style, so columns can stay narrower
             AutoFitColumns(sh, 18,
-                new[] { 5, 10, 10, 12, 10, 12, 10, 6,  9,  9,  8,  8,  9,  9,  9,  8,  8,  9 },
-                new[] { 8, 20, 18, 18, 16, 20, 16, 10, 15, 15, 12, 12, 14, 15, 15, 12, 12, 14 });
+                new[] { 7, 10, 10, 12, 10, 12, 10, 6,  9,  9,  8,  8,  9,  9,  9,  8,  8,  9 },
+                new[] { 9, 20, 18, 18, 16, 20, 16, 10, 15, 15, 12, 12, 14, 15, 15, 12, 12, 14 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }
@@ -380,8 +380,8 @@ namespace ShopDrawing.Plugin.Core
 
             // WrapText is enabled on header style, so columns can stay narrower
             AutoFitColumns(sh, 8,
-                new[] { 5, 12, 16, 18, 14,  8, 10, 20 },
-                new[] { 8, 20, 28, 40, 35, 12, 16, 55 });
+                new[] { 7, 12, 16, 18, 14,  8, 10, 20 },
+                new[] { 9, 20, 28, 40, 35, 12, 16, 55 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }

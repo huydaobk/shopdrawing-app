@@ -149,6 +149,7 @@ namespace ShopDrawing.Plugin.Core
             SetCell(fs, 9, "", sumStyle);
 
             ApplyColumnWidths(sh, new[] { 6, 10, 12, 15, 13, 14, 13, 12, 16, 30 });
+            AutoFitColumns(sh, 10, new[] { 5, 8, 8, 10, 10, 8, 8, 8, 12, 20 }, new[] { 8, 15, 15, 20, 18, 12, 12, 12, 18, 45 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -262,6 +263,7 @@ namespace ShopDrawing.Plugin.Core
             }
 
             ApplyColumnWidths(sh, new[] { 6, 15, 13, 13, 12, 15, 12, 10, 12, 13, 13, 13, 13, 13, 13, 13, 13, 13 });
+            AutoFitColumns(sh, 18, new[] { 5, 10, 10, 12, 10, 12, 10, 6, 10, 10, 8, 8, 10, 10, 10, 8, 8, 10 }, new[] { 8, 20, 16, 18, 14, 18, 14, 10, 15, 15, 12, 12, 15, 15, 15, 12, 12, 15 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }
@@ -364,6 +366,7 @@ namespace ShopDrawing.Plugin.Core
             SetCell(fs, 7, "", sumStyle);
 
             ApplyColumnWidths(sh, new[] { 6, 15, 20, 35, 30, 10, 12, 40 });
+            AutoFitColumns(sh, 8, new[] { 5, 12, 15, 20, 20, 8, 10, 25 }, new[] { 8, 20, 25, 40, 35, 12, 12, 50 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -397,6 +400,37 @@ namespace ShopDrawing.Plugin.Core
             for (int i = 0; i < widths.Length; i++)
             {
                 sheet.SetColumnWidth(i, widths[i] * 256);
+            }
+        }
+
+        /// <summary>
+        /// Auto-sizes each column to fit its content, then enforces per-column min/max caps.
+        /// This fixes the Times New Roman 13pt vs Calibri 11pt scaling mismatch where
+        /// manual widths appear too narrow because SetColumnWidth units are based on
+        /// the default Calibri 11pt font, not the actual cell font.
+        /// </summary>
+        private void AutoFitColumns(ISheet sheet, int colCount, int[] minWidths, int[] maxWidths)
+        {
+            for (int i = 0; i < colCount; i++)
+            {
+                sheet.AutoSizeColumn(i);
+                int current = sheet.GetColumnWidth(i);
+
+                // Apply minimum width
+                if (minWidths != null && i < minWidths.Length)
+                {
+                    int min = minWidths[i] * 256;
+                    if (current < min) current = min;
+                }
+
+                // Apply maximum width (prevent runaway wide columns from long text)
+                if (maxWidths != null && i < maxWidths.Length)
+                {
+                    int max = maxWidths[i] * 256;
+                    if (current > max) current = max;
+                }
+
+                sheet.SetColumnWidth(i, current);
             }
         }
 

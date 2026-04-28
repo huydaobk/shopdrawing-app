@@ -148,11 +148,10 @@ namespace ShopDrawing.Plugin.Core
             }
             SetCell(fs, 9, "", sumStyle);
 
-            // Min widths = header text length × 1.5 (Times New Roman 13pt vs Calibri 11pt)
-            // Headers: STT(3), ƯU TIÊN(7), TẦNG(4), CẤU TẠO(7), KÝ HIỆU(7), RỘNG(mm)(9), DÀI(mm)(8), SỐ LƯỢNG(8), DIỆN TÍCH m²(14), GHI CHÚ
+            // WrapText is enabled on header style, so columns can stay narrower
             AutoFitColumns(sh, 10,
-                new[] { 6, 12,  8, 13, 13, 15, 14, 14, 20, 20 },
-                new[] { 9, 18, 15, 22, 18, 20, 18, 18, 25, 55 });
+                new[] { 5, 8,  8, 10, 10, 10, 10, 10, 14, 20 },
+                new[] { 8, 15, 15, 20, 18, 18, 18, 16, 22, 55 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -265,10 +264,10 @@ namespace ShopDrawing.Plugin.Core
                 r++;
             }
 
-            // Headers: STT, Mã spec, Khổ tấm(mm)(12), Loại panel(10), Tỷ trọng(8), Chiều dày(mm)(14), Chống cháy(10), FM, MẶT TRÊN(8), sub-headers...
+            // WrapText is enabled on header style, so columns can stay narrower
             AutoFitColumns(sh, 18,
-                new[] { 6, 12, 18, 16, 14, 20, 16, 8, 13, 13, 10, 12, 12, 13, 13, 10, 12, 12 },
-                new[] { 9, 22, 22, 22, 18, 24, 18, 12, 18, 18, 14, 16, 16, 18, 18, 14, 16, 16 });
+                new[] { 5, 10, 10, 12, 10, 12, 10, 6,  9,  9,  8,  8,  9,  9,  9,  8,  8,  9 },
+                new[] { 8, 20, 18, 18, 16, 20, 16, 10, 15, 15, 12, 12, 14, 15, 15, 12, 12, 14 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }
@@ -370,10 +369,10 @@ namespace ShopDrawing.Plugin.Core
             }
             SetCell(fs, 7, "", sumStyle);
 
-            // Headers: STT, HẠNG MỤC(8), VỊ TRÍ/ỨNG DỤNG(17), TÊN PHỤ KIỆN(12), QUY CÁCH(8), ĐVT(3), SỐ LƯỢNG(8), GHI CHÚ(7)
+            // WrapText is enabled on header style, so columns can stay narrower
             AutoFitColumns(sh, 8,
-                new[] { 6, 14, 22, 18, 14,  8, 14, 20 },
-                new[] { 9, 22, 30, 40, 35, 12, 16, 55 });
+                new[] { 5, 12, 16, 18, 14,  8, 10, 20 },
+                new[] { 8, 20, 28, 40, 35, 12, 16, 55 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -469,6 +468,7 @@ namespace ShopDrawing.Plugin.Core
                 xs.SetFillForegroundColor(blueColor);
                 s.FillPattern = FillPattern.SolidForeground;
             }
+            s.WrapText = true;
             SetBorders(s);
             return s;
         }

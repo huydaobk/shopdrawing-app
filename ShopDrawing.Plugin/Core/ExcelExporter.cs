@@ -101,6 +101,9 @@ namespace ShopDrawing.Plugin.Core
             dateCell.CellStyle = metadataStyle;
             sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 9));
 
+            // Row 4: blank separator
+            sh.CreateRow(4).HeightInPoints = 10;
+
             string[] headers = { "STT", "ƯU TIÊN", "TẦNG", "CẤU TẠO", "KÝ HIỆU", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
             int headerRowIdx = 5;
             IRow hdr = sh.CreateRow(headerRowIdx);
@@ -196,8 +199,11 @@ namespace ShopDrawing.Plugin.Core
             dateCell.CellStyle = metadataStyle;
             sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 17));
 
+            // Row 4: blank separator (matches Sheet 1 and Sheet 3 layout)
+            sh.CreateRow(4).HeightInPoints = 10;
+
             var listRow = sh.CreateRow(5);
-            listRow.HeightInPoints = 22;
+            listRow.HeightInPoints = 33;
             var listCell = listRow.CreateCell(0);
             listCell.SetCellValue("DANH SÁCH SPEC DỰ ÁN");
             listCell.CellStyle = headerStyle;
@@ -311,6 +317,9 @@ namespace ShopDrawing.Plugin.Core
             dateCell.SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
             dateCell.CellStyle = metadataStyle;
             sh.AddMergedRegion(new CellRangeAddress(3, 3, 0, 7));
+
+            // Row 4: blank separator
+            sh.CreateRow(4).HeightInPoints = 10;
 
             string[] headers = { "STT", "HẠNG MỤC", "VỊ TRÍ / ỨNG DỤNG", "TÊN PHỤ KIỆN", "QUY CÁCH", "ĐVT", "SỐ LƯỢNG", "GHI CHÚ" };
             int headerRowIdx = 5;

@@ -73,12 +73,12 @@ namespace ShopDrawing.Plugin.Core
             var titleCell = titleRow.CreateCell(0);
             titleCell.SetCellValue("LỆNH SẢN XUẤT");
             titleCell.CellStyle = titleStyle;
-            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 8));
+            sh.AddMergedRegion(new CellRangeAddress(0, 0, 0, 9));
 
             var dateRow = sh.CreateRow(1);
             dateRow.CreateCell(0).SetCellValue($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
 
-            string[] headers = { "STT", "ƯU TIÊN", "CẤU TẠO", "KÝ HIỆU", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
+            string[] headers = { "STT", "ƯU TIÊN", "TẦNG", "CẤU TẠO", "KÝ HIỆU", "RỘNG (mm)", "DÀI (mm)", "SỐ LƯỢNG", "DIỆN TÍCH (m²)", "GHI CHÚ" };
             int headerRowIdx = 3;
             IRow hdr = sh.CreateRow(headerRowIdx);
             hdr.HeightInPoints = 22;
@@ -95,36 +95,37 @@ namespace ShopDrawing.Plugin.Core
                 IRow dr = sh.CreateRow(r);
                 SetCell(dr, 0, stt++, dataStyle);
                 SetCell(dr, 1, order.Priority ?? "", dataStyle);
-                SetCell(dr, 2, order.Spec ?? "", wrapStyle);
-                SetCell(dr, 3, order.PanelIds ?? "", wrapStyle);
-                SetCell(dr, 4, order.WidthMm, dataStyle);
-                SetCell(dr, 5, order.LengthMm, dataStyle);
-                SetCell(dr, 6, order.Qty, dataStyle);
+                SetCell(dr, 2, order.Level ?? "", dataStyle);
+                SetCell(dr, 3, order.Spec ?? "", wrapStyle);
+                SetCell(dr, 4, order.PanelIds ?? "", wrapStyle);
+                SetCell(dr, 5, order.WidthMm, dataStyle);
+                SetCell(dr, 6, order.LengthMm, dataStyle);
+                SetCell(dr, 7, order.Qty, dataStyle);
                 
-                SetFormulaCell(dr, 7, $"{CellRef(r, 4)}*{CellRef(r, 5)}/1000000*{CellRef(r, 6)}", computedStyle);
+                SetFormulaCell(dr, 8, $"{CellRef(r, 5)}*{CellRef(r, 6)}/1000000*{CellRef(r, 7)}", computedStyle);
                 
-                SetCell(dr, 8, order.Note ?? "", wrapStyle);
+                SetCell(dr, 9, order.Note ?? "", wrapStyle);
                 r++;
             }
 
             IRow fs = sh.CreateRow(r);
             SetCell(fs, 0, "TỔNG ĐẶT HÀNG", sumStyle);
-            for(int i=1;i<=5;i++) SetCell(fs, i, "", sumStyle);
-            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 5));
+            for(int i=1;i<=6;i++) SetCell(fs, i, "", sumStyle);
+            sh.AddMergedRegion(new CellRangeAddress(r, r, 0, 6));
             
             if (r > dataStart)
             {
-                SetFormulaCell(fs, 6, $"SUM({CellRef(dataStart, 6)}:{CellRef(r - 1, 6)})", sumIntegerStyle);
-                SetFormulaCell(fs, 7, $"SUM({CellRef(dataStart, 7)}:{CellRef(r - 1, 7)})", sumStyle);
+                SetFormulaCell(fs, 7, $"SUM({CellRef(dataStart, 7)}:{CellRef(r - 1, 7)})", sumIntegerStyle);
+                SetFormulaCell(fs, 8, $"SUM({CellRef(dataStart, 8)}:{CellRef(r - 1, 8)})", sumStyle);
             }
             else
             {
-                SetCell(fs, 6, 0, sumIntegerStyle);
-                SetCell(fs, 7, 0, sumStyle);
+                SetCell(fs, 7, 0, sumIntegerStyle);
+                SetCell(fs, 8, 0, sumStyle);
             }
-            SetCell(fs, 8, "", sumStyle);
+            SetCell(fs, 9, "", sumStyle);
 
-            ApplyColumnWidths(sh, new[] { 5, 10, 20, 10, 10, 10, 10, 14, 25 });
+            ApplyColumnWidths(sh, new[] { 5, 10, 15, 20, 10, 10, 10, 10, 14, 25 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -270,11 +271,6 @@ namespace ShopDrawing.Plugin.Core
                 {
                     dvtMua = "Cây";
                     slMua = Math.Ceiling(slMua / 6.0);
-                }
-                else if (acc.Unit?.ToLower() == "cái")
-                {
-                    dvtMua = "Hộp";
-                    slMua = Math.Ceiling(slMua);
                 }
                 else
                 {

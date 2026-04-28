@@ -49,6 +49,8 @@ namespace ShopDrawing.Plugin.Runtime
 
         public string DefaultApplication { get; set; } = "Phòng sạch";
 
+        public string DefaultLevel { get; set; } = "Tầng 1";
+
         public double DefaultCeilingCableDropMm { get; set; } = 1500;
 
         public string DefaultWallTopPanelTreatment { get; set; } = "Không áp dụng";

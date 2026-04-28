@@ -53,6 +53,12 @@ namespace ShopDrawing.Plugin.Modules.Panel
             set => Settings.DefaultApplication = value;
         }
 
+        public string DefaultLevel
+        {
+            get => Settings.DefaultLevel;
+            set => Settings.DefaultLevel = value;
+        }
+
         public string DefaultWallTopPanelTreatment
         {
             get => Settings.DefaultWallTopPanelTreatment;
@@ -220,6 +226,14 @@ namespace ShopDrawing.Plugin.Modules.Panel
             }
         }
 
+        public void SetLevel(string level)
+        {
+            if (!string.IsNullOrWhiteSpace(level))
+            {
+                Settings.DefaultLevel = level.Trim();
+            }
+        }
+
         public void SetWallTopTreatment(string treatment)
         {
             Settings.DefaultWallTopPanelTreatment = TenderWall.NormalizeTopPanelTreatment(treatment);
@@ -256,6 +270,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
             return new ShopdrawingPaletteSettingsSnapshot(
                 Settings.DefaultSpec,
                 Settings.DefaultApplication,
+                Settings.DefaultLevel,
                 Settings.DefaultWallTopPanelTreatment,
                 Settings.DefaultWallStartPanelTreatment,
                 Settings.DefaultWallEndPanelTreatment,

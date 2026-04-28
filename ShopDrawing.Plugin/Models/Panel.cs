@@ -1,6 +1,7 @@
-﻿namespace ShopDrawing.Plugin.Models
+namespace ShopDrawing.Plugin.Models
 {
-    public enum JointType { Male, Female, Cut }
+    public enum JointType { Male, Female, Cut }
+    public enum StepSide { None, Left, Right }
 
     public class Panel
     {
@@ -20,8 +21,10 @@
         public bool IsHorizontal { get; set; }   // true = tấm nằm ngang (Length theo X)
         public string? ParentPanelId { get; set; }
         public double StepWasteWidth { get; set; }   // Chiều rộng waste bậc thang (partial)
-        public double StepWasteHeight { get; set; }  // Chiều dài waste bậc thang (chênh lệch)
+        public double StepWasteHeight { get; set; }  // Chiều dài waste bậc thang (chênh lệch)
+        public StepSide StepWasteSide { get; set; }
         public string Application { get; set; } = string.Empty;
+        public string Level { get; set; } = string.Empty;
         public string TopPanelTreatment { get; set; } = string.Empty;
         public string StartPanelTreatment { get; set; } = string.Empty;
         public string EndPanelTreatment { get; set; } = string.Empty;

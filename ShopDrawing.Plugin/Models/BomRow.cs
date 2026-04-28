@@ -14,6 +14,7 @@ namespace ShopDrawing.Plugin.Models
         public double LengthMm { get; set; }
         public int ThickMm { get; set; }
         public string Priority { get; set; } = string.Empty;
+        public string Level { get; set; } = string.Empty;
     }
 
     public class BomRow 
@@ -31,6 +32,7 @@ namespace ShopDrawing.Plugin.Models
         public double LengthMm { get; set; }
         public int ThickMm { get; set; }
         public string Priority { get; set; } = string.Empty;
+        public string Level { get; set; } = string.Empty;
         public double AreaM2 => (WidthMm * LengthMm) / 1_000_000.0;
     }
 }

@@ -188,6 +188,15 @@ namespace ShopDrawing.Plugin.UI
             stackApplication.Children.Add(cboApplication);
             settingsSection.Children.Add(stackApplication);
 
+            var stackLevel = CreateSettingRow("Tầng:", 80);
+            var txtLevel = new TextBox { Width = 100, Text = initialSettings.DefaultLevel };
+            txtLevel.TextChanged += (_, _) =>
+            {
+                _paletteFacade.SetLevel(txtLevel.Text);
+            };
+            stackLevel.Children.Add(txtLevel);
+            settingsSection.Children.Add(stackLevel);
+
             var stackTopTreatment = CreateSettingRow("Đỉnh vách:", 80);
             var cboTopTreatment = new ComboBox { Width = 120, ItemsSource = TenderWall.TopPanelTreatmentOptions };
             cboTopTreatment.SelectedItem = initialSettings.DefaultWallTopPanelTreatment;

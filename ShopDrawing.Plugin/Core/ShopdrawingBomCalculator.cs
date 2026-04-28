@@ -21,6 +21,7 @@ namespace ShopDrawing.Plugin.Core
             public int Qty { get; set; }
             public double AreaM2 { get; set; }
             public string Note { get; set; } = "";
+            public string Level { get; set; } = "";
         }
 
         public class ProjectSummary
@@ -107,9 +108,9 @@ namespace ShopDrawing.Plugin.Core
                     {
                         w = standardWidths[wc];
                     }
-                    return new { r.Id, r.Spec, WidthMm = w, r.LengthMm, r.ThickMm, r.Qty, r.Status, r.WallCode };
+                    return new { r.Id, r.Spec, WidthMm = w, r.LengthMm, r.ThickMm, r.Qty, r.Status, r.WallCode, r.Level };
                 })
-                .GroupBy(b => new { b.Id, b.Spec, b.WidthMm, b.LengthMm, b.ThickMm })
+                .GroupBy(b => new { b.Id, b.Spec, b.WidthMm, b.LengthMm, b.ThickMm, b.Level })
                 .OrderBy(g => g.Key.Spec)
                 .ThenByDescending(g => g.Key.LengthMm)
                 .ThenBy(g => g.Key.Id);
@@ -152,6 +153,7 @@ namespace ShopDrawing.Plugin.Core
                     ThickMm = g.Key.ThickMm,
                     WidthMm = g.Key.WidthMm,
                     LengthMm = g.Key.LengthMm,
+                    Level = g.Key.Level,
                     Qty = qty,
                     AreaM2 = area,
                     Note = note

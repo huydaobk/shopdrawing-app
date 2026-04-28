@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -22,6 +22,7 @@ namespace ShopDrawing.Plugin.Core
         public string WallCode { get; set; } = string.Empty;
         public List<Opening> Openings { get; set; } = new();
         public string Application { get; set; } = string.Empty;
+        public string Level { get; set; } = string.Empty;
         public string TopPanelTreatment { get; set; } = string.Empty;
         public string StartPanelTreatment { get; set; } = string.Empty;
         public string EndPanelTreatment { get; set; } = string.Empty;
@@ -126,6 +127,7 @@ namespace ShopDrawing.Plugin.Core
                 JointRight = jointRight,
                 IsCutPanel = isRemnant,
                 Application = request.Application,
+                Level = request.Level,
                 TopPanelTreatment = request.TopPanelTreatment,
                 StartPanelTreatment = request.StartPanelTreatment,
                 EndPanelTreatment = request.EndPanelTreatment,
@@ -159,6 +161,7 @@ namespace ShopDrawing.Plugin.Core
                     ? stepPos - leftEdge
                     : rightEdge - stepPos;
                 panel.StepWasteHeight = spanDiff;
+                panel.StepWasteSide = spanLeft.Span < spanRight.Span ? StepSide.Left : StepSide.Right;
             }
 
             return panel;
@@ -425,6 +428,7 @@ namespace ShopDrawing.Plugin.Core
                 ParentPanelId = sourcePanel.ParentPanelId,
                 StepWasteWidth = 0,
                 StepWasteHeight = 0,
+                StepWasteSide = StepSide.None,
                 Application = sourcePanel.Application,
                 TopPanelTreatment = sourcePanel.TopPanelTreatment,
                 StartPanelTreatment = sourcePanel.StartPanelTreatment,

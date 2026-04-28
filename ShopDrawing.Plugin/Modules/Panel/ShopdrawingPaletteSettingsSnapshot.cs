@@ -6,6 +6,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
     internal sealed record ShopdrawingPaletteSettingsSnapshot(
         string DefaultSpecKey,
         string DefaultApplication,
+        string DefaultLevel,
         string DefaultWallTopPanelTreatment,
         string DefaultWallStartPanelTreatment,
         string DefaultWallEndPanelTreatment,

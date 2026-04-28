@@ -262,7 +262,8 @@ namespace ShopDrawing.Plugin.Core
                     JointRight = jointRight,
                     WidthMm = widthMm,
                     LengthMm = lengthMm,
-                    Priority = ""
+                    Priority = "",
+                    Level = ""
                 });
             }
 
@@ -286,7 +287,7 @@ namespace ShopDrawing.Plugin.Core
                 }
             }
 
-            return data.GroupBy(x => new { x.Id, x.Spec, x.Status, x.WallCode, x.JointLeft, x.JointRight, x.WidthMm, x.LengthMm, x.Priority })
+            return data.GroupBy(x => new { x.Id, x.Spec, x.Status, x.WallCode, x.JointLeft, x.JointRight, x.WidthMm, x.LengthMm, x.Priority, x.Level })
                        .Select(g => new BomRow
                        {
                            Id = g.Key.Id,
@@ -299,6 +300,7 @@ namespace ShopDrawing.Plugin.Core
                            WidthMm = g.Key.WidthMm,
                            LengthMm = g.Key.LengthMm,
                            Priority = g.Key.Priority,
+                           Level = g.Key.Level,
                            Qty = g.Count()
                        })
                        .OrderBy(r => r.Id)
@@ -332,7 +334,8 @@ namespace ShopDrawing.Plugin.Core
                 JointRight = string.Empty,
                 WidthMm = Math.Min(widthMm, lengthMm),
                 LengthMm = Math.Max(widthMm, lengthMm),
-                Priority = TryGetMetadataValue(metadata, "PRIORITY")
+                Priority = TryGetMetadataValue(metadata, "PRIORITY"),
+                Level = TryGetMetadataValue(metadata, "LEVEL")
             };
 
             return true;

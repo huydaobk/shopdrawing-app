@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -25,6 +25,7 @@ namespace ShopDrawing.Plugin.Modules.Accessories
                 ["IS_CUT"] = panel.IsCutPanel ? "1" : "0",
                 ["IS_REUSED"] = panel.IsReused ? "1" : "0",
                 ["SOURCE_ID"] = panel.SourceId ?? string.Empty,
+                ["LEVEL"] = panel.Level ?? string.Empty,
                 ["APP"] = panel.Application,
                 ["TOP"] = panel.TopPanelTreatment,
                 ["START"] = panel.StartPanelTreatment,

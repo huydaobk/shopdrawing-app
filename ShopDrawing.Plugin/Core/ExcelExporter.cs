@@ -414,7 +414,7 @@ namespace ShopDrawing.Plugin.Core
             for (int i = 0; i < colCount; i++)
             {
                 sheet.AutoSizeColumn(i);
-                int current = sheet.GetColumnWidth(i);
+                int current = (int)sheet.GetColumnWidth(i);
 
                 // Apply minimum width
                 if (minWidths != null && i < minWidths.Length)

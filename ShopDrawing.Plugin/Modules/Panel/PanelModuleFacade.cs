@@ -113,6 +113,7 @@ namespace ShopDrawing.Plugin.Modules.Panel
                 var exporter = new ExcelExporter();
                 exporter.ExportFullBom(report, dlg.FileName);
                 doc.Editor.WriteMessage($"\n✅ Xuất BOM thành công ra: {dlg.FileName}");
+                Application.ShowAlertDialog($"Xuất BOM thành công ra file:\n{dlg.FileName}");
             }
             catch (Exception ex)
             {

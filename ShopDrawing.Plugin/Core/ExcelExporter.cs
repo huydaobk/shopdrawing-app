@@ -157,9 +157,10 @@ namespace ShopDrawing.Plugin.Core
             SetCell(fs, 9, "", sumStyle);
 
             // WrapText is enabled on header style, so columns can stay narrower
+            // Fixed widths sum to 135 for 100% cross-sheet alignment
             AutoFitColumns(sh, 10,
-                new[] { 5, 7,  7, 8, 8, 8, 8, 8, 10, 15 },
-                new[] { 7, 10, 10, 15, 15, 12, 12, 12, 18, 35 });
+                new[] { 5, 10, 10, 15, 20, 10, 10, 10, 15, 30 },
+                new[] { 5, 10, 10, 15, 20, 10, 10, 10, 15, 30 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }
@@ -275,9 +276,10 @@ namespace ShopDrawing.Plugin.Core
             }
 
             // WrapText is enabled on header style, so columns can stay narrower
+            // Fixed widths sum to 135 for 100% cross-sheet alignment
             AutoFitColumns(sh, 18,
-                new[] { 5, 8, 8, 8, 7, 8, 7, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 },
-                new[] { 7, 15, 12, 12, 12, 12, 12, 8, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 });
+                new[] { 5, 11, 8, 10, 8, 8, 8, 5, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7 },
+                new[] { 5, 11, 8, 10, 8, 8, 8, 5, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7 });
             sh.CreateFreezePane(0, headerRowIdx + 2);
             SetZoom(sh, 90);
         }
@@ -382,9 +384,10 @@ namespace ShopDrawing.Plugin.Core
             SetCell(fs, 7, "", sumStyle);
 
             // WrapText is enabled on header style, so columns can stay narrower
+            // Fixed widths sum to 135 for 100% cross-sheet alignment
             AutoFitColumns(sh, 8,
-                new[] { 5, 10, 12, 12, 10,  6, 8, 15 },
-                new[] { 7, 15, 20, 25, 20, 10, 12, 35 });
+                new[] { 5, 15, 20, 25, 20, 10, 10, 30 },
+                new[] { 5, 15, 20, 25, 20, 10, 10, 30 });
             sh.CreateFreezePane(0, headerRowIdx + 1);
             SetZoom(sh, 90);
         }

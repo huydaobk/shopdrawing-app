@@ -1,4 +1,4 @@
-namespace ShopDrawing.Plugin.Models
+﻿namespace ShopDrawing.Plugin.Models
 {
     public enum JointType { Male, Female, Cut }
     public enum StepSide { None, Left, Right }

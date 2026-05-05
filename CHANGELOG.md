@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-05-05] - v0.2.76 Tender Pick Span Height Suggestion 📐
+### Changed
+- **Tender Pick Nhịp UX**: Khi pick nhịp thứ 2 trở đi, popup nhập chiều cao tự động gợi ý giá trị chiều cao của nhịp vừa pick trước đó thay vì luôn hiển thị giá trị mặc định (3000mm). Hint text cũng cập nhật thành "Chiều cao nhịp trước: X" để user dễ nhận biết context.
+- **Đồng bộ cả 2 flow**: Áp dụng cho cả flow "Pick nhịp" nhanh (`PickSpanFromCad`) và flow "Pick nhịp" trong popup hình học (`TryPromptTenderGeometryPopup`).
+
 ## [2026-04-24] - v0.2.57 Shopdrawing Excel BOM Synchronization 📊
 ### Changed
 - **Excel Export**: Nâng cấp module xuất file báo cáo Excel (Lệnh Sản Xuất, Quản lý Spec, Đặt hàng Phụ kiện). Đồng bộ hoàn toàn logic tính toán hao hụt `WasteFactor` từ giao diện UI vào công thức tính khối lượng phụ kiện.

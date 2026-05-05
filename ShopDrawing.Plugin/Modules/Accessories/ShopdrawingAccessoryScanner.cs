@@ -1,4 +1,4 @@
-using Autodesk.AutoCAD.DatabaseServices;
+﻿using Autodesk.AutoCAD.DatabaseServices;
 using ShopDrawing.Plugin.Runtime;
 
 namespace ShopDrawing.Plugin.Modules.Accessories

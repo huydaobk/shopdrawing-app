@@ -1,0 +1,26 @@
+--- Inspecting C:\Users\Administrator\OneDrive - GREENPAN JSC\Desktop\Test2\Project Data\BOQ\Shopdrawing\ShopDrawing_BOM_20260428_143118.xlsx ---
+
+Sheet: Lệnh Sản Xuất
+Column Widths: ['5.0', '10.0', '15.0', '20.0', '10.0', '13.0', '13.0', '13.0', '14.0', '25.0']
+Header Colors (Row 8): ['1: 00000000', ': 00000000', 'Tầng 1: 00000000', 'SPEC1: 00000000', 'W1-01: 00000000', '1100: 00000000', '4000: 00000000', '10: 00000000', "None: Values must be of type <class 'str'>", 'Cắt tại công trường | W1: 00000000']
+
+Sheet: Quản lý Spec
+Column Widths: ['5.0', '12.0', '13.0', '13.0', '10.0', '12.0', '13.0', '6.0', '10.0', '13.0', '13.0', '9.0', '10.0', '13.0', '13.0', '13.0', '9.0', '10.0']
+Header Colors (Row 8): ["STT: Values must be of type <class 'str'>", "Mã spec: Values must be of type <class 'str'>", "Khổ tấm (mm): Values must be of type <class 'str'>", "Loại panel: Values must be of type <class 'str'>", "Tỷ trọng: Values must be of type <class 'str'>", "Chiều dày (mm): Values must be of type <class 'str'>", "Chống cháy: Values must be of type <class 'str'>", "FM: Values must be of type <class 'str'>", "MẶT TRÊN: Values must be of type <class 'str'>", 'None: 00000000', 'None: 00000000', 'None: 00000000', 'None: 00000000', "MẶT DƯỚI: Values must be of type <class 'str'>", 'None: 00000000', 'None: 00000000', 'None: 00000000', 'None: 00000000']
+
+Sheet: Đặt Hàng Phụ Kiện
+Column Widths: ['5.0', '15.0', '20.0', '30.0', '25.0', '10.0', '12.0', '30.0']
+Header Colors (Row 8): ['1: 00000000', 'Vách: 00000000', 'Phòng sạch: 00000000', 'Bộ cửa đi phòng sạch: 00000000', 'Cửa đi: 00000000', 'bộ: 00000000', '7: 00000000', 'W1: Sơ bộ theo số lượng cửa đi phòng sạch: 00000000']
+--- Inspecting C:\Users\Administrator\OneDrive - GREENPAN JSC\Desktop\Test2\Project Data\BOQ\Shopdrawing\ShopDrawing_BOM_Formatted_V9.xlsx ---
+
+Sheet: Lệnh Sản Xuất
+Column Widths: ['6.0', '10.0', '12.0', '15.0', '13.0', '14.0', '13.0', '12.0', '16.0', '30.0']
+Header Colors (Row 8): ['1: 00000000', 'None: 00000000', 'Tầng 1: 00000000', 'SPEC1: 00000000', 'W1-01: 00000000', '1100: 00000000', '4000: 00000000', '10: 00000000', "44: Values must be of type <class 'str'>", 'Cắt tại công trường | W1: 00000000']
+
+Sheet: Quản lý Spec
+Column Widths: ['6.0', '15.0', '13.0', '13.0', '12.0', '15.0', '12.0', '10.0', '12.0', '13.0', '13.0', '13.0', '13.0', '13.0', '13.0', '13.0', '13.0', '13.0']
+Header Colors (Row 8): ['STT: FF4F81BD', 'Mã spec: FF4F81BD', 'Khổ tấm (mm): FF4F81BD', 'Loại panel: FF4F81BD', 'Tỷ trọng: FF4F81BD', 'Chiều dày (mm): FF4F81BD', 'Chống cháy: FF4F81BD', 'FM: FF4F81BD', 'MẶT TRÊN: FF4F81BD', 'None: 00000000', 'None: 00000000', 'None: 00000000', 'None: 00000000', 'MẶT DƯỚI: FF4F81BD', 'None: 00000000', 'None: 00000000', 'None: 00000000', 'None: 00000000']
+
+Sheet: Đặt Hàng Phụ Kiện
+Column Widths: ['6.0', '15.0', '20.0', '35.0', '30.0', '10.0', '12.0', '40.0']
+Header Colors (Row 8): ['1: 00000000', 'Vách: 00000000', 'Phòng sạch: 00000000', 'Bộ cửa đi phòng sạch: 00000000', 'Cửa đi: 00000000', 'bộ: 00000000', '7: 00000000', 'W1: Sơ bộ theo số lượng cửa đi phòng sạch: 00000000']

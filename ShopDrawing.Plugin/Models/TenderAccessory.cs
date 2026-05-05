@@ -1,4 +1,4 @@
-namespace ShopDrawing.Plugin.Models
+﻿namespace ShopDrawing.Plugin.Models
 {
     /// <summary>
     /// Quy tắc tính khối lượng phụ kiện.

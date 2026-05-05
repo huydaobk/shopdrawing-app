@@ -1,41 +1,77 @@
 {
     "working_on": {
-        "task": "Tách cơ chế Cửa đi/Sổ độc lập",
+        "task": "Chuẩn hóa định dạng Excel BOM (No Scaling, Fixed Width)",
         "files": [
-            "ShopDrawing.Plugin/UI/MainPaletteControl.cs",
-            "ShopDrawing.Plugin/Modules/Panel/ShopdrawingPaletteFacade.cs",
-            "ShopDrawing.Plugin/Runtime/ShopDrawingRuntimeSettings.cs",
-            "ShopDrawing.Plugin/Modules/Panel/QuickPlanWallCommandService.cs",
-            "ShopDrawing.Plugin/Modules/Panel/QuickPanelLayoutCommandService.cs"
+            "ShopDrawing.Plugin/Core/ExcelExporter.cs"
         ],
-        "notes": "Đã release v0.2.41",
+        "notes": "Đã release v0.2.75. Tổng chiều rộng 3 sheet = 135 units, cân đối A4 Landscape.",
         "blockers": [],
         "status": "completed",
-        "feature": "Dynamic Opening Separation"
+        "feature": "Excel BOM Formatting Standardization"
     },
     "recent_changes": [
         {
-            "timestamp": "2026-04-22T11:19:00+07:00",
-            "description": "Removed global DefaultOpeningType and introducted interactive type selection in Prompts",
+            "timestamp": "2026-04-29T08:54:00+07:00",
+            "description": "Fixed total width = 135 units across all 3 sheets (min=max to disable dynamic sizing)",
             "files": [
-                "ShopDrawing.Plugin/UI/MainPaletteControl.cs",
-                "ShopDrawing.Plugin/Modules/Panel/QuickPlanWallCommandService.cs",
-                "ShopDrawing.Plugin/Modules/Panel/QuickPanelLayoutCommandService.cs"
+                "ShopDrawing.Plugin/Core/ExcelExporter.cs"
             ],
-            "type": "feature"
+            "type": "fix",
+            "version": "v0.2.75"
+        },
+        {
+            "timestamp": "2026-04-29T08:36:00+07:00",
+            "description": "Resolved Mojibake encoding (UTF-8 BOM corruption) and reapplied No Scaling formatting",
+            "files": [
+                "ShopDrawing.Plugin/Core/ExcelExporter.cs"
+            ],
+            "type": "fix",
+            "version": "v0.2.74"
+        },
+        {
+            "timestamp": "2026-04-28T16:50:00+07:00",
+            "description": "Standardized A4 Landscape, 9pt TNR, Scale=100, FitToPage=false for all sheets",
+            "files": [
+                "ShopDrawing.Plugin/Core/ExcelExporter.cs"
+            ],
+            "type": "fix",
+            "version": "v0.2.73"
         }
     ],
     "decisions_made": [
         {
-            "decision": "Remove DefaultOpeningType from Palette UI and RuntimeSettings",
-            "reason": "Global type setting caused incorrect accessory calculation for mixed door/window setups in the same wall layout."
+            "decision": "Set total table width = 135 units across all 3 Excel sheets",
+            "reason": "135 units = 243mm, fits 93% of A4 Landscape printable area (261mm). Ensures all sheets have identical right-edge alignment."
         },
         {
-            "decision": "Two-step selection for Opening in SD_PANEL_LAYOUT (QuickPanelLayoutCommandService)",
-            "reason": "Allows quick polyline selection while accurately classifying Door vs Window."
+            "decision": "Use fixed widths (minWidth = maxWidth) to disable dynamic column sizing",
+            "reason": "Dynamic AutoFit caused inconsistent table widths between sheets depending on data content."
+        },
+        {
+            "decision": "Font 9pt Times New Roman + Scale 100% (No Scaling) for all sheets",
+            "reason": "Ensures WYSIWYG print output. FitToPage was distorting font sizes."
+        },
+        {
+            "decision": "Use add_bom_safe.ps1 script for encoding protection",
+            "reason": "PowerShell Get-Content/Set-Content caused double-encoding (Mojibake). The safe script inserts BOM bytes without re-interpreting file content."
         }
     ],
     "pending_tasks": [],
-    "errors_encountered": [],
-    "updated_at": "2026-04-22T11:20:00+07:00"
+    "errors_encountered": [
+        {
+            "error": "Mojibake (Vietnamese character corruption) in Excel output",
+            "root_cause": "PowerShell encoding conversion read UTF-8 bytes as Windows-1252, causing double-encoding",
+            "resolution": "Reverted to clean git state, reapplied changes, used add_bom_safe.ps1 for BOM insertion",
+            "resolved_in": "v0.2.74"
+        }
+    ],
+    "context_checkpoints": [
+        {
+            "timestamp": "2026-04-29T11:59:00+07:00",
+            "trigger": "user_requested",
+            "summary": "Excel BOM formatting complete. 3 sheets standardized: A4 Landscape, 9pt TNR, No Scaling, fixed 135-unit total width. Mojibake resolved. Latest release: v0.2.75.",
+            "message_count": 10
+        }
+    ],
+    "updated_at": "2026-04-29T11:59:00+07:00"
 }

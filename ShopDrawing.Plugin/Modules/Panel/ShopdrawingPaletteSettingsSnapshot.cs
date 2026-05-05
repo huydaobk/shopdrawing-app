@@ -1,4 +1,4 @@
-using ShopDrawing.Plugin.Core;
+﻿using ShopDrawing.Plugin.Core;
 using ShopDrawing.Plugin.Models;
 
 namespace ShopDrawing.Plugin.Modules.Panel

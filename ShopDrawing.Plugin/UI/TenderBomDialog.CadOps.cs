@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -359,7 +359,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             return true;
         }
 
-        private bool TryPromptWallHeightInput(double defaultHeightMm, out double heightMm)
+        private bool TryPromptWallHeightInput(double defaultHeightMm, out double heightMm, int spanIndex = 0)
         {
             double resultHeight = Math.Round(defaultHeightMm > 0 ? defaultHeightMm : 3000.0);
             heightMm = resultHeight;
@@ -408,7 +408,9 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
 
                 var hint = new TextBlock
                 {
-                    Text = "V\u00ed d\u1ee5: 3000",
+                    Text = spanIndex > 0
+                        ? $"Chi\u1ec1u cao nh\u1ecbp tr\u01b0\u1edbc: {defaultHeightMm:F0}"
+                        : "V\u00ed d\u1ee5: 3000",
                     Margin = new Thickness(0, 6, 0, 0),
                     Foreground = FgGray,
                     FontSize = 12
@@ -1479,7 +1481,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                             double lengthMm = Math.Round(p1Res.Value.DistanceTo(p2Res.Value));
                             if (lengthMm <= 0)
                                 continue;
-                            if (!TryPromptWallHeightInput(referenceHeightMm, out var heightMm) || heightMm <= 0)
+                            if (!TryPromptWallHeightInput(referenceHeightMm, out var heightMm, segmentRows.Count) || heightMm <= 0)
                                 break;
                             TryCreatePersistentPickSpanLine(p1Res.Value, p2Res.Value, out var handle, out _);
                             segmentRows.Add(new PopupSegmentRow
@@ -1491,6 +1493,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 StartPoint = p1Res.Value,
                                 EndPoint = p2Res.Value
                             });
+                            referenceHeightMm = Math.Round(heightMm);
                             mode = TenderPopupGeometryMode.WallLineChain;
                             polygonVertices = null;
                         }
@@ -4484,7 +4487,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     double lengthMm = Math.Round(p1Res.Value.DistanceTo(p2Res.Value));
                     if (lengthMm <= 0) continue;
                     
-                    if (!TryPromptWallHeightInput(referenceHeightMm, out var heightMm) || heightMm <= 0) break;
+                    if (!TryPromptWallHeightInput(referenceHeightMm, out var heightMm, segmentRows.Count) || heightMm <= 0) break;
                     TryCreatePersistentPickSpanLine(p1Res.Value, p2Res.Value, out var handle, out _);
                     
                     segmentRows.Add(new TenderHeightSegment
@@ -4493,6 +4496,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         HeightMm = Math.Round(heightMm),
                         CadHandle = string.IsNullOrWhiteSpace(handle) ? null : handle
                     });
+                    referenceHeightMm = Math.Round(heightMm);
                     // Auto Draw temporary preview inside CAD can be added, but we skip for now.
                 }
                 if (segmentRows.Any())

@@ -1,5 +1,9 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-05-07] - v0.2.77 Stabilize Tender Height Persistence 📏
+### Fixed
+- **Persistent Height**: Fix issue where the span height suggestion resets to a default 3000mm on new row creation or subsequent pick operations. The system now reliably remembers the last user-entered height across multiple spans and popup sessions via a global `_lastPickedSpanHeightMm` state.
+
 ## [2026-05-05] - v0.2.76 Tender Pick Span Height Suggestion 📐
 ### Changed
 - **Tender Pick Nhịp UX**: Khi pick nhịp thứ 2 trở đi, popup nhập chiều cao tự động gợi ý giá trị chiều cao của nhịp vừa pick trước đó thay vì luôn hiển thị giá trị mặc định (3000mm). Hint text cũng cập nhật thành "Chiều cao nhịp trước: X" để user dễ nhận biết context.

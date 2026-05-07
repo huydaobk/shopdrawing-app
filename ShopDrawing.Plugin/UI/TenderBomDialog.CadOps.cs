@@ -15,6 +15,7 @@ namespace ShopDrawing.Plugin.UI
 {
     public partial class TenderBomDialog
     {
+        private static double _lastPickedSpanHeightMm = 3000;
         private void BeginCadInteraction()
         {
             _suspendCadOperations = true;
@@ -1306,7 +1307,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
             bool isCeiling = IsCeilingCategory(seedRow.Category);
             TenderPopupGeometryMode mode = ResolvePopupMode(seedRow);
             double referenceLengthMm = Math.Max(0, seedRow.HeightSegments?.Sum(s => Math.Max(0, s.LengthMm)) ?? seedRow.Length);
-            double referenceHeightMm = Math.Max(1, seedRow.Height > 0 ? seedRow.Height : 3000);
+            double referenceHeightMm = Math.Max(1, seedRow.Height > 0 ? seedRow.Height : _lastPickedSpanHeightMm);
             double previewZoom = 1.0;
             var polygonVertices = seedRow.PolygonVertices?.Select(v => v.ToArray()).ToList();
             var segmentRows = new ObservableCollection<PopupSegmentRow>(
@@ -1494,6 +1495,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                                 EndPoint = p2Res.Value
                             });
                             referenceHeightMm = Math.Round(heightMm);
+                            _lastPickedSpanHeightMm = referenceHeightMm;
                             mode = TenderPopupGeometryMode.WallLineChain;
                             polygonVertices = null;
                         }
@@ -4448,7 +4450,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                     targetRow = BuildPickTemplateRow();
                     targetRow.Index = _wallRows.Count + 1;
                     targetRow.Name = $"{TenderWall.GetCategoryPrefix(targetRow.Category)}-{_wallRows.Count + 1}";
-                    if (targetRow.Height <= 0) targetRow.Height = 3000;
+                    if (targetRow.Height <= 0) targetRow.Height = _lastPickedSpanHeightMm;
                     
                     _wallRows.Add(targetRow);
                     _wallGrid.SelectedItem = targetRow;
@@ -4473,7 +4475,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                 var ed = doc.Editor;
                 
                 var segmentRows = new List<TenderHeightSegment>();
-                double referenceHeightMm = Math.Max(1, targetRow.Height > 0 ? targetRow.Height : 3000);
+                double referenceHeightMm = Math.Max(1, targetRow.Height > 0 ? targetRow.Height : _lastPickedSpanHeightMm);
                 while (true)
                 {
                     var p1Opt = new Autodesk.AutoCAD.EditorInput.PromptPointOptions("\nChọn điểm đầu nhịp (Enter để kết thúc):") { AllowNone = true };
@@ -4497,6 +4499,7 @@ private void RepickWallFromCad(TenderWallRow targetRow, bool pickArea)
                         CadHandle = string.IsNullOrWhiteSpace(handle) ? null : handle
                     });
                     referenceHeightMm = Math.Round(heightMm);
+                    _lastPickedSpanHeightMm = referenceHeightMm;
                     // Auto Draw temporary preview inside CAD can be added, but we skip for now.
                 }
                 if (segmentRows.Any())

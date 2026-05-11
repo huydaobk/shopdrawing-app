@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
@@ -49,7 +49,7 @@ namespace ShopDrawing.Plugin.UI
 
                 AlternatingRowBackground = AltRow,
 
-                ItemsSource = _wallRows
+                ItemsSource = System.Windows.Data.CollectionViewSource.GetDefaultView(_wallRows)
 
             };
 

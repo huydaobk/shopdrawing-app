@@ -114,6 +114,7 @@
     }
   ],
   "known_bugs_fixed": [
+    "Tender Pick Span height persistence resets to 3000mm — TenderBomDialog.CadOps.cs",
     "NaturalComparer double negation (sort chip không đổi chiều) — WasteManagerDialog.cs",
     "Kho Lẻ không auto-refresh sau khi vẽ vách mới — WasteUpdated event pattern",
     "Tag text W01-12/SPEC1 trong cột ký hiệu — tách thành 2 DBText riêng",

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -57,6 +57,9 @@ namespace ShopDrawing.Plugin.UI
         private ComboBox _pickCategoryPreset = null!;
         private ComboBox _pickApplicationPreset = null!;
         private ComboBox _pickSpecPreset = null!;
+        private ComboBox _filterFloorCombo = null!;
+        private ComboBox _filterSpecCombo = null!;
+        private bool _isUpdatingFilterList;
         private ScrollViewer _previewScroll = null!;
         private Canvas _previewCanvas = null!;
         private Point? _lastDragPoint;
@@ -228,7 +231,8 @@ namespace ShopDrawing.Plugin.UI
             leftPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 0: info
             leftPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 1: edgeGuide
             leftPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 2: toolbar
-            leftPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // 3: wall grid
+            leftPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                   // 3: filter bar
+            leftPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // 4: wall grid
 
             var info = new TextBlock
             {
@@ -299,8 +303,44 @@ namespace ShopDrawing.Plugin.UI
             Grid.SetRow(toolbar, 2);
             leftPanel.Children.Add(toolbar);
 
+            var filterBar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+            filterBar.Children.Add(new TextBlock
+            {
+                Text = "Bộ lọc:",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 6, 0),
+                Foreground = FgDark,
+                FontWeight = FontWeights.SemiBold
+            });
+            _filterFloorCombo = CreatePresetCombo(new[] { "<Tất cả>" }, "<Tất cả>", 85);
+            _filterFloorCombo.ToolTip = "Lọc theo Tầng";
+            filterBar.Children.Add(new TextBlock { Text = "Tầng:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0), Foreground = FgGray });
+            filterBar.Children.Add(_filterFloorCombo);
+
+            var specFilterList = new List<string> { "<Tất cả>" };
+            specFilterList.AddRange(_project.Specs.Select(s => s.Key));
+            _filterSpecCombo = CreatePresetCombo(specFilterList, "<Tất cả>", 110);
+            _filterSpecCombo.ToolTip = "Lọc theo Spec";
+            filterBar.Children.Add(new TextBlock { Text = "Spec:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 4, 0), Foreground = FgGray });
+            filterBar.Children.Add(_filterSpecCombo);
+
+            _filterFloorCombo.SelectionChanged += OnFilterChanged;
+            _filterSpecCombo.SelectionChanged += OnFilterChanged;
+
+            filterBar.Children.Add(Btn("Bỏ lọc", BtnGray, Brushes.White, (s, e) =>
+            {
+                _isUpdatingFilterList = true;
+                _filterFloorCombo.SelectedItem = "<Tất cả>";
+                _filterSpecCombo.SelectedItem = "<Tất cả>";
+                _isUpdatingFilterList = false;
+                ApplyDataGridFilter();
+            }));
+
+            Grid.SetRow(filterBar, 3);
+            leftPanel.Children.Add(filterBar);
+
             _wallGrid = CreateWallGrid();
-            Grid.SetRow(_wallGrid, 3);
+            Grid.SetRow(_wallGrid, 4);
             leftPanel.Children.Add(_wallGrid);
 
             Grid.SetColumn(leftPanel, 0);
@@ -1021,6 +1061,7 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
         /// </summary>
         private void SafeRefreshWallGrid()
         {
+            UpdateFilterCombos();
             CommitPendingGridEdits(_wallGrid);
             
             if (_wallGrid?.SelectedItem is TenderWallRow row)
@@ -1028,6 +1069,55 @@ private List<TenderAccessory> EnsureProjectAccessoriesConfigured()
                 RefreshPanelBreakdown(row);
                 UpdateLiveCanvasPreview(row);
             }
+        }
+
+        private void OnFilterChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingFilterList) return;
+            ApplyDataGridFilter();
+        }
+
+        private void ApplyDataGridFilter()
+        {
+            if (_wallGrid == null || _wallRows == null) return;
+            var view = System.Windows.Data.CollectionViewSource.GetDefaultView(_wallRows);
+            if (view == null) return;
+
+            string filterFloor = _filterFloorCombo?.SelectedItem as string ?? string.Empty;
+            string filterSpec = _filterSpecCombo?.SelectedItem as string ?? string.Empty;
+
+            view.Filter = item =>
+            {
+                var row = item as TenderWallRow;
+                if (row == null) return false;
+
+                bool matchFloor = string.IsNullOrEmpty(filterFloor) || filterFloor == "<Tất cả>" || row.Floor == filterFloor;
+                bool matchSpec = string.IsNullOrEmpty(filterSpec) || filterSpec == "<Tất cả>" || row.SpecKey == filterSpec;
+
+                return matchFloor && matchSpec;
+            };
+
+            view.Refresh();
+        }
+
+        private void UpdateFilterCombos()
+        {
+            if (_filterFloorCombo == null || _wallRows == null) return;
+
+            var currentFloor = _filterFloorCombo.SelectedItem as string;
+
+            var floors = new List<string> { "<Tất cả>" };
+            floors.AddRange(_wallRows.Select(x => x.Floor).Where(f => !string.IsNullOrWhiteSpace(f)).Distinct().OrderBy(x => x));
+
+            _isUpdatingFilterList = true;
+            _filterFloorCombo.ItemsSource = floors;
+
+            if (currentFloor != null && floors.Contains(currentFloor))
+                _filterFloorCombo.SelectedItem = currentFloor;
+            else
+                _filterFloorCombo.SelectedIndex = 0;
+
+            _isUpdatingFilterList = false;
         }
 
         private bool CommitPendingGridEdits(DataGrid? grid)

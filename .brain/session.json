@@ -1,15 +1,24 @@
 {
     "working_on": {
-        "task": "Chuẩn hóa định dạng Excel BOM (No Scaling, Fixed Width)",
+        "task": "Tender Pick Span height suggestion persistence",
         "files": [
-            "ShopDrawing.Plugin/Core/ExcelExporter.cs"
+            "ShopDrawing.Plugin/UI/TenderBomDialog.CadOps.cs"
         ],
-        "notes": "Đã release v0.2.75. Tổng chiều rộng 3 sheet = 135 units, cân đối A4 Landscape.",
+        "notes": "Đã sửa lỗi chiều cao bị reset về 3000mm. Release v0.2.77.",
         "blockers": [],
         "status": "completed",
-        "feature": "Excel BOM Formatting Standardization"
+        "feature": "Tender Module Height Suggestion"
     },
     "recent_changes": [
+        {
+            "timestamp": "2026-05-07T09:10:00+07:00",
+            "description": "Fix: Stabilize Tender Pick Span height persistence by introducing global state variable _lastPickedSpanHeightMm",
+            "files": [
+                "ShopDrawing.Plugin/UI/TenderBomDialog.CadOps.cs"
+            ],
+            "type": "fix",
+            "version": "v0.2.77"
+        },
         {
             "timestamp": "2026-04-29T08:54:00+07:00",
             "description": "Fixed total width = 135 units across all 3 sheets (min=max to disable dynamic sizing)",
@@ -18,60 +27,34 @@
             ],
             "type": "fix",
             "version": "v0.2.75"
-        },
-        {
-            "timestamp": "2026-04-29T08:36:00+07:00",
-            "description": "Resolved Mojibake encoding (UTF-8 BOM corruption) and reapplied No Scaling formatting",
-            "files": [
-                "ShopDrawing.Plugin/Core/ExcelExporter.cs"
-            ],
-            "type": "fix",
-            "version": "v0.2.74"
-        },
-        {
-            "timestamp": "2026-04-28T16:50:00+07:00",
-            "description": "Standardized A4 Landscape, 9pt TNR, Scale=100, FitToPage=false for all sheets",
-            "files": [
-                "ShopDrawing.Plugin/Core/ExcelExporter.cs"
-            ],
-            "type": "fix",
-            "version": "v0.2.73"
         }
     ],
     "decisions_made": [
         {
+            "decision": "Use static global field _lastPickedSpanHeightMm in TenderBomDialog to persist height",
+            "reason": "Prevents resetting to 3000mm when new rows are initialized or new picking loops start, allowing spans to inherit the previous span's height seamlessly."
+        },
+        {
             "decision": "Set total table width = 135 units across all 3 Excel sheets",
             "reason": "135 units = 243mm, fits 93% of A4 Landscape printable area (261mm). Ensures all sheets have identical right-edge alignment."
-        },
-        {
-            "decision": "Use fixed widths (minWidth = maxWidth) to disable dynamic column sizing",
-            "reason": "Dynamic AutoFit caused inconsistent table widths between sheets depending on data content."
-        },
-        {
-            "decision": "Font 9pt Times New Roman + Scale 100% (No Scaling) for all sheets",
-            "reason": "Ensures WYSIWYG print output. FitToPage was distorting font sizes."
-        },
-        {
-            "decision": "Use add_bom_safe.ps1 script for encoding protection",
-            "reason": "PowerShell Get-Content/Set-Content caused double-encoding (Mojibake). The safe script inserts BOM bytes without re-interpreting file content."
         }
     ],
     "pending_tasks": [],
     "errors_encountered": [
         {
-            "error": "Mojibake (Vietnamese character corruption) in Excel output",
-            "root_cause": "PowerShell encoding conversion read UTF-8 bytes as Windows-1252, causing double-encoding",
-            "resolution": "Reverted to clean git state, reapplied changes, used add_bom_safe.ps1 for BOM insertion",
-            "resolved_in": "v0.2.74"
+            "error": "Height suggestion resets to 3000mm during Pick Span",
+            "root_cause": "Hardcoded 3000mm fallbacks in PrepareTargetRowForPick and PickSpanFromCad loop initialization overridden previous user input.",
+            "resolution": "Replaced hardcoded 3000 with a globally persistent _lastPickedSpanHeightMm variable.",
+            "resolved_in": "v0.2.77"
         }
     ],
     "context_checkpoints": [
         {
-            "timestamp": "2026-04-29T11:59:00+07:00",
+            "timestamp": "2026-05-07T09:15:00+07:00",
             "trigger": "user_requested",
-            "summary": "Excel BOM formatting complete. 3 sheets standardized: A4 Landscape, 9pt TNR, No Scaling, fixed 135-unit total width. Mojibake resolved. Latest release: v0.2.75.",
-            "message_count": 10
+            "summary": "Fixed Tender Pick Span height persistence. Height is now saved globally via _lastPickedSpanHeightMm. Version bumped to v0.2.77.",
+            "message_count": 5
         }
     ],
-    "updated_at": "2026-04-29T11:59:00+07:00"
+    "updated_at": "2026-05-07T09:15:00+07:00"
 }

@@ -1,5 +1,10 @@
 # Changelog - ShopDrawing AutoCAD Plugin
 
+## [2026-05-11] - v0.2.78 Tender Module Filtering 🔍
+### Added
+- **UI Filter Bar**: Added a programmatic filter bar to the Tender Module popup (`TenderBomDialog.cs`). Users can now filter the DataGrid rows by **"Tầng"** (Floor) and **"Spec"** to generate more granular, detailed reports without cluttering the UI. The filter dynamically auto-populates the Floor choices from user inputs and maintains a stable state without infinite loop crashes.
+- **WPF ICollectionView Binding**: Implemented zero-latency WPF native filtering instead of mutating data collections. This is purely a UI visual filter; total BOM and Excel logic remains fully calculated across the entire project as per original requirements.
+
 ## [2026-05-07] - v0.2.77 Stabilize Tender Height Persistence 📏
 ### Fixed
 - **Persistent Height**: Fix issue where the span height suggestion resets to a default 3000mm on new row creation or subsequent pick operations. The system now reliably remembers the last user-entered height across multiple spans and popup sessions via a global `_lastPickedSpanHeightMm` state.
